@@ -1,0 +1,68 @@
+name: Remote Build
+description: Build a snap using `snapcraft remote-build` and publish to channel
+
+inputs:
+  channel:
+    description: The channel to publish the snap to
+    default: "latest/edge"
+    required: false
+
+  launchpad-project:
+    description: The Launchpad project to host the code on
+    default: ""
+    required: false
+
+  launchpad-token:
+    description: Launchpad token to trigger the remote build
+    required: true
+
+  snapcraft-channel:
+    description: The channel to install Snapcraft from
+    default: latest/stable
+    required: false
+
+  store-token:
+    description: >
+      A token with permissions to upload and release to the specified
+      channel
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Snapcraft
+      id: snapcraft-setup
+      shell: bash
+      run: |
+        sudo snap install snapcraft --channel "${{inputs.snapcraft-channel}}" --classic
+
+    - name: Setup Launchpad credentials
+      id: launchpad-credentials
+      shell: bash
+      run: |
+        # For versions of snapcraft after 8.2.0, the path is different
+        mkdir -p ~/.local/share/snapcraft/provider/launchpad ~/.local/share/snapcraft
+        echo "${{ inputs.launchpad-token }}" > ~/.local/share/snapcraft/provider/launchpad/credentials
+        echo "${{ inputs.launchpad-token }}" > ~/.local/share/snapcraft/launchpad-credentials
+
+    - name: Snapcraft Build on Launchpad and Publish
+      id: snapcraft-remote-build
+      shell: bash
+      run: |
+        if [[ -z "${{inputs.launchpad-project}}" ]]; then
+          snapcraft_args=("${{inputs.launchpad-project}}")
+        else
+          snapcraft_args=("--launchpad-accept-public-upload")
+        fi
+
+        # shellcheck disable=SC2068
+        snapcraft remote-build ${snapcraft_args[@]} || true
+
+        for snap in *.snap; do
+          snapcraft upload "$snap" --release="${{ inputs.channel }}"
+        done
