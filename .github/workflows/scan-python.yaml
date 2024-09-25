@@ -1,0 +1,170 @@
+name: Run security scans for a Python project
+
+on:
+  workflow_call:
+    inputs:
+      packages:
+        required: false
+        type: string
+        description: |
+          Packages to install with apt when building the wheel or scanning with trivy
+          This can be useful if creating a virtual environment has extra build-deps.
+      requirements-find-args:
+        required: false
+        type: string
+        default: ""
+        description: |
+          Additional arguments to use for find when finding requirements files. Can
+          be used to find additional files or to exclude files.
+      osv-extra-args:
+        required: false
+        type: string
+        default: ""
+        description: |
+          Additional arguments to pass to osv-scanner.
+      trivy-extra-args:
+        required: false
+        type: string
+        default: "--severity HIGH,CRITICAL --ignore-unfixed"
+        description: Additional arguments to pass to trivy.
+
+jobs:
+  build-artefacts:
+    name: Build artefacts
+    runs-on: [ubuntu-24.04] # Needs Noble specifically
+    env:
+      UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
+    steps:
+      - name: Install tools
+        shell: bash
+        run: |
+          uv_job=$(sudo snap install --no-wait --classic astral-uv)
+          sudo apt-get update
+          sudo apt-get --yes install python3-venv python3-build ${{ inputs.packages }}
+          snap watch $uv_job
+          mkdir -p ${{ runner.temp }}/python-artefacts/requirements
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Find any existing requirements files
+        shell: bash
+        run: |
+          find -type f -name 'requirements*.txt' ${{ inputs.requirements-find-args }} -exec cp '{}' "${{ runner.temp }}/python-artefacts/requirements" \;
+      - name: Build wheel
+        shell: bash
+        run: |
+          python -m build --wheel --outdir ${{ runner.temp }}/python-artefacts
+      - name: Create requirements files from uv
+        if: ${{ hashFiles('uv.lock') != '' }}
+        run: |
+          uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt --output-file=${{ runner.temp }}/python-artefacts/requirements/uv-requirements.txt
+          uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt --all-extras --output-file=${{ runner.temp }}/python-artefacts/requirements/uv-requirements-all.txt
+      - name: Upload artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artefacts
+          path: ${{ runner.temp }}/python-artefacts
+  scan-trivy:
+    name: Trivy
+    needs: build-artefacts
+    runs-on: [ubuntu-latest]
+    env:
+      UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
+    steps:
+      - name: Install tools
+        run: |
+          trivy_job=$(sudo snap install --no-wait trivy)
+          uv_job=$(sudo snap install --no-wait --classic astral-uv)
+          sudo apt-get update
+          sudo apt-get --yes install ${{ inputs.packages }}
+          snap watch $trivy_job
+          snap watch $uv_job
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          path: source
+      - name: Download artefacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artefacts
+      - name: Cache uv packages
+        uses: actions/cache@v4
+        id: cache-uv
+        with:
+          path: ${{ env.UV_CACHE_DIR }}
+          key: ${{ github.workflow }}-uv-${{ hashFiles('requirements/*') }}
+      - name: Scan requirements files
+        if: ${{ !cancelled() && hashFiles('requirements/') != '' }}
+        run: |
+          for reqs in $(ls -1 requirements/*); do
+            trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} "${reqs}"
+          done
+      - name: Scan wheel files
+        if: ${{ !cancelled() && hashFiles('*.whl') != '' }}
+        run: |
+          for wheel in $(ls -1 *.whl); do
+            echo "::group::Scanning ${wheel}"
+            wheel_dir=$(mktemp -d --tmpdir=${{ runner.temp }} --suffix=.whl-dir)
+            unzip -q "${wheel}" -d "${wheel_dir}"
+            trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} "${wheel_dir}"
+            echo "::endgroup::"
+          done
+      - name: Scan source
+        if: ${{ !cancelled() }}
+        run: |
+          trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} source
+      - name: Scan virtual environments
+        run: |
+          snap watch --last=install
+          for reqs in $(ls -1 requirements/*); do
+            echo "::group::Setup ${reqs}"
+            venv=$(mktemp -d --tmpdir=${{ runner.temp }} --suffix=.venv)
+            uv venv "${venv}"
+            source "${venv}/bin/activate"
+            echo Installing "${reqs}"
+            uv pip install --requirement="${reqs}"
+            echo "::endgroup::"
+            trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} "${venv}"
+            deactivate
+          done
+          for wheel in $(ls -1 *.whl); do
+            echo "::group::Setup ${wheel}"
+            venv=$(mktemp -d --tmpdir=${{ runner.temp }} --suffix=.venv)
+            uv venv "${venv}"
+            source "${venv}/bin/activate"
+            echo Installing "${reqs}"
+            uv pip install "${wheel}"
+            echo "::endgroup::"
+            trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} "${venv}"
+            deactivate
+          done
+  scan-osv:
+    name: OSV-scanner
+    needs: build-artefacts
+    runs-on: [ubuntu-latest]
+    env:
+      UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
+    steps:
+      - name: Install tools
+        run: |
+          sudo snap install osv-scanner
+          sudo snap install --no-wait --classic astral-uv
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          path: source
+      - name: Download artefacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artefacts
+      - name: Scan requirements files
+        if: ${{ !cancelled() && hashFiles('requirements/') != '' }}
+        run: |
+          for reqs in $(ls -1 requirements/*); do
+            osv-scanner ${{ inputs.osv-extra-args }} --lockfile requirements.txt:${reqs}
+          done
+      - name: Scan source
+        if: ${{ !cancelled() }}
+        run: |
+          osv-scanner ${{ inputs.osv-extra-args }} source
