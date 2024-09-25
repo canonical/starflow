@@ -9,6 +9,7 @@ lint:
 ## lint: Lint the codebase with Prettier
 	npx prettier --print-width=99 --check .
 	bash ${CURDIR}/.github/shellcheck-actions.sh
+	yamllint .
 
 .PHONY: format
 format:
