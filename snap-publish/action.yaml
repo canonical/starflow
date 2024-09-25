@@ -93,10 +93,10 @@ runs:
         echo "::group::remote build"
         echo '## Snapcraft Remote Build'  >> "$GITHUB_STEP_SUMMARY"
         # shellcheck disable=SC2068
-        echo Command: \`snapcraft remote-build ${snapcraft_args[@]}\` >> "$GITHUB_STEP_SUMMARY"
+        echo "Command: \`snapcraft remote-build ${snapcraft_args[*]}\`" >> "$GITHUB_STEP_SUMMARY"
         # shellcheck disable=SC2068
         if snapcraft remote-build ${snapcraft_args[@]}; then
-          echo Packed: \`$(ls ${name}*${arch}.snap)\` >> "$GITHUB_STEP_SUMMARY"
+          echo "Packed: \`$(ls "${name}"*"${arch}".snap)\`" >> "$GITHUB_STEP_SUMMARY"
           echo "snap=${name}_*_${arch}.snap" >> "$GITHUB_OUTPUT"
           success=0
         else
@@ -109,7 +109,7 @@ runs:
         echo '## Snapcraft Remote Build Logs'  >> "$GITHUB_STEP_SUMMARY"
         echo '<details>'  >> "$GITHUB_STEP_SUMMARY"
         echo \`\`\`   >> "$GITHUB_STEP_SUMMARY"
-        cat snapcraft-${name}*${arch}*.txt   >> "$GITHUB_STEP_SUMMARY"
+        cat snapcraft-"${name}"*"${arch}"*.txt   >> "$GITHUB_STEP_SUMMARY"
         echo \`\`\`   >> "$GITHUB_STEP_SUMMARY"
         echo '</details>'  >> "$GITHUB_STEP_SUMMARY"
 
