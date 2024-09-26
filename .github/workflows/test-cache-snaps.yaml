@@ -1,0 +1,18 @@
+name: Test cache-snaps action
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./cache-snaps
+      - run: |
+          sudo snap install --classic astral-uv
+          /snap/bin/uv tool run ruff help
