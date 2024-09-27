@@ -1,0 +1,25 @@
+name: Cache snaps on the runner
+description: Cache snaps that are installed in the workflow so they don't need re-downloading.
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare
+      shell: bash
+      run: |
+        sudo systemctl stop snapd.service
+        sudo chown --recursive $USER /var/lib/snapd/snaps
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: /var/lib/snapd/snaps
+        key: snaps-${{ github.workflow_sha }}
+    - name: Restart snapd
+      uses: pyTooling/Actions/with-post-step@v1.0.7
+      with:
+        main: |
+          sudo chown --recursive root /var/lib/snapd/snaps
+          sudo systemctl start snapd.service
+        post: |
+          sudo systemctl stop snapd.service
+          sudo chown --recursive $USER /var/lib/snapd/snaps
