@@ -1,0 +1,19 @@
+name: Lint
+description: Run all configured linters
+
+runs:
+  using: composite
+  steps:
+    - name: Install tools
+      shell: bash
+      run: |
+        make setup
+    - name: Run Linters
+      shell: bash
+      run: |
+        make -k lint
+    - name: conventional commits
+      if: ${{ !cancelled() }}
+      uses: webiny/action-conventional-commits@v1.3.0
+      with:
+        allowed-commit-types: "build,chore,ci,docs,feat,fix,perf,refactor,style,test"
