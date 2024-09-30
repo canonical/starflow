@@ -4,6 +4,27 @@ help:
 	@echo "Usage:"
 	@sed -n 's/^##//p' ${MAKEFILE_LIST} | column -t -s ':' |  sed -e 's/^/ /'
 
+.PHONY: setup
+setup: setup-lint
+## setup: Install the necessary tools for linting and testing.
+
+.PHONY: setup-lint
+setup-lint:
+## setup-lint: Install the necessary tools for linting.
+ifneq ($(shell which npx),)
+else ifneq ($(shell which snap),)
+	sudo snap install --classic --channel 22 node
+else
+	$(error Cannot find npx. Please install it on your system.)
+endif
+ifneq ($(shell which shellcheck),)
+else ifneq ($(shell which snap),)
+	sudo snap install shellcheck
+else
+	$(error Cannot find shellcheck. Please install it on your system.)
+endif
+
+
 .PHONY: lint
 lint:
 ## lint: Lint the codebase with Prettier

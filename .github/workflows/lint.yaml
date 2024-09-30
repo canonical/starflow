@@ -3,32 +3,34 @@ name: Lint
 
 on:
   pull_request:
-    branches:
-      - main
   push:
     branches:
-      - main
+      - "main"
+      - "feature/*"
+      - "hotfix/*"
+      - "release/*"
+      - "renovate/*"
+  workflow_call:
 
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node and shellcheck
+      - name: Set up system for linting.
         run: |
-          sudo snap install node --classic --channel 22
-          sudo snap install shellcheck
+          make setup-lint
 
       - name: Run linters
         run: |
-          make lint
+          make -k lint
 
       - name: Run formatters
         run: |
-          make format
+          make -k format
 
       - name: Check for modifications to generated files
         run: |
