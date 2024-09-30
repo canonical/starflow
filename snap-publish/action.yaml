@@ -96,7 +96,7 @@ runs:
         # shellcheck disable=SC2068
         if snapcraft remote-build ${snapcraft_args[@]}; then
           echo "Packed: \`$(ls "${name}"*"${arch}".snap)\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "snap=${name}_*_${arch}.snap" >> "$GITHUB_OUTPUT"
+          echo "snap=$(ls "${name}"*"${arch}".snap)" >> "$GITHUB_OUTPUT"
           success=0
         else
           echo Remote Build failed
@@ -121,6 +121,6 @@ runs:
       uses: canonical/action-publish@master
       with:
         snap: ${{ steps.snapcraft-remote-build.outputs.snap }}
-        channel: ${{ inputs.channel }}
+        release: ${{ inputs.channel }}
       env:
         SNAPCRAFT_STORE_CREDENTIALS: ${{ inputs.store-token }}
