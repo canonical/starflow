@@ -8,6 +8,28 @@ Some of these automations are provided as [Reusable workflows](https://docs.gith
 For these workflows, you can embed them in a workflow you run at the `job` level.
 Examples are provided below.
 
+## Policy checkers
+
+Two reusable workflows combine to check that a commit matches Canonical and team
+policies for PRs to our repositories. Right now, these checks are:
+
+- [CLA check](https://github.com/canonical/has-signed-canonical-cla)
+- [Commit message styles](https://github.com/canonical/starbase/blob/main/HACKING.rst#commits).
+
+### Usage
+
+```
+name: Policy
+on: [pull_request]
+
+jobs:
+  company:
+    uses: canonical/starflow/.github/workflows/corporate-policy.yaml@main
+  team:
+    uses: canonical/starflow/.github/workflows/team-policy.yaml@main
+
+```
+
 ## Python security scanner
 
 The Python security scanner workflow uses several tools (trivy, osv-scanner) to scan a
