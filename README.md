@@ -94,3 +94,14 @@ jobs:
       # Use the standard extra args and ignore spread tests
       trivy-extra-args: '--skip-dirs "tests/spread/**"'
 ```
+
+# Other Configuration
+
+This repository also contains our base renovate configuration. A repository may be
+configured to use this by adding the following to its `.github/renovate.json5` file:
+
+```json5
+{
+  extends: ["github:canonical/starflow:renovate-base.json5"],
+}
+```
