@@ -9,6 +9,12 @@ on:
         description: |
           Packages to install with apt when building the wheel or scanning with trivy
           This can be useful if creating a virtual environment has extra build-deps.
+      osv-channel:
+        required: false
+        type: string
+        default: "latest/stable"
+        description: |
+          The snap channel to use for installing osv-scanner.
       osv-extra-args:
         required: false
         type: string
@@ -57,7 +63,7 @@ jobs:
     steps:
       - name: Install tools
         run: |
-          osv_job=$(sudo snap install --no-wait osv-scanner)
+          osv_job=$(sudo snap install --no-wait osv-scanner --channel=${{ inputs.osv-channel }})
           if [[ -n "${{ inputs.packages }}" ]]; then
             sudo apt-get update
             sudo apt-get --yes install ${{ inputs.packages }}
