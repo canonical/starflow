@@ -1,4 +1,3 @@
-# https://github.com/snapcrafters/ci/blob/main/.github/workflows/lint.yaml
 name: Lint
 
 on:
@@ -12,29 +11,8 @@ on:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node and shellcheck
-        run: |
-          sudo snap install node --classic --channel 22
-          sudo snap install shellcheck
-
-      - name: Run linters
-        run: |
-          make lint
-
-      - name: Run formatters
-        run: |
-          make format
-
-      - name: Check for modifications to generated files
-        run: |
-          if [[ -n "$(git status -s)" ]]; then
-            echo "Run 'make format' then commit/push changes"
-            echo
-            git diff
-            exit 1
-          fi
+      - uses: ./lint # Lint this repo with the current linting action.

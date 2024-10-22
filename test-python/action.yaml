@@ -1,0 +1,53 @@
+name: Run unit tests with coverage
+description: Run unit tests and upload coverage data.
+
+inputs:
+  python-versions:
+    description: Python versions to run tests on, separated with spaces
+  target:
+    description: Makefile target for the test run. If changed, coverage will not be uploaded.
+    default: coverage
+  tics-token:
+    description: The authorization token for TIOBE TICS
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Set up uv with caching
+      id: setup-uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+    - name: Run tests
+      shell: bash
+      run: |
+        # shellcheck disable=SC1083 # (thinks a GitHub variable is a literal "}")
+        for UV_PYTHON in ${{ inputs.python-versions }}; do
+          export UV_PYTHON
+          echo "::group::Setup tests on Python ${UV_PYTHON}"
+          make setup-tests
+          echo "::endgroup::"
+          echo "::group::Run tests on Python ${UV_PYTHON}"
+          make "${{ inputs.target }}"
+          echo "::endgroup::"
+        done
+    - name: Upload coverage
+      if: ${{ inputs.target == 'coverage' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-${{ runner.os }}-${{ runner.arch }}-${{ github.run-name }}-${{ inputs.python-versions }}
+        overwrite: true
+        path: |
+          ./coverage.xml
+          htmlcov/**
+    - name: Run TICS analysis
+      uses: tiobe/tics-github-action@v3
+      if: ${{ inputs.target == 'coverage' && inputs.tics-token != '' && runner.os == 'Linux' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/tics') }}
+      with:
+        mode: qserver
+        project: ${{ github.repository }}
+        viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
+        branchdir: ${{ github.workspace }}
+        ticsAuthToken: ${{ inputs.tics-token }}
+        installTics: true
