@@ -25,10 +25,11 @@ runs:
         # shellcheck disable=SC1083 # (thinks a GitHub variable is a literal "}")
         for UV_PYTHON in ${{ inputs.python-versions }}; do
           export UV_PYTHON
-          echo "::group::Setup tests on Python ${UV_PYTHON}"
+          echo "::notice title=PYTHON-${UV_PYTHON}::Test with python ${UV_PYTHON}"
+          echo "::group::Setup"
           make setup-tests
           echo "::endgroup::"
-          echo "::group::Run tests on Python ${UV_PYTHON}"
+          echo "::group::Run tests"
           make "${{ inputs.target }}"
           echo "::endgroup::"
         done
