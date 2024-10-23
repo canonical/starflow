@@ -23,16 +23,26 @@ runs:
       shell: bash
       run: |
         # shellcheck disable=SC1083 # (thinks a GitHub variable is a literal "}")
+        exit_code=0
+        echo "## Test results" >> "${GITHUB_STEP_SUMMARY}"
+        echo "| Python version | Result |" >> "${GITHUB_STEP_SUMMARY}"
+        echo "| --- | --- |" >> "${GITHUB_STEP_SUMMARY}"
         for UV_PYTHON in ${{ inputs.python-versions }}; do
           export UV_PYTHON
-          echo "::notice title=PYTHON-${UV_PYTHON}::Test with python ${UV_PYTHON}"
-          echo "::group::Setup"
+          echo "::group::Setup tests on Python ${UV_PYTHON}"
           make setup-tests
           echo "::endgroup::"
-          echo "::group::Run tests"
-          make "${{ inputs.target }}"
+          echo -e "::group::Run tests on 🐍 \033[1;36mPython ${UV_PYTHON}\033[0m"
+          if make "${{ inputs.target }}"; then
+            echo "| ${UV_PYTHON} | :white_check_mark: **PASS** |" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "| ${UV_PYTHON} | :x: **FAIL** |" >> "${GITHUB_STEP_SUMMARY}"
+            exit_code=1
+          fi
+          echo "| --- | --- |" >> "${GITHUB_STEP_SUMMARY}"
           echo "::endgroup::"
         done
+        exit $exit_code
     - name: Upload coverage
       if: ${{ inputs.target == 'coverage' }}
       uses: actions/upload-artifact@v4
