@@ -99,6 +99,7 @@ jobs:
         run: |
           for reqs in $(ls -1 requirements/*); do
             trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} "${reqs}"
+            sleep 1  # trivy rate-limits, will fail if requests are too close together
           done
       - name: Scan wheel files
         if: ${{ !cancelled() && hashFiles('*.whl') != '' }}
