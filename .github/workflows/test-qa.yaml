@@ -1,0 +1,67 @@
+name: Tests for QA actions
+on:
+  pull_request:
+
+jobs:
+  lint:
+    strategy:
+      matrix:
+        repository:
+          - canonical/craft-platforms
+          - canonical/starbase
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repository }}
+          ref: work/starflow-lint # TODO: Remove this once the appropriate items are merged to main.
+      - uses: actions/checkout@v4
+        with:
+          path: starflow
+      - uses: ./starflow/lint
+  test-python-defaults:
+    strategy:
+      matrix:
+        platform:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        repository:
+          - canonical/craft-platforms
+          - canonical/starbase
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repository }}
+          ref: work/starflow-lint # TODO: Remove this once the appropriate items are merged to main.
+      - uses: actions/checkout@v4
+        with:
+          path: starflow
+      - uses: ./starflow/test-python
+        with:
+          python-versions: 3.12
+  test-python-integration:
+    strategy:
+      matrix:
+        platform:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        repository:
+          - canonical/craft-platforms
+          - canonical/starbase
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repository }}
+          ref: work/starflow-lint # TODO: Remove this once the appropriate items are merged to main.
+      - uses: actions/checkout@v4
+        with:
+          path: starflow
+      - uses: ./starflow/test-python
+        with:
+          python-versions: 3.12
+          target: test-integration

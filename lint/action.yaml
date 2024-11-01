@@ -1,0 +1,17 @@
+name: Run linters
+description: Run linters on the project
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        echo "::group::Setup"
+        make setup-lint
+        echo "::endgroup::"
+        make -k lint
+    - name: conventional commits
+      if: ${{ !cancelled() }}
+      uses: webiny/action-conventional-commits@v1.3.0
+      with:
+        allowed-commit-types: "build,chore,ci,docs,feat,fix,perf,refactor,style,test"
