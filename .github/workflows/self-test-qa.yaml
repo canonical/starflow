@@ -1,0 +1,17 @@
+name: QA self-test
+on:
+  pull_request:
+
+jobs:
+  lint-python:
+    uses: ./.github/workflows/lint-python.yaml
+  test-python:
+    uses: ./.github/workflows/test-python.yaml
+  test-python-custom:
+    uses: ./.github/workflows/test-python.yaml
+    with:
+      unit-platforms: '["ubuntu-latest"]'
+      unit-python-versions: '["3.14"]'
+      integration-platforms: '["ubuntu-latest"]'
+      integration-python-versions: '["3.14"]'
+      lowest-python-version: '["3.0"]'

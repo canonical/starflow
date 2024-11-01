@@ -1,0 +1,7 @@
+DO NOT DELETE
+
+This file exists to provide the `setup-uv` job with a uv.lock file in this repository.
+It doesn't get used for anything but the UV cache. To use a fresh cache, bump the number
+below:
+
+Cache reset count: 0

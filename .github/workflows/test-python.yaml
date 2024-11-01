@@ -1,0 +1,133 @@
+name: Test Python
+on:
+  workflow_call:
+    inputs:
+      unit-platforms:
+        required: false
+        type: string
+        default: '["ubuntu-22.04", "ubuntu-24.04", "windows-latest", "macos-latest"]'
+        description: |
+          The platforms to run unit tests on, as a JSON array.
+      unit-python-versions:
+        required: false
+        type: string
+        default: '["3.10", "3.11", "3.12", "3.13"]'
+        description: |
+          The python versions to run unit tests on, as a JSON array.
+      lowest-python-version:
+        required: false
+        type: string
+        description: |
+          The Python version to run when using "lowest" resolution for unit tests.
+      integration-platforms:
+        type: string
+        default: '["ubuntu-latest", "windows-latest", "macos-latest"]'
+        description: |
+          The platforms to run integration tests on, as a JSON array.
+      integration-python-versions:
+        required: false
+        type: string
+        default: '["3.10"]'
+        description: |
+          The python versions to run integration tests on, as a JSON array.
+
+jobs:
+  unit:
+    strategy:
+      matrix:
+        platform: ${{ fromJson(inputs.unit-platforms) }}
+    runs-on: ${{ matrix.platform }}
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up uv with caching
+        id: setup-uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-suffix: ${{ matrix.platform }}
+      - name: Set up tests
+        shell: bash
+        run: |
+          for python_version in $(echo '${{ inputs.unit-python-versions }}' | jq -r .[] | tr '\n' ' '); do
+            python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
+            make setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}"
+          done
+      - name: Run tests
+        shell: bash
+        run: |
+          for python_version in $(echo '${{ inputs.unit-python-versions }}' | jq -r .[] | tr '\n' ' '); do
+            echo "::group::Python ${python_version}"
+            python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
+            make coverage UV_PROJECT_ENVIRONMENT="${python_dirname}"
+            echo "::endgroup::"
+          done
+      - name: Upload coverage
+        if: ${{ inputs.target == 'coverage' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.platform }}-${{ matrix.python-version }}
+          overwrite: true
+          path: |
+            ./coverage.xml
+            htmlcov/**
+      - name: Run TICS analysis
+        uses: tiobe/tics-github-action@v3
+        if: ${{ runner.os == 'Linux' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/tics') }}
+        with:
+          mode: qserver
+          project: ${{ github.repository }}
+          viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
+          branchdir: ${{ github.workspace }}
+          ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}
+          installTics: true
+  unit-lowest:
+    name: unit (minimum deps)
+    if: ${{ inputs.lowest-python-version }} != ''
+    runs-on: ubuntu-20.04
+    env:
+      UV_PYTHON: ${{ inputs.lowest-python-version }}
+      UV_RESOLUTION: lowest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up uv with caching
+        id: setup-uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-suffix: ${{ matrix.platform }}
+      - name: Install tools
+        run: |
+          make setup-tests
+      - name: Run unit tests
+        run: |
+          make coverage
+  integration:
+    strategy:
+      matrix:
+        platform: ${{ fromJson(inputs.integration-platforms) }}
+        python-version: ${{ fromJson(inputs.integration-python-versions) }}
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up uv with caching
+        id: setup-uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-suffix: ${{ matrix.platform }}
+      - name: Install tools
+        run: |
+          make setup-tests
+      - name: Integration tests
+        run: |
+          make test-integration
+        env:
+          PYTEST_ADDOPTS: "--no-header -v -rN"

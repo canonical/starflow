@@ -1,0 +1,34 @@
+name: Lint
+on:
+  workflow_call:
+  # Because we have a uv.lock file, we can also use this workflow to lint ourselves.
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Begin snap installs of common linters
+        id: snap-install
+        run: |
+          echo -n 'jobs="$(sudo snap install --no-wait codespell ruff shellcheck)"' >> $GITHUB_OUTPUT
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up uv with caching
+        id: setup-uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Set up linters
+        run: |
+          for job in ${{ steps.snap-install.outputs.jobs }}; do
+            sudo snap watch $job
+          done
+          make setup-lint
+      - name: Run linters
+        run: make -k lint

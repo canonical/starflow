@@ -1,0 +1,25 @@
+name: Check policy
+on:
+  workflow_call:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  cla:
+    name: Authors signed Canonical CLA
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if CLA signed
+        uses: canonical/has-signed-canonical-cla@v1
+  commits:
+    name: Conventional Commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: webiny/action-conventional-commits@v1.3.0
+        with:
+          allowed-commit-types: "build,chore,ci,docs,feat,fix,perf,refactor,style,test"

@@ -1,4 +1,3 @@
-# https://github.com/snapcrafters/ci/blob/main/Makefile
 .PHONY: help
 help:
 	@echo "Usage:"
@@ -14,3 +13,37 @@ lint:
 format:
 ## format: Formats both Markdown documents and YAML documents to preferred repository style.
 	npx prettier --print-width=99 --write .
+
+.PHONY: setup
+setup: setup-lint
+## setup: Install the necessary tools for linting and testing.
+
+.PHONY: setup-lint
+setup-lint:
+## setup-lint: Install the necessary tools for linting.
+ifneq ($(shell which npx),)
+else ifneq ($(shell which snap),)
+	sudo snap install --classic --channel 22 node
+else
+	$(error Cannot find npx. Please install it on your system.)
+endif
+ifneq ($(shell which shellcheck),)
+else ifneq ($(shell which snap),)
+	sudo snap install shellcheck
+else
+	$(error Cannot find shellcheck. Please install it on your system.)
+endif
+
+.PHONY: setup-tests
+setup-tests:
+	echo "Installing nothing..."
+	echo "Installed!"
+
+.PHONY: test-unit
+test-unit:
+
+.PHONY: test-integration
+test-integration:
+
+.PHONY: coverage
+coverage:
