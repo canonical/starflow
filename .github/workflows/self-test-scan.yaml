@@ -1,0 +1,13 @@
+name: Self-tests for scanners
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  golang:
+    uses: ./.github/workflows/scan-golang.yaml
+  python:
+    uses: ./.github/workflows/scan-python.yaml
