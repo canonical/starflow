@@ -39,6 +39,11 @@ jobs:
         shell: bash
         run: |
           uv_job=$(sudo snap install --no-wait --classic astral-uv)
+
+          # Workaround for https://github.com/actions/runner-images/issues/10977
+          echo "set man-db/auto-update false" | sudo debconf-communicate
+          sudo dpkg-reconfigure --frontend noninteractive man-db
+
           sudo apt-get update
           sudo apt-get --yes install python3-venv python3-build ${{ inputs.packages }}
           snap watch $uv_job

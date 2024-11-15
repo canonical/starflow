@@ -1,4 +1,4 @@
-name: Run security scans for a Python project
+name: Run security scans for a Go project
 
 on:
   workflow_call:
@@ -7,7 +7,7 @@ on:
         required: false
         type: string
         description: |
-          Packages to install with apt when building the wheel or scanning with trivy
+          Packages to install with apt when building or scanning with trivy.
           This can be useful if creating a virtual environment has extra build-deps.
       osv-extra-args:
         required: false
@@ -29,13 +29,16 @@ jobs:
       - name: Install tools
         run: |
           trivy_job=$(sudo snap install --no-wait trivy)
-          uv_job=$(sudo snap install --no-wait --classic astral-uv)
+
+          # Workaround for https://github.com/actions/runner-images/issues/10977
+          echo "set man-db/auto-update false" | sudo debconf-communicate
+          sudo dpkg-reconfigure --frontend noninteractive man-db
+
           if [[ -n "${{ inputs.packages }}" ]]; then
             sudo apt-get update
             sudo apt-get --yes install ${{ inputs.packages }}
           fi
           snap watch $trivy_job
-          snap watch $uv_job
       - name: Download trivy database
         run: |
           timeout 30s bash -c 'while ! trivy filesystem --download-db-only; do sleep 0.1; done'
