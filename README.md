@@ -181,3 +181,14 @@ jobs:
   test:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
 ```
+
+# Other Configuration
+
+This repository also contains our base renovate configuration. A repository may be
+configured to use this by adding the following to its `.github/renovate.json5` file:
+
+```json5
+{
+  extends: ["github:canonical/starflow:renovate-base.json5"],
+}
+```
