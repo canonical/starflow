@@ -16,6 +16,12 @@ on:
         description: |
           Additional arguments to use for find when finding requirements files. Can
           be used to find additional files or to exclude files.
+      uv-export-extra-args:
+        required: false
+        type: string
+        default: ""
+        description: |
+          Additional arguments for uv export commands (for example to ignore certain extras).
       osv-extra-args:
         required: false
         type: string
@@ -63,8 +69,8 @@ jobs:
       - name: Create requirements files from uv
         if: ${{ hashFiles('uv.lock') != '' }}
         run: |
-          uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt --output-file=${{ runner.temp }}/python-artefacts/requirements/uv-requirements.txt
-          uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt --all-extras --output-file=${{ runner.temp }}/python-artefacts/requirements/uv-requirements-all.txt
+          uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt ${{ inputs.uv-export-extra-args }} --output-file=${{ runner.temp }}/python-artefacts/requirements/uv-requirements.txt
+          uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt ${{ inputs.uv-export-extra-args }} --all-extras --output-file=${{ runner.temp }}/python-artefacts/requirements/uv-requirements-all.txt
       - name: Upload artefacts
         uses: actions/upload-artifact@v4
         with:
