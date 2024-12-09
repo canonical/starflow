@@ -16,7 +16,7 @@ on:
           Whether to export requirements files from uv. Defaults to true.
       uv-sync-extra-args:
         type: string
-        default: "--no-dev --all-extras"
+        default: ""
         description: |
           Extra arguments to pass to uv when using sync to generate a virtual environment.
       requirements-find-args:
