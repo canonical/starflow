@@ -73,7 +73,7 @@ Python project for security issues. It does the following:
    b. `requirements-all.txt` with all available extras
 
 If there are any existing `requirements*.txt` files in your project, it will scan those
-below too.
+below too. Exporting a `uv.lock` file can be disabled by setting `uv-export: false`.
 
 With [Trivy](https://github.com/aquasecurity/trivy), it:
 
@@ -81,6 +81,8 @@ With [Trivy](https://github.com/aquasecurity/trivy), it:
 2. Scans the wheel file(s)
 3. Scans the project directory
 4. Installs each combination of (requirements, wheel) in a virtual environment and scans that environment.
+5. If a `uv.lock` file exists for the project, creates a virtual environment using `uv sync` and
+   scans that environment. `uv sync` can be configured with the `uv-sync-extra-args` input.
 
 With [OSV-scanner](https://google.github.io/osv-scanner/) it:
 
