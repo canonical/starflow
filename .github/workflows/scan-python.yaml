@@ -9,6 +9,16 @@ on:
         description: |
           Packages to install with apt when building the wheel or scanning with trivy
           This can be useful if creating a virtual environment has extra build-deps.
+      uv-export:
+        type: boolean
+        default: true
+        description: |
+          Whether to export requirements files from uv. Defaults to true.
+      uv-sync-extra-args:
+        type: string
+        default: ""
+        description: |
+          Extra arguments to pass to uv when using sync to generate a virtual environment.
       requirements-find-args:
         required: false
         type: string
@@ -67,7 +77,7 @@ jobs:
         run: |
           python -m build --wheel --outdir ${{ runner.temp }}/python-artefacts
       - name: Create requirements files from uv
-        if: ${{ hashFiles('uv.lock') != '' }}
+        if: ${{ inputs.uv-export && hashFiles('uv.lock') != ''}}
         run: |
           uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt ${{ inputs.uv-export-extra-args }} --output-file=${{ runner.temp }}/python-artefacts/requirements/uv-requirements.txt
           uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt ${{ inputs.uv-export-extra-args }} --all-extras --output-file=${{ runner.temp }}/python-artefacts/requirements/uv-requirements-all.txt
@@ -153,6 +163,12 @@ jobs:
             trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} "${venv}"
             deactivate
           done
+      - name: Scan uv workspace
+        if: ${{ hashFiles('source/uv.lock') != ''}}
+        run: |
+          cd source
+          uv sync ${{ uv-sync-extra-args }}
+          trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} .venv
   scan-osv:
     name: OSV-scanner
     needs: build-artefacts
