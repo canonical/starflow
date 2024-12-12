@@ -44,6 +44,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # On mac, set up homebrew caching since we use homebrew to install dependencies.
+      - name: Set up Homebrew
+        if: runner.os == 'macOS'
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+      - name: Cache Homebrew Bundler RubyGems
+        if: runner.os == 'macOS'
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ runner.os }}-rubygems-
+      - name: Install Homebrew Bundler RubyGems
+        if: steps.cache.outputs.cache-hit != 'true' && runner.os == 'macOS'
+        run: brew install-bundler-gems
+
       - name: Hash runner info
         id: runner-info
         run: |
@@ -97,6 +115,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # On mac, set up homebrew caching since we use homebrew to install dependencies.
+      - name: Set up Homebrew
+        if: runner.os == 'macOS'
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+      - name: Cache Homebrew Bundler RubyGems
+        if: runner.os == 'macOS'
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ runner.os }}-rubygems-
+      - name: Install Homebrew Bundler RubyGems
+        if: steps.cache.outputs.cache-hit != 'true' && runner.os == 'macOS'
+        run: brew install-bundler-gems
+
       - name: Set up uv with caching
         id: setup-uv
         uses: astral-sh/setup-uv@v3
