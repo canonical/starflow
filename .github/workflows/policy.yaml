@@ -10,6 +10,7 @@ on:
 
 jobs:
   cla:
+    if: github.event_name == 'pull_request'
     name: Authors signed Canonical CLA
     runs-on: ubuntu-latest
     steps:
