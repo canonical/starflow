@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - ".github/**"
+      - "renovate-base.json5"
   push:
     branches:
       - work/renovate # For development
@@ -29,16 +30,16 @@ jobs:
         with:
           node-version: 22
       - name: Install renovate
-        run: npm install --global renovate
+        run: npm install --global re2 renovate
       - name: Enable ssh access
         uses: mxschmitt/action-tmate@v3
         if: ${{ inputs.enable_ssh_access }}
         with:
           limit-access-to-actor: true
       - name: Check renovate config
-        run: renovate-config-validator .github/renovate.json5
+        run: renovate-config-validator renovate-base.json5
       - name: Renovate dry-run
-        run: renovate --dry-run --print-config --use-base-branch-config $(git branch --show-current) ${{ github.repository }}
+        run: renovate --platform=local --dry-run=full
         env:
           RENOVATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RENOVATE_USE_BASE_BRANCH_CONFIG: ${{ github.ref }}
