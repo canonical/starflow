@@ -191,6 +191,6 @@ configured to use this by adding the following to its `.github/renovate.json5` f
 
 ```json5
 {
-  extends: ["github:canonical/starflow:renovate-base.json5"],
+  extends: ["github>canonical/starflow"],
 }
 ```

@@ -2,8 +2,8 @@ name: Check what the renovate run would do.
 on:
   pull_request:
     paths:
-      - ".github/**"
-      - "renovate-base.json5"
+      - ".github/workflows/self-test-renovate.yaml"
+      - "renovate.json5"
   push:
     branches:
       - work/renovate # For development
@@ -37,9 +37,10 @@ jobs:
         with:
           limit-access-to-actor: true
       - name: Check renovate config
-        run: renovate-config-validator renovate-base.json5
+        run: renovate-config-validator renovate.json5
       - name: Renovate dry-run
-        run: renovate --platform=local --dry-run=full
+        run: |
+          renovate --platform=local --dry-run=full
         env:
           RENOVATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RENOVATE_USE_BASE_BRANCH_CONFIG: ${{ github.ref }}
