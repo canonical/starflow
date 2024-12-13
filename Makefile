@@ -43,4 +43,5 @@ setup-tests:
 test-coverage:
 	$(info Simulating coverage creation)
 	$(info "Running tests with extra pytest options: ${PYTEST_ADDOPTS}")
-	@touch coverage.xml
+	uvx coverage run .test-data/hello.py
+	uvx coverage xml -o coverage.xml
