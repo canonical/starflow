@@ -16,7 +16,7 @@ jobs:
       - name: Begin snap installs of common linters
         id: snap-install
         run: |
-          echo -n 'jobs="$(sudo snap install --no-wait --classic codespell pyright ruff shellcheck)"' >> $GITHUB_OUTPUT
+          echo -n 'jobs="$(sudo snap install --no-wait codespell ruff shellcheck) $(sudo snap install --no-wait --classic pyright)"' >> $GITHUB_OUTPUT
       - name: Check out code
         uses: actions/checkout@v4
       - name: Set up uv with caching
