@@ -155,7 +155,7 @@ jobs:
             htmlcov/**
   lowest:
     name: Minimum dependencies (all tests)
-    if: ${{ inputs.lowest-python-version }} != ''
+    if: ${{ inputs.lowest-python-version != '' }}
     runs-on: ${{ inputs.lowest-python-platform }}
     env:
       UV_PYTHON: ${{ inputs.lowest-python-version }}
