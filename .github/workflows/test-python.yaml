@@ -53,7 +53,7 @@ jobs:
       - name: Cache Homebrew Bundler RubyGems
         if: runner.os == 'macOS'
         id: cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -68,7 +68,7 @@ jobs:
           echo "cache-hash=$(echo '${{ toJSON(matrix.platform) }}' | sha1sum | cut -f1 -d' ')" >> $GITHUB_OUTPUT
       - name: Set up uv with caching
         id: setup-uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
           cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
@@ -124,7 +124,7 @@ jobs:
       - name: Cache Homebrew Bundler RubyGems
         if: runner.os == 'macOS'
         id: cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -135,7 +135,7 @@ jobs:
 
       - name: Set up uv with caching
         id: setup-uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
           cache-suffix: ${{ toJSON(matrix.platform) }}
@@ -166,7 +166,7 @@ jobs:
           fetch-depth: 0
       - name: Set up uv with caching
         id: setup-uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
           cache-suffix: lowest-jammy
