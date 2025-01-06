@@ -184,6 +184,11 @@ jobs:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
 ```
 
+## TICS
+
+The TICS workflow runs similarly to the Python test runner workflow, but after
+collecting coverage it uploads it to TICS.
+
 # Other Configuration
 
 This repository also contains our base renovate configuration. A repository may be

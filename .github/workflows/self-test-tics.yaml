@@ -1,0 +1,16 @@
+name: Self-test for TICS
+
+on:
+  push:
+    branches:
+      - "work/tics"
+  pull_request:
+    paths:
+      - .github/workflows/analysis.yaml
+      - .github/workflows/self-test-tics.yaml
+
+jobs:
+  tics:
+    uses: ./.github/workflows/analysis.yaml
+    with:
+      project: starflow
