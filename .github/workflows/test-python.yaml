@@ -37,6 +37,7 @@ jobs:
   fast:
     name: Fast tests
     strategy:
+      fail-fast: false
       matrix:
         platform: ${{ fromJson(inputs.fast-test-platforms) }}
     runs-on: ${{ matrix.platform }}
