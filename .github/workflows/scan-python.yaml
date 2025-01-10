@@ -29,9 +29,10 @@ on:
       uv-export-extra-args:
         required: false
         type: string
-        default: ""
+        default: "--all-extras"
         description: |
-          Additional arguments for uv export commands (for example to ignore certain extras).
+          List of additional arguments for uv export commands (for example to ignore certain extras).
+          Use multiline string to provide several sets of arguments.
       osv-extra-args:
         required: false
         type: string
@@ -79,8 +80,12 @@ jobs:
       - name: Create requirements files from uv
         if: ${{ inputs.uv-export && hashFiles('uv.lock') != ''}}
         run: |
-          uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt ${{ inputs.uv-export-extra-args }} --output-file=${{ runner.temp }}/python-artefacts/requirements/uv-requirements.txt
-          uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt ${{ inputs.uv-export-extra-args }} --all-extras --output-file=${{ runner.temp }}/python-artefacts/requirements/uv-requirements-all.txt
+          IFS=$'\n'
+          for extras in $(echo "${{ inputs.uv-export-extra-args }}"); do
+            unset IFS
+            filename=uv-requirements.$(echo $extras | tr ' ' '_').txt
+            uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt $extras --output-file=${{ runner.temp }}/python-artefacts/requirements/$filename
+          done
       - name: Upload artefacts
         uses: actions/upload-artifact@v4
         with:
