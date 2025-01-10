@@ -73,6 +73,7 @@ jobs:
         with:
           enable-cache: true
           cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
+          ignore-nothing-to-cache: true
       - name: Set up tests
         shell: bash
         run: |
@@ -141,6 +142,7 @@ jobs:
           enable-cache: true
           cache-suffix: ${{ toJSON(matrix.platform) }}
           python-version: ${{ matrix.python-version }}
+          ignore-nothing-to-cache: true
       - name: Install tools
         run: |
           make setup-tests
@@ -172,6 +174,7 @@ jobs:
           enable-cache: true
           cache-suffix: lowest-jammy
           python-version: ${{ inputs.lowest-python-version }}
+          ignore-nothing-to-cache: true
       - name: Install tools
         run: |
           make setup-tests
