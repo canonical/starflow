@@ -29,6 +29,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Set up uv with caching
+        id: setup-uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
       - name: Install renovate
         run: npm install --global re2 renovate
       - name: Enable ssh access
@@ -44,3 +50,4 @@ jobs:
         env:
           RENOVATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RENOVATE_USE_BASE_BRANCH_CONFIG: ${{ github.ref }}
+          LOG_LEVEL: debug

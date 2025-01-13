@@ -4,4 +4,6 @@ version = "0.1.0"
 description = "Fake Python project for testing project scanning."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "distro>=1.8.0",
+]
