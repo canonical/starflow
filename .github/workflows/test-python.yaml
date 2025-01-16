@@ -37,6 +37,7 @@ jobs:
   fast:
     name: Fast tests
     strategy:
+      fail-fast: false
       matrix:
         platform: ${{ fromJson(inputs.fast-test-platforms) }}
     runs-on: ${{ matrix.platform }}
@@ -68,10 +69,11 @@ jobs:
           echo "cache-hash=$(echo '${{ toJSON(matrix.platform) }}' | sha1sum | cut -f1 -d' ')" >> $GITHUB_OUTPUT
       - name: Set up uv with caching
         id: setup-uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
+          ignore-nothing-to-cache: true
       - name: Set up tests
         shell: bash
         run: |
@@ -135,10 +137,12 @@ jobs:
 
       - name: Set up uv with caching
         id: setup-uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           cache-suffix: ${{ toJSON(matrix.platform) }}
+          python-version: ${{ matrix.python-version }}
+          ignore-nothing-to-cache: true
       - name: Install tools
         run: |
           make setup-tests
@@ -158,7 +162,6 @@ jobs:
     if: ${{ inputs.lowest-python-version != '' }}
     runs-on: ${{ inputs.lowest-python-platform }}
     env:
-      UV_PYTHON: ${{ inputs.lowest-python-version }}
       UV_RESOLUTION: lowest
     steps:
       - uses: actions/checkout@v4
@@ -166,10 +169,12 @@ jobs:
           fetch-depth: 0
       - name: Set up uv with caching
         id: setup-uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
           cache-suffix: lowest-jammy
+          python-version: ${{ inputs.lowest-python-version }}
+          ignore-nothing-to-cache: true
       - name: Install tools
         run: |
           make setup-tests
