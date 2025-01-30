@@ -79,7 +79,7 @@ jobs:
         run: |
           for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
-            make setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}"
+            make setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}" UV_PYTHON="${python_version}"
           done
       - name: Run tests
         shell: bash
@@ -88,7 +88,7 @@ jobs:
           for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             echo "::group::Python ${python_version}"
             python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
-            if ! make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}" PYTEST_ADDOPTS="-m 'not slow'"
+            if ! make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}" PYTEST_ADDOPTS="-m 'not slow'" UV_PYTHON="${python_version}"
             then
               exit_code=1
               echo "::error title=TESTS FAILED::Tests failed with Python ${python_version}"

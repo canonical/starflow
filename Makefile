@@ -43,4 +43,5 @@ setup-tests:
 test-coverage:
 	$(info Simulating coverage creation)
 	$(info "Running tests with extra pytest options: ${PYTEST_ADDOPTS}")
+	$(info "Using Python ${UV_PYTHON}")
 	@touch coverage.xml
