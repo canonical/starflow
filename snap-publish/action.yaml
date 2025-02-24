@@ -110,7 +110,8 @@ runs:
         echo '## Snapcraft Remote Build Logs'  >> "$GITHUB_STEP_SUMMARY"
         echo '<details>'  >> "$GITHUB_STEP_SUMMARY"
         echo \`\`\`   >> "$GITHUB_STEP_SUMMARY"
-        cat snapcraft-"${name}"*"${arch}"*.txt   >> "$GITHUB_STEP_SUMMARY"
+        cat snapcraft-"${name}"*"${arch}"*.txt   >> "$GITHUB_STEP_SUMMARY" || cat snapcraft-"${name}"*.txt   >> "$GITHUB_STEP_SUMMARY"
+
         echo \`\`\`   >> "$GITHUB_STEP_SUMMARY"
         echo '</details>'  >> "$GITHUB_STEP_SUMMARY"
 
