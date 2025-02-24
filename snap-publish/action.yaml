@@ -76,10 +76,12 @@ runs:
 
         echo "::group::set platform"
         # shellcheck disable=SC2193
-        if [[ "$(yq -r '.base' "$yaml_path")" == "core24" ]] && [ "${arch}" != "all" ]; then
+        if [[ "$(yq -r '.base' "$yaml_path")" == "core24" ]]; then
           # `core24` uses platforms syntax rather than `architectures`:
           # https://snapcraft.io/docs/architectures
-          yq -i '.platforms |= {env(arch): {"build-on": env(arch)}}' "$yaml_path"
+          if [[ "${arch}" != "all" ]]; then
+            yq -i '.platforms |= {env(arch): {"build-on": env(arch)}}' "$yaml_path"
+          fi
         elif [[ "$(yq -r '.architectures' "$yaml_path")" != null ]]; then
           # Restrict arch definition to one only in snapcraft.yaml due to:
           # https://bugs.launchpad.net/snapcraft/+bug/1885150
