@@ -26,7 +26,7 @@ on:
         type: string
         description: |
           The platform to run the lowest python version tests on.
-        default: "ubuntu-20.04"
+        default: "ubuntu-22.04"
       lowest-python-version:
         type: string
         description: |
