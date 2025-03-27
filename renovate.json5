@@ -13,8 +13,8 @@
     {
       // Exclude certain Python packages that will require manual changes.
       matchPackageNames: [
-        "python-apt",  # Version is tightly coupled to the base OS.
-        "pygit2",      # Version is coupled to libgit2.
+        "python-apt",  // Version is tightly coupled to the base OS.
+        "pygit2",      // Version is coupled to libgit2.
       ],
       enabled: false,
     },
