@@ -1,0 +1,47 @@
+name: TICS
+
+on:
+  workflow_call:
+    inputs:
+      platform:
+        type: string
+        required: true
+        description:
+          The platform to run the tests on, should be the "product" platform.
+      project:
+        type: string
+        required: true
+        description: |
+          Tiobe Tics project to publish results for
+
+jobs:
+  TICS:
+    runs-on: $${ inputs.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup project
+        run: make setup-tics
+
+      - name: Run coverage
+        run: make test-coverage
+
+      - name: Upload test results
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ inputs.platform }}
+          path: results/
+
+      - name: Run TICS analysis
+        uses: tiobe/tics-github-action@v3
+        with:
+          mode: qserver
+          project: ${{ inputs.project }}
+          viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
+          branchdir: ${{ github.workspace }}
+          ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}
+          installTics: true
