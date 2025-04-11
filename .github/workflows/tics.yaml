@@ -3,20 +3,18 @@ name: TICS
 on:
   workflow_call:
     inputs:
-      platform:
-        type: string
-        required: true
-        description:
-          The platform to run the tests on, should be the "product" platform.
       project:
         type: string
         required: true
         description: |
           Tiobe Tics project to publish results for
+    secrets:
+      TICSAUTHTOKEN:
+        required: true
 
 jobs:
   TICS:
-    runs-on: $${ inputs.platform }}
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
