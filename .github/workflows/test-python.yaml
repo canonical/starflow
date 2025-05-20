@@ -82,6 +82,7 @@ jobs:
 
       - name: Store runner info
         id: runner-info
+        shell: bash
         run: |
           echo "cache-hash=$(echo '${{ toJSON(matrix.platform) }}' | sha1sum | cut -f1 -d' ')" >> $GITHUB_OUTPUT
           if [[ '${{ matrix.lxd-channel }}' == 'no-lxd' ]]; then
@@ -171,12 +172,13 @@ jobs:
 
       - name: Store runner info
         id: runner-info
+        shell: bash
         run: |
           echo "cache-hash=$(echo '${{ toJSON(matrix.platform) }}' | sha1sum | cut -f1 -d' ')" >> $GITHUB_OUTPUT
           if [[ '${{ matrix.lxd-channel }}' == 'no-lxd' ]]; then
             echo "cov-name=coverage-fast-${{ matrix.platform }}-${{ matrix.python-version }}" >> $GITHUB_OUTPUT
           else
-            echo "cov-name=coverage-fast-${{ matrix.platform }}-${{ matrix.python-version }}-$(echo '${{ matrix.lxd-channel' }} | tr / -)" >> $GITHUB_OUTPUT
+            echo "cov-name=coverage-fast-${{ matrix.platform }}-${{ matrix.python-version }}-$(echo '${{ matrix.lxd-channel }}' | tr / -)" >> $GITHUB_OUTPUT
           fi
       - name: Set up uv with caching
         id: setup-uv

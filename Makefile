@@ -45,3 +45,5 @@ test-coverage:
 	$(info "Running tests with extra pytest options: ${PYTEST_ADDOPTS}")
 	$(info "Using Python ${UV_PYTHON}")
 	@touch coverage.xml
+	$(info Testing LXD installation if relevant.)
+	lxc list || true

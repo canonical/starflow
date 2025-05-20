@@ -20,4 +20,4 @@ jobs:
       slow-test-lxd-channels: '["5.0/candidate", "5.21/candidate", "5.21/edge", "latest/candidate"]'
       lowest-python-version: "3.8"
       lowest-python-platform: '["jammy", "arm64"]'
-      lowest-lxd-channel: 3.0/stable
+      lowest-lxd-channel: 5.0/stable
