@@ -26,7 +26,7 @@ on:
         type: string
         description: |
           The platform to run the lowest python version tests on.
-        default: "ubuntu-20.04"
+        default: "ubuntu-22.04"
       lowest-python-version:
         type: string
         description: |
@@ -82,6 +82,10 @@ jobs:
           enable-cache: true
           cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
           ignore-nothing-to-cache: true
+      - name: Update Apt
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
       - name: Set up tests
         shell: bash
         run: |
@@ -154,6 +158,10 @@ jobs:
           cache-suffix: ${{ toJSON(matrix.platform) }}
           python-version: ${{ matrix.python-version }}
           ignore-nothing-to-cache: true
+      - name: Update Apt
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
       - name: Install tools
         run: |
           make setup-tests
@@ -171,7 +179,10 @@ jobs:
   lowest:
     name: Minimum dependencies (all tests)
     if: ${{ inputs.lowest-python-version != '' }}
-    runs-on: ${{ inputs.lowest-python-platform }}
+    # Allows either a string containing the platform or a JSON list of tags.
+    # This is done for backwards compatibility with a string lowest-python version while
+    # still allowing a list of tags if needed.
+    runs-on: ${{ startsWith(inputs.lowest-python-platform, '[') && fromJson(inputs.lowest-python-platform) || inputs.lowest-python-platform }}
     env:
       UV_RESOLUTION: lowest
     steps:
@@ -189,6 +200,10 @@ jobs:
           cache-suffix: lowest-jammy
           python-version: ${{ inputs.lowest-python-version }}
           ignore-nothing-to-cache: true
+      - name: Update Apt
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
       - name: Install tools
         run: |
           make setup-tests

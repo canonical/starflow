@@ -79,7 +79,9 @@ runs:
         if [[ "$(yq -r '.base' "$yaml_path")" == "core24" ]]; then
           # `core24` uses platforms syntax rather than `architectures`:
           # https://snapcraft.io/docs/architectures
-          yq -i '.platforms |= {env(arch): {"build-on": env(arch)}}' "$yaml_path"
+          if [[ "${arch}" != "all" ]]; then
+            yq -i '.platforms |= {env(arch): {"build-on": env(arch)}}' "$yaml_path"
+          fi
         elif [[ "$(yq -r '.architectures' "$yaml_path")" != null ]]; then
           # Restrict arch definition to one only in snapcraft.yaml due to:
           # https://bugs.launchpad.net/snapcraft/+bug/1885150
@@ -108,7 +110,7 @@ runs:
         echo '## Snapcraft Remote Build Logs'  >> "$GITHUB_STEP_SUMMARY"
         echo '<details>'  >> "$GITHUB_STEP_SUMMARY"
         echo \`\`\`   >> "$GITHUB_STEP_SUMMARY"
-        cat snapcraft-"${name}"*"${arch}"*.txt   >> "$GITHUB_STEP_SUMMARY"
+        cat snapcraft-"${name}"*"${arch}"*.txt   >> "$GITHUB_STEP_SUMMARY" || cat snapcraft-"${name}"*.txt   >> "$GITHUB_STEP_SUMMARY"
         echo \`\`\`   >> "$GITHUB_STEP_SUMMARY"
         echo '</details>'  >> "$GITHUB_STEP_SUMMARY"
 

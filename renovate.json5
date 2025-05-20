@@ -11,6 +11,14 @@
   },
   packageRules: [
     {
+      // Exclude certain Python packages that will require manual changes.
+      matchPackageNames: [
+        "python-apt", // Version is tightly coupled to the base OS.
+        "pygit2", // Version is coupled to libgit2.
+      ],
+      enabled: false,
+    },
+    {
       // Internal package minor patch updates get top priority, with auto-merging
       groupName: "internal package minor releases",
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],

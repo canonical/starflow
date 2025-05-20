@@ -17,4 +17,5 @@ jobs:
       slow-test-platforms: '["ubuntu-latest"]'
       slow-test-python-versions: '["3.14"]'
       lowest-python-version: "3.8"
+      lowest-python-platform: '["jammy", "arm64"]'
       use-lxd: true
