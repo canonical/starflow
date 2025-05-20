@@ -14,7 +14,10 @@ jobs:
       # Also ensure we can add a list of tags for self-hosted runners.
       fast-test-platforms: '[["jammy", "amd64"], ["noble", "arm64"], "ubuntu-22.04", "windows-latest", "macos-latest"]'
       fast-test-python-versions: '["3.14"]'
+      fast-test-lxd-channels: '["5.0/candidate", "5.21/candidate", "5.21/edge", "latest/candidate"]'
       slow-test-platforms: '["ubuntu-latest"]'
       slow-test-python-versions: '["3.14"]'
+      slow-test-lxd-channels: '["5.0/candidate", "5.21/candidate", "5.21/edge", "latest/candidate"]'
       lowest-python-version: "3.8"
       lowest-python-platform: '["jammy", "arm64"]'
+      lowest-lxd-channel: 3.0/stable

@@ -12,6 +12,9 @@ on:
         default: '["3.10", "3.11", "3.12", "3.13"]'
         description: |
           The python versions to run fast tests on, as a JSON array.
+      fast-test-lxd-channels:
+        type: string
+        default: '["no-lxd"]'
       slow-test-platforms:
         type: string
         default: '["jammy"]'
@@ -22,6 +25,9 @@ on:
         default: '["3.10"]'
         description: |
           The python versions to run slow tests on, as a JSON array.
+      slow-test-lxd-channels:
+        type: string
+        default: '["no-lxd"]'
       lowest-python-platform:
         type: string
         description: |
@@ -32,6 +38,9 @@ on:
         description: |
           The Python version to run when using "lowest" resolution for tests.
         default: "3.10"
+      lowest-lxd-channel:
+        type: string
+        default: ""
 
 jobs:
   fast:
@@ -40,6 +49,7 @@ jobs:
       fail-fast: false
       matrix:
         platform: ${{ fromJson(inputs.fast-test-platforms) }}
+        lxd-channel: ${{ fromJson(inputs.fast-test-lxd-channels) }}
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -63,10 +73,22 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true' && runner.os == 'macOS'
         run: brew install-bundler-gems
 
-      - name: Hash runner info
+      # On Linux, set up LXD if requested
+      - name: Set up LXD
+        if: runner.os == 'Linux' && matrix.lxd-channel != 'no-lxd'
+        uses: canonical/setup-lxd@v0.1.2
+        with:
+          channel: ${{ matrix.lxd-channel }}
+
+      - name: Store runner info
         id: runner-info
         run: |
           echo "cache-hash=$(echo '${{ toJSON(matrix.platform) }}' | sha1sum | cut -f1 -d' ')" >> $GITHUB_OUTPUT
+          if [[ '${{ matrix.lxd-channel }}' == 'no-lxd' ]]; then
+            echo "cov-name=coverage-fast-${{ matrix.platform }}" >> $GITHUB_OUTPUT
+          else
+            echo "cov-name=coverage-fast-${{ matrix.platform }}-$(echo '${{ matrix.lxd-channel }}' | tr / -)" >> $GITHUB_OUTPUT
+          fi
       - name: Set up uv with caching
         id: setup-uv
         uses: astral-sh/setup-uv@v5
@@ -103,7 +125,7 @@ jobs:
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-fast-${{ matrix.platform }}
+          name: ${{ steps.runner-info.outputs.cov-name }}
           overwrite: true
           path: |
             ./coverage.xml
@@ -114,6 +136,7 @@ jobs:
       matrix:
         platform: ${{ fromJson(inputs.slow-test-platforms) }}
         python-version: ${{ fromJson(inputs.slow-test-python-versions) }}
+        lxd-channel: ${{ fromJson(inputs.slow-test-lxd-channels) }}
     runs-on: ${{ matrix.platform }}
     env:
       PYTEST_ADDOPTS: --no-header -v -rN -m 'slow'
@@ -139,12 +162,28 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true' && runner.os == 'macOS'
         run: brew install-bundler-gems
 
+      # On Linux, set up LXD if requested
+      - name: Set up LXD
+        if: runner.os == 'Linux' && matrix.lxd-channel != 'no-lxd'
+        uses: canonical/setup-lxd@v0.1.2
+        with:
+          channel: ${{ matrix.lxd-channel }}
+
+      - name: Store runner info
+        id: runner-info
+        run: |
+          echo "cache-hash=$(echo '${{ toJSON(matrix.platform) }}' | sha1sum | cut -f1 -d' ')" >> $GITHUB_OUTPUT
+          if [[ '${{ matrix.lxd-channel }}' == 'no-lxd' ]]; then
+            echo "cov-name=coverage-fast-${{ matrix.platform }}-${{ matrix.python-version }}" >> $GITHUB_OUTPUT
+          else
+            echo "cov-name=coverage-fast-${{ matrix.platform }}-${{ matrix.python-version }}-$(echo '${{ matrix.lxd-channel' }} | tr / -)" >> $GITHUB_OUTPUT
+          fi
       - name: Set up uv with caching
         id: setup-uv
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
-          cache-suffix: ${{ toJSON(matrix.platform) }}
+          cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
           python-version: ${{ matrix.python-version }}
           ignore-nothing-to-cache: true
       - name: Update Apt
@@ -160,7 +199,7 @@ jobs:
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-slow-${{ matrix.platform }}-${{ matrix.python-version }}
+          name: ${{ steps.runner-info.outputs.cov-name }}
           overwrite: true
           path: |
             ./coverage.xml
@@ -175,6 +214,13 @@ jobs:
     env:
       UV_RESOLUTION: lowest
     steps:
+      # On Linux, set up LXD if requested
+      - name: Set up LXD
+        if: runner.os == 'Linux' && inputs.lowest-lxd-channel != ''
+        uses: canonical/setup-lxd@v0.1.2
+        with:
+          channel: ${{ inputs.lowest-lxd-channel }}
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
