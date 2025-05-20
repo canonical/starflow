@@ -127,7 +127,7 @@ jobs:
       PYTEST_ADDOPTS: --no-header -v -rN -m 'slow'
     steps:
       - name: Setup LXD
-        if: ${{ inputs.use-lxd }}
+        if: ${{ runner.os == 'Linux' && inputs.use-lxd }}
         uses: canonical/setup-lxd@v0.1.2
       - uses: actions/checkout@v4
         with:
