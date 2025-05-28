@@ -32,6 +32,11 @@ on:
         description: |
           The Python version to run when using "lowest" resolution for tests.
         default: "3.10"
+      use-lxd:
+        type: boolean
+        description: |
+          Whether to set up LXD on Linux runners.
+        default: false
 
 jobs:
   fast:
@@ -42,6 +47,9 @@ jobs:
         platform: ${{ fromJson(inputs.fast-test-platforms) }}
     runs-on: ${{ matrix.platform }}
     steps:
+      - name: Setup LXD
+        if: ${{ runner.os == 'Linux' && inputs.use-lxd }}
+        uses: canonical/setup-lxd@v0.1.2
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -118,6 +126,9 @@ jobs:
     env:
       PYTEST_ADDOPTS: --no-header -v -rN -m 'slow'
     steps:
+      - name: Setup LXD
+        if: ${{ runner.os == 'Linux' && inputs.use-lxd }}
+        uses: canonical/setup-lxd@v0.1.2
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -175,6 +186,9 @@ jobs:
     env:
       UV_RESOLUTION: lowest
     steps:
+      - name: Setup LXD
+        if: ${{ runner.os == 'Linux' && inputs.use-lxd }}
+        uses: canonical/setup-lxd@v0.1.2
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
