@@ -1,0 +1,66 @@
+name: Setup Python runner
+description: Set up a GitHub runner for Starcraft Python workflows
+
+inputs:
+  lxd-channel:
+    type: string
+    default: 5.21/candidate
+
+runs:
+  using: composite
+  steps:
+    - name: Start apt update
+      if: runner.os == 'Linux'
+      id: apt
+      shell: bash
+      run: |
+        nohup sudo apt-get update > /dev/null &
+        echo "apt-pid=$!" >> "${GITHUB_OUTPUT}"
+    - name: Setup LXD
+      if: ${{ runner.os == 'Linux' }}
+      uses: canonical/setup-lxd@v0.1.2
+      with:
+        channel: ${{ inputs.lxd-channel }}
+    - name: Fetch source
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    # On mac, set up homebrew caching since we use homebrew to install dependencies.
+    - name: Set up Homebrew
+      if: runner.os == 'macOS'
+      id: set-up-homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+    - name: Cache Homebrew Bundler RubyGems
+      if: runner.os == 'macOS'
+      id: cache
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+        key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+        restore-keys: ${{ runner.os }}-rubygems-
+    - name: Install Homebrew Bundler RubyGems
+      if: steps.cache.outputs.cache-hit != 'true' && runner.os == 'macOS'
+      shell: bash
+      run: brew install-bundler-gems
+    - name: Hash runner info
+      id: runner-info
+      shell: bash
+      run: |
+        echo "cache-hash=$(echo "${{ toJSON(matrix.platform) }}" | sha1sum | cut -f1 -d' ')" >> "${GITHUB_OUTPUT}"
+    - name: Set up uv with caching
+      id: setup-uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
+        ignore-nothing-to-cache: true
+    - name: Complete apt update
+      if: runner.os == 'Linux'
+      shell: bash
+      env:
+        APT_PID: ${{ steps.apt.outputs.apt-pid }}
+      run: |
+        while [[ -d "/proc/${APT_PID:-dev/null}" ]]; do
+          echo Still running...
+          sleep 0.1
+        done
