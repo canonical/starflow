@@ -37,6 +37,10 @@ on:
         description: |
           Whether to set up LXD on Linux runners.
         default: false
+      pytest-markers:
+        type: string
+        description: |
+          A pytest marker filter to add when running the tests.
 
 jobs:
   fast:
@@ -95,12 +99,14 @@ jobs:
           done
       - name: Run tests
         shell: bash
+        env:
+          MARKERS: ${{ inputs.pytest-markers }}
         run: |
           exit_code=0
           for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             echo "::group::Python ${python_version}"
             python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
-            if ! make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}" PYTEST_ADDOPTS="-m 'not slow'" UV_PYTHON="${python_version}"
+            if ! make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}" PYTEST_ADDOPTS="-m 'not slow ${MARKERS:+and ($MARKERS)}'" UV_PYTHON="${python_version}"
             then
               exit_code=1
               echo "::error title=TESTS FAILED::Tests failed with Python ${python_version}"
@@ -123,8 +129,6 @@ jobs:
         platform: ${{ fromJson(inputs.slow-test-platforms) }}
         python-version: ${{ fromJson(inputs.slow-test-python-versions) }}
     runs-on: ${{ matrix.platform }}
-    env:
-      PYTEST_ADDOPTS: --no-header -v -rN -m 'slow'
     steps:
       - name: Setup LXD
         if: ${{ runner.os == 'Linux' && inputs.use-lxd }}
@@ -166,8 +170,10 @@ jobs:
         run: |
           make setup-tests
       - name: Run tests
+        env:
+          MARKERS: ${{ inputs.pytest-markers }}
         run: |
-          make test-coverage
+          make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow ${MARKERS:+and ($MARKERS)}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:
@@ -208,8 +214,10 @@ jobs:
         run: |
           make setup-tests
       - name: Run tests
+        env:
+          MARKERS: ${{ inputs.pytest-markers }}
         run: |
-          make test-coverage
+          make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:

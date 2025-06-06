@@ -19,3 +19,4 @@ jobs:
       lowest-python-version: "3.8"
       lowest-python-platform: '["jammy", "arm64"]'
       use-lxd: true
+      pytest-markers: smoketest and not steamtest

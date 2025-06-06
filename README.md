@@ -182,6 +182,15 @@ on:
 jobs:
   test:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    with:
+      fast-test-platforms: '["ubuntu-22.04", "windows-latest", "macos-latest"]'
+      fast-test-python-versions: '["3.14"]'
+      slow-test-platforms: '["ubuntu-latest"]'
+      slow-test-python-versions: '["3.14"]'
+      lowest-python-version: "3.8"
+      lowest-python-platform: '["jammy", "arm64"]'
+      use-lxd: true # If we should install lxd on the runner.
+      pytest-markers: smoketest and not steamtest # Extra pytest marks to set, for example to break up large test sets
 ```
 
 # Other Configuration
