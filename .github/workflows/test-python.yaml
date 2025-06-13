@@ -48,7 +48,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Set up runner
-        uses: lengau/starflow/setup-python-runner@work/setup-runner
+        uses: canonical/starflow/setup-python-runner@main
       - name: Set up tests
         shell: bash
         run: |
@@ -90,7 +90,7 @@ jobs:
       PYTEST_ADDOPTS: --no-header -v -rN -m 'slow'
     steps:
       - name: Set up runner
-        uses: lengau/starflow/setup-python-runner@work/setup-runner
+        uses: canonical/starflow/setup-python-runner@main
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tools
@@ -118,7 +118,7 @@ jobs:
       UV_RESOLUTION: lowest
     steps:
       - name: Set up runner
-        uses: lengau/starflow/setup-python-runner@work/setup-runner
+        uses: canonical/starflow/setup-python-runner@main
         with:
           python-version: ${{ inputs.lowest-python-version }}
       - name: Install tools
