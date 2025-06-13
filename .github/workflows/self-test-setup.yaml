@@ -1,0 +1,102 @@
+name: Self-tests for Python runner setup
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "setup-python-runner/*"
+      - ".github/workflows/self-test-setup"
+  pull_request:
+    paths:
+      - "setup-python-runner/*"
+      - ".github/workflows/self-test-setup"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  default:
+    name: Default inputs
+    strategy:
+      matrix:
+        platform:
+          - ubuntu-22.04
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+          - macos-14
+          - macos-15
+          - macos-15-large
+          - [focal, medium, amd64]
+          - [jammy, medium, amd64]
+          - [jammy, medium, arm64]
+          - [noble, medium, amd64]
+          - [noble, medium, arm64]
+      fail-fast: false
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Fetch source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./setup-python-runner
+      - name: Test that apt has finished
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt --yes upgrade
+      - name: Test setup
+        run: |
+          make setup-tests
+          uv sync --frozen
+      - name: Check lxd version
+        if: runner.os == 'Linux'
+        run: |
+          [[ $(lxc --version) =~ 5.21* ]]
+  lxd-6:
+    name: LXD 6
+    strategy:
+      matrix:
+        platform:
+          - ubuntu-22.04
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+          - [focal, medium, amd64]
+          - [jammy, medium, amd64]
+          - [jammy, medium, arm64]
+          - [noble, medium, amd64]
+          - [noble, medium, arm64]
+      fail-fast: false
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Fetch source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./setup-python-runner
+        with:
+          lxd-channel: 6/candidate
+      - name: Check lxd version
+        if: runner.os == 'Linux'
+        run: |
+          [[ $(lxc --version) =~ 6.* ]]
+  lxd-5_0:
+    name: LXD 5.0
+    strategy:
+      matrix:
+        platform:
+          - ubuntu-24.04
+      fail-fast: false
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Fetch source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./setup-python-runner
+        with:
+          lxd-channel: 5.0/candidate
+      - name: Check lxd version
+        if: runner.os == 'Linux'
+        run: |
+          [[ $(lxc --version) =~ 5.0* ]]

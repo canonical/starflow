@@ -51,45 +51,8 @@ jobs:
         platform: ${{ fromJson(inputs.fast-test-platforms) }}
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Setup LXD
-        if: ${{ runner.os == 'Linux' && inputs.use-lxd }}
-        uses: canonical/setup-lxd@v0.1.2
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # On mac, set up homebrew caching since we use homebrew to install dependencies.
-      - name: Set up Homebrew
-        if: runner.os == 'macOS'
-        id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
-      - name: Cache Homebrew Bundler RubyGems
-        if: runner.os == 'macOS'
-        id: cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ runner.os }}-rubygems-
-      - name: Install Homebrew Bundler RubyGems
-        if: steps.cache.outputs.cache-hit != 'true' && runner.os == 'macOS'
-        run: brew install-bundler-gems
-
-      - name: Hash runner info
-        id: runner-info
-        run: |
-          echo "cache-hash=$(echo '${{ toJSON(matrix.platform) }}' | sha1sum | cut -f1 -d' ')" >> $GITHUB_OUTPUT
-      - name: Set up uv with caching
-        id: setup-uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
-          ignore-nothing-to-cache: true
-      - name: Update Apt
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt update
+      - name: Set up runner
+        uses: canonical/starflow/setup-python-runner@main
       - name: Set up tests
         shell: bash
         run: |
@@ -130,42 +93,10 @@ jobs:
         python-version: ${{ fromJson(inputs.slow-test-python-versions) }}
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: Setup LXD
-        if: ${{ runner.os == 'Linux' && inputs.use-lxd }}
-        uses: canonical/setup-lxd@v0.1.2
-      - uses: actions/checkout@v4
+      - name: Set up runner
+        uses: canonical/starflow/setup-python-runner@main
         with:
-          fetch-depth: 0
-
-      # On mac, set up homebrew caching since we use homebrew to install dependencies.
-      - name: Set up Homebrew
-        if: runner.os == 'macOS'
-        id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@master
-      - name: Cache Homebrew Bundler RubyGems
-        if: runner.os == 'macOS'
-        id: cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-          key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ runner.os }}-rubygems-
-      - name: Install Homebrew Bundler RubyGems
-        if: steps.cache.outputs.cache-hit != 'true' && runner.os == 'macOS'
-        run: brew install-bundler-gems
-
-      - name: Set up uv with caching
-        id: setup-uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-suffix: ${{ toJSON(matrix.platform) }}
           python-version: ${{ matrix.python-version }}
-          ignore-nothing-to-cache: true
-      - name: Update Apt
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt update
       - name: Install tools
         run: |
           make setup-tests
@@ -192,24 +123,10 @@ jobs:
     env:
       UV_RESOLUTION: lowest
     steps:
-      - name: Setup LXD
-        if: ${{ runner.os == 'Linux' && inputs.use-lxd }}
-        uses: canonical/setup-lxd@v0.1.2
-      - uses: actions/checkout@v4
+      - name: Set up runner
+        uses: canonical/starflow/setup-python-runner@main
         with:
-          fetch-depth: 0
-      - name: Set up uv with caching
-        id: setup-uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-          cache-suffix: lowest-jammy
           python-version: ${{ inputs.lowest-python-version }}
-          ignore-nothing-to-cache: true
-      - name: Update Apt
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt update
       - name: Install tools
         run: |
           make setup-tests
