@@ -14,7 +14,7 @@ on:
 
 jobs:
   TICS:
-    runs-on: [self-hosted, noble, amd64]
+    runs-on: [self-hosted, amd64, tiobe]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
