@@ -19,3 +19,14 @@ jobs:
         with:
           lxd-channel: latest/edge
 ```
+
+## Inputs
+
+### `lxd-channel`
+
+The snap channel from which to install LXD. Defaults to the current LTS channel.
+
+### `python-version`
+
+The version of Python to use with UV. If set, sets the `UV_PYTHON` environment variable
+for the rest of the job.

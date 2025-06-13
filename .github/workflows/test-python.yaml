@@ -91,6 +91,8 @@ jobs:
     steps:
       - name: Set up runner
         uses: lengau/starflow/setup-python-runner@work/setup-runner
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: Install tools
         run: |
           make setup-tests
@@ -117,6 +119,8 @@ jobs:
     steps:
       - name: Set up runner
         uses: lengau/starflow/setup-python-runner@work/setup-runner
+        with:
+          python-version: ${{ inputs.lowest-python-version }}
       - name: Install tools
         run: |
           make setup-tests

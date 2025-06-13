@@ -5,6 +5,9 @@ inputs:
   lxd-channel:
     type: string
     default: 5.21/candidate
+  python-version:
+    type: string
+    default: ""
 
 runs:
   using: composite
@@ -54,6 +57,7 @@ runs:
         enable-cache: true
         cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
         ignore-nothing-to-cache: true
+        python-version: ${{ inputs.python-version }}
     - name: Complete apt update
       if: runner.os == 'Linux'
       shell: bash
