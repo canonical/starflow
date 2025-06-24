@@ -144,6 +144,14 @@
         "# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)(\\[[\\w]*\\])*[=><]=?(?<currentValue>.*?)\n",
       ],
     },
+    {
+      // For updating prettier
+      customType: "regex",
+      managerFilePatterns: ["Makefile", "common.mk", ".pre-commit-config.yaml"],
+      matchStrings: [
+        "(?<depName>[a-z_-]+)@(?<currentValue>[\d.]+).*# renovate: datasource=(?<datasource>\S+)",
+      ],
+    },
   ],
   timezone: "Etc/UTC",
   schedule: ["every weekend"],
