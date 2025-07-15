@@ -9,6 +9,7 @@
   pip_requirements: {
     fileMatch: ["^tox.ini$", "(^|/)requirements([\\w-]*)\\.txt$"],
   },
+  branchPrefix: "work/renovate/",
   packageRules: [
     {
       // Exclude certain Python packages that will require manual changes.
