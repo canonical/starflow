@@ -9,13 +9,6 @@ on:
       - main
 
 jobs:
-  cla:
-    if: github.event_name == 'pull_request'
-    name: Authors signed Canonical CLA
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check if CLA signed
-        uses: canonical/has-signed-canonical-cla@v2
   commits:
     name: Conventional Commits
     runs-on: ubuntu-latest
