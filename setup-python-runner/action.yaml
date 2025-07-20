@@ -36,7 +36,7 @@ runs:
     - name: Cache Homebrew Bundler RubyGems
       if: runner.os == 'macOS'
       id: cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ steps.set-up-homebrew.outputs.gems-path }}
         key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -52,7 +52,7 @@ runs:
         echo "cache-hash=$(echo "${{ toJSON(matrix.platform) }}" | sha1sum | cut -f1 -d' ')" >> "${GITHUB_OUTPUT}"
     - name: Set up uv with caching
       id: setup-uv
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@v6
       with:
         enable-cache: true
         cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
