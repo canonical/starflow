@@ -2,79 +2,60 @@
   // Configuration file for RenovateBot: https://docs.renovatebot.com/configuration-options
   // NOTE: This file acts as the renovate configuration for all Starcraft repositories.
   extends: ["config:recommended", ":semanticCommitTypeAll(build)", ":enablePreCommit"],
-  labels: [
-    "dependencies", // For convenient searching in GitHub
-  ],
-  baseBranches: ["$default", "/^hotfix\\/.*/"],
+  labels: ["dependencies"],
+  baseBranchPatterns: ["$default", "/^hotfix\\/.*/"],
   pip_requirements: {
-    fileMatch: ["^tox.ini$", "(^|/)requirements([\\w-]*)\\.txt$"],
+    managerFilePatterns: ["/^tox.ini$/", "/(^|/)requirements([\\w-]*)\\.txt$/"],
   },
   packageRules: [
     {
-      // Exclude certain Python packages that will require manual changes.
       matchPackageNames: [
+        // Exclude certain Python packages that will require manual changes.
         "python-apt", // Version is tightly coupled to the base OS.
-        "pygit2", // Version is coupled to libgit2.
+        "pygit2", // Version is tightly coupled to libgit2
       ],
       enabled: false,
     },
     {
-      // Internal package minor patch updates get top priority, with auto-merging
       groupName: "internal package minor releases",
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       prPriority: 10,
       automerge: true,
       minimumReleaseAge: "0 seconds",
       schedule: ["at any time"],
-      matchBaseBranches: [
-        "$default", // Only do minor releases on main
-      ],
+      matchBaseBranches: ["$default"],
       matchPackageNames: ["/^craft-.*/"],
     },
     {
-      // Same as above, but for hotfix branches, only for patch, and without auto-merging.
       groupName: "internal package patch releases (hotfix)",
       matchUpdateTypes: ["patch", "pin", "digest"],
       prPriority: 10,
       minimumReleaseAge: "0 seconds",
       schedule: ["at any time"],
-      matchBaseBranches: [
-        "/^hotfix\\/.*/", // All hotfix branches
-      ],
+      matchBaseBranches: ["/^hotfix\\/.*/"],
       matchPackageNames: ["/^craft-.*/"],
     },
     {
-      // Automerge patches, pin changes and digest changes.
-      // Also groups these changes together.
       groupName: "bugfixes",
       matchUpdateTypes: ["patch", "pin", "digest"],
-      prPriority: 3, // Patches should go first!
+      prPriority: 3,
       automerge: true,
-      matchDepNames: [
-        "!/lint/.*/",
-        "!/types/.*/",
-        "!/pyright/", // Pyright needs to be done separately.
-      ],
+      matchDepNames: ["!/lint/.*/", "!/types/.*/", "!/pyright/"],
     },
     {
-      // Update all internal packages in one higher-priority PR
       groupName: "internal packages",
       matchCategories: ["python"],
       prPriority: 2,
-      matchBaseBranches: [
-        "$default", // Not for hotfix branches
-      ],
+      matchBaseBranches: ["$default"],
       matchDepNames: ["/craft-.*/", "/snap-.*/"],
     },
     {
-      // GitHub Actions are higher priority to update than most dependencies since they don't tend to break things.
       groupName: "GitHub Actions",
       matchManagers: ["github-actions"],
       prPriority: 1,
       automerge: true,
     },
     {
-      // Minor changes can be grouped and automerged for dev dependencies, but are also deprioritised.
       groupName: "development dependencies (minor and patch)",
       groupSlug: "dev-dependencies",
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
@@ -104,7 +85,6 @@
       ],
     },
     {
-      // Documentation related updates
       groupName: "documentation dependencies",
       groupSlug: "doc-dependencies",
       matchPackageNames: ["furo", "/[Ss]phinx.*/"],
@@ -112,13 +92,11 @@
       matchBaseBranches: ["$default"],
     },
     {
-      // Other major dependencies get deprioritised below minor dev dependencies.
       matchUpdateTypes: ["major"],
       prPriority: -2,
       matchBaseBranches: ["$default"],
     },
     {
-      // Major dev dependencies are grouped.
       groupName: "development dependencies (major versions)",
       groupSlug: "dev-dependencies",
       matchDepTypes: ["devDependencies"],
@@ -127,8 +105,6 @@
       matchBaseBranches: ["$default"],
     },
     {
-      // Pyright makes regular breaking changes in patch releases, so we separate these
-      // and do them independently.
       matchPackageNames: ["pyright", "types/pyright"],
       prPriority: -4,
       matchBaseBranches: ["$default"],
@@ -136,8 +112,7 @@
   ],
   customManagers: [
     {
-      // tox.ini can get updates too if we specify for each package.
-      fileMatch: ["tox.ini"],
+      managerFilePatterns: ["/tox.ini/"],
       customType: "regex",
       depTypeTemplate: "devDependencies",
       matchStrings: [
@@ -145,24 +120,25 @@
       ],
     },
     {
-      // For updating prettier
       customType: "regex",
       managerFilePatterns: ["Makefile", "common.mk", ".pre-commit-config.yaml"],
       matchStrings: [
-        "(?<depName>[a-z_-]+)@(?<currentValue>[\d.]+).*# renovate: datasource=(?<datasource>\S+)",
+        "(?<depName>[a-z_-]+)@(?<currentValue>[d.]+).*# renovate: datasource=(?<datasource>S+)",
       ],
     },
   ],
   timezone: "Etc/UTC",
   schedule: ["every weekend"],
-  lockFileMaintenance: { enabled: true },
-  prConcurrentLimit: 2, // No more than 2 open PRs at a time.
-  branchConcurrentLimit: 20, // No more than 20 open branches at a time.
-  prCreation: "not-pending", // Wait until status checks have completed before raising the PR
-  prNotPendingHours: 4, // ...unless the status checks have been running for 4+ hours.
-  prHourlyLimit: 1, // No more than 1 PR per hour.
+  lockFileMaintenance: {
+    enabled: true,
+  },
+  prConcurrentLimit: 2,
+  branchConcurrentLimit: 20,
+  prCreation: "not-pending",
+  prNotPendingHours: 4,
+  prHourlyLimit: 1,
   minimumReleaseAge: "2 days",
-  automergeStrategy: "squash", // Squash & rebase when auto-merging.
-  semanticCommitType: "build", // use `build` as commit header type (i.e. `build(deps): <description>`)
-  reviewers: ["team:starcraft-reviewers"], // Always add general reviewers
+  automergeStrategy: "squash",
+  semanticCommitType: "build",
+  reviewers: ["team:starcraft-reviewers"],
 }
