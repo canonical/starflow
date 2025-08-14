@@ -1,237 +1,144 @@
 {
   // Configuration file for RenovateBot: https://docs.renovatebot.com/configuration-options
   // NOTE: This file acts as the renovate configuration for all Starcraft repositories.
-  extends: [
-    'config:recommended',
-    ':semanticCommitTypeAll(build)',
-    ':enablePreCommit',
-  ],
-  labels: [
-    'dependencies',
-  ],
-  baseBranchPatterns: [
-    '$default',
-    '/^hotfix\\/.*/',
-  ],
+  extends: ["config:recommended", ":semanticCommitTypeAll(build)", ":enablePreCommit"],
+  labels: ["dependencies"],
+  baseBranchPatterns: ["$default", "/^hotfix\\/.*/"],
   pip_requirements: {
-    managerFilePatterns: [
-      '/^tox.ini$/',
-      '/(^|/)requirements([\\w-]*)\\.txt$/',
-    ],
+    managerFilePatterns: ["/^tox.ini$/", "/(^|/)requirements([\\w-]*)\\.txt$/"],
   },
   packageRules: [
     {
       matchPackageNames: [
         // Exclude certain Python packages that will require manual changes.
-        'python-apt',  // Version is tightly coupled to the base OS.
-        'pygit2',  // Version is tightly coupled to libgit2
+        "python-apt", // Version is tightly coupled to the base OS.
+        "pygit2", // Version is tightly coupled to libgit2
       ],
       enabled: false,
     },
     {
-      groupName: 'internal package minor releases',
-      matchUpdateTypes: [
-        'minor',
-        'patch',
-        'pin',
-        'digest',
-      ],
+      groupName: "internal package minor releases",
+      matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       prPriority: 10,
       automerge: true,
-      minimumReleaseAge: '0 seconds',
-      schedule: [
-        'at any time',
-      ],
-      matchBaseBranches: [
-        '$default',
-      ],
-      matchPackageNames: [
-        '/^craft-.*/',
-      ],
+      minimumReleaseAge: "0 seconds",
+      schedule: ["at any time"],
+      matchBaseBranches: ["$default"],
+      matchPackageNames: ["/^craft-.*/"],
     },
     {
-      groupName: 'internal package patch releases (hotfix)',
-      matchUpdateTypes: [
-        'patch',
-        'pin',
-        'digest',
-      ],
+      groupName: "internal package patch releases (hotfix)",
+      matchUpdateTypes: ["patch", "pin", "digest"],
       prPriority: 10,
-      minimumReleaseAge: '0 seconds',
-      schedule: [
-        'at any time',
-      ],
-      matchBaseBranches: [
-        '/^hotfix\\/.*/',
-      ],
-      matchPackageNames: [
-        '/^craft-.*/',
-      ],
+      minimumReleaseAge: "0 seconds",
+      schedule: ["at any time"],
+      matchBaseBranches: ["/^hotfix\\/.*/"],
+      matchPackageNames: ["/^craft-.*/"],
     },
     {
-      groupName: 'bugfixes',
-      matchUpdateTypes: [
-        'patch',
-        'pin',
-        'digest',
-      ],
+      groupName: "bugfixes",
+      matchUpdateTypes: ["patch", "pin", "digest"],
       prPriority: 3,
       automerge: true,
-      matchDepNames: [
-        '!/lint/.*/',
-        '!/types/.*/',
-        '!/pyright/',
-      ],
+      matchDepNames: ["!/lint/.*/", "!/types/.*/", "!/pyright/"],
     },
     {
-      groupName: 'internal packages',
-      matchCategories: [
-        'python',
-      ],
+      groupName: "internal packages",
+      matchCategories: ["python"],
       prPriority: 2,
-      matchBaseBranches: [
-        '$default',
-      ],
-      matchDepNames: [
-        '/craft-.*/',
-        '/snap-.*/',
-      ],
+      matchBaseBranches: ["$default"],
+      matchDepNames: ["/craft-.*/", "/snap-.*/"],
     },
     {
-      groupName: 'GitHub Actions',
-      matchManagers: [
-        'github-actions',
-      ],
+      groupName: "GitHub Actions",
+      matchManagers: ["github-actions"],
       prPriority: 1,
       automerge: true,
     },
     {
-      groupName: 'development dependencies (minor and patch)',
-      groupSlug: 'dev-dependencies',
-      matchUpdateTypes: [
-        'minor',
-        'patch',
-        'pin',
-        'digest',
-      ],
+      groupName: "development dependencies (minor and patch)",
+      groupSlug: "dev-dependencies",
+      matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       prPriority: -1,
       automerge: true,
-      matchBaseBranches: [
-        '$default',
-      ],
-      matchDepNames: [
-        '/dev/.*/',
-        '/lint/.*/',
-        '/types/.*/',
-      ],
+      matchBaseBranches: ["$default"],
+      matchDepNames: ["/dev/.*/", "/lint/.*/", "/types/.*/"],
       matchPackageNames: [
-        '/^(.*/)?autoflake$/',
-        '/^(.*/)?black$/',
-        '/^(.*/)?codespell$/',
-        '/^(.*/)?coverage$/',
-        '/^(.*/)?flake8$/',
-        '/^(.*/)?hypothesis$/',
-        '/^(.*/)?mypy$/',
-        '/^(.*/)?pycodestyle$/',
-        '/^(.*/)?docstyle$/',
-        '/^(.*/)?pyfakefs$/',
-        '/^(.*/)?pyflakes$/',
-        '/^(.*/)?pylint$/',
-        '/^(.*/)?pytest/',
-        '/^(.*/)?responses$/',
-        '/^(.*/)?ruff$/',
-        '/^(.*/)?twine$/',
-        '/^(.*/)?tox$/',
-        '/^(.*/)?types-/',
+        "/^(.*/)?autoflake$/",
+        "/^(.*/)?black$/",
+        "/^(.*/)?codespell$/",
+        "/^(.*/)?coverage$/",
+        "/^(.*/)?flake8$/",
+        "/^(.*/)?hypothesis$/",
+        "/^(.*/)?mypy$/",
+        "/^(.*/)?pycodestyle$/",
+        "/^(.*/)?docstyle$/",
+        "/^(.*/)?pyfakefs$/",
+        "/^(.*/)?pyflakes$/",
+        "/^(.*/)?pylint$/",
+        "/^(.*/)?pytest/",
+        "/^(.*/)?responses$/",
+        "/^(.*/)?ruff$/",
+        "/^(.*/)?twine$/",
+        "/^(.*/)?tox$/",
+        "/^(.*/)?types-/",
       ],
     },
     {
-      groupName: 'documentation dependencies',
-      groupSlug: 'doc-dependencies',
-      matchPackageNames: [
-        'furo',
-        '/[Ss]phinx.*/',
-      ],
-      matchDepNames: [
-        '/docs/.*/',
-      ],
-      matchBaseBranches: [
-        '$default',
-      ],
+      groupName: "documentation dependencies",
+      groupSlug: "doc-dependencies",
+      matchPackageNames: ["furo", "/[Ss]phinx.*/"],
+      matchDepNames: ["/docs/.*/"],
+      matchBaseBranches: ["$default"],
     },
     {
-      matchUpdateTypes: [
-        'major',
-      ],
+      matchUpdateTypes: ["major"],
       prPriority: -2,
-      matchBaseBranches: [
-        '$default',
-      ],
+      matchBaseBranches: ["$default"],
     },
     {
-      groupName: 'development dependencies (major versions)',
-      groupSlug: 'dev-dependencies',
-      matchDepTypes: [
-        'devDependencies',
-      ],
-      matchUpdateTypes: [
-        'major',
-      ],
+      groupName: "development dependencies (major versions)",
+      groupSlug: "dev-dependencies",
+      matchDepTypes: ["devDependencies"],
+      matchUpdateTypes: ["major"],
       prPriority: -3,
-      matchBaseBranches: [
-        '$default',
-      ],
+      matchBaseBranches: ["$default"],
     },
     {
-      matchPackageNames: [
-        'pyright',
-        'types/pyright',
-      ],
+      matchPackageNames: ["pyright", "types/pyright"],
       prPriority: -4,
-      matchBaseBranches: [
-        '$default',
-      ],
+      matchBaseBranches: ["$default"],
     },
   ],
   customManagers: [
     {
-      managerFilePatterns: [
-        '/tox.ini/',
-      ],
-      customType: 'regex',
-      depTypeTemplate: 'devDependencies',
+      managerFilePatterns: ["/tox.ini/"],
+      customType: "regex",
+      depTypeTemplate: "devDependencies",
       matchStrings: [
-        '# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)(\\[[\\w]*\\])*[=><]=?(?<currentValue>.*?)\n',
+        "# renovate: datasource=(?<datasource>\\S+)\n\\s+(?<depName>.*?)(\\[[\\w]*\\])*[=><]=?(?<currentValue>.*?)\n",
       ],
     },
     {
-      customType: 'regex',
-      managerFilePatterns: [
-        'Makefile',
-        'common.mk',
-        '.pre-commit-config.yaml',
-      ],
+      customType: "regex",
+      managerFilePatterns: ["Makefile", "common.mk", ".pre-commit-config.yaml"],
       matchStrings: [
-        '(?<depName>[a-z_-]+)@(?<currentValue>[d.]+).*# renovate: datasource=(?<datasource>S+)',
+        "(?<depName>[a-z_-]+)@(?<currentValue>[d.]+).*# renovate: datasource=(?<datasource>S+)",
       ],
     },
   ],
-  timezone: 'Etc/UTC',
-  schedule: [
-    'every weekend',
-  ],
+  timezone: "Etc/UTC",
+  schedule: ["every weekend"],
   lockFileMaintenance: {
     enabled: true,
   },
   prConcurrentLimit: 2,
   branchConcurrentLimit: 20,
-  prCreation: 'not-pending',
+  prCreation: "not-pending",
   prNotPendingHours: 4,
   prHourlyLimit: 1,
-  minimumReleaseAge: '2 days',
-  automergeStrategy: 'squash',
-  semanticCommitType: 'build',
-  reviewers: [
-    'team:starcraft-reviewers',
-  ],
+  minimumReleaseAge: "2 days",
+  automergeStrategy: "squash",
+  semanticCommitType: "build",
+  reviewers: ["team:starcraft-reviewers"],
 }
