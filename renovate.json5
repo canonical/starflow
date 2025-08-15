@@ -23,7 +23,7 @@
       automerge: true,
       minimumReleaseAge: "0 seconds",
       schedule: ["at any time"],
-      matchBaseBranches: ["$default"],
+      matchBaseBranches: ["main"],
       matchPackageNames: ["/^craft-.*/"],
     },
     {
@@ -46,7 +46,7 @@
       groupName: "internal packages",
       matchCategories: ["python"],
       prPriority: 2,
-      matchBaseBranches: ["$default"],
+      matchBaseBranches: ["main"],
       matchDepNames: ["/craft-.*/", "/snap-.*/"],
     },
     {
@@ -61,7 +61,7 @@
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       prPriority: -1,
       automerge: true,
-      matchBaseBranches: ["$default"],
+      matchBaseBranches: ["main"],
       matchDepNames: ["/dev/.*/", "/lint/.*/", "/types/.*/"],
       matchPackageNames: [
         "/^(.*/)?autoflake$/",
@@ -89,12 +89,12 @@
       groupSlug: "doc-dependencies",
       matchPackageNames: ["furo", "/[Ss]phinx.*/"],
       matchDepNames: ["/docs/.*/"],
-      matchBaseBranches: ["$default"],
+      matchBaseBranches: ["main"],
     },
     {
       matchUpdateTypes: ["major"],
       prPriority: -2,
-      matchBaseBranches: ["$default"],
+      matchBaseBranches: ["main"],
     },
     {
       groupName: "development dependencies (major versions)",
@@ -102,12 +102,12 @@
       matchDepTypes: ["devDependencies"],
       matchUpdateTypes: ["major"],
       prPriority: -3,
-      matchBaseBranches: ["$default"],
+      matchBaseBranches: ["main"],
     },
     {
       matchPackageNames: ["pyright", "types/pyright"],
       prPriority: -4,
-      matchBaseBranches: ["$default"],
+      matchBaseBranches: ["main"],
     },
   ],
   customManagers: [
