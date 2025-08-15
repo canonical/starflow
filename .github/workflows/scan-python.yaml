@@ -66,7 +66,7 @@ jobs:
           snap watch $uv_job
           mkdir -p ${{ runner.temp }}/python-artefacts/requirements
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Find any existing requirements files
@@ -110,11 +110,11 @@ jobs:
         run: |
           timeout 30s bash -c 'while ! trivy filesystem --download-db-only; do sleep 0.1; done'
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: source
       - name: Download artefacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: artefacts
       - name: Cache uv packages
@@ -186,11 +186,11 @@ jobs:
           sudo snap install osv-scanner
           sudo snap install --no-wait --classic astral-uv
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: source
       - name: Download artefacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: artefacts
       - name: Scan requirements files

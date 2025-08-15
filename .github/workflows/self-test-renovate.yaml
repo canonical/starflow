@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Install node
@@ -31,7 +31,7 @@ jobs:
           node-version: 22
       - name: Set up uv with caching
         id: setup-uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
           cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
