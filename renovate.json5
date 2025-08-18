@@ -2,7 +2,7 @@
   // Configuration file for RenovateBot: https://docs.renovatebot.com/configuration-options
   // NOTE: This file acts as the renovate configuration for all Starcraft repositories.
   extends: ["config:recommended", ":semanticCommitTypeAll(build)", ":enablePreCommit"],
-  labels: ["dependencies"],
+  labels: ["Dependencies"],
   baseBranchPatterns: ["$default", "/^hotfix\\/.*/"],
   pip_requirements: {
     managerFilePatterns: ["/^tox.ini$/", "/(^|/)requirements([\\w-]*)\\.txt$/"],
