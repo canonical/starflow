@@ -9,7 +9,7 @@ on:
           The platforms to run fast tests on, as a JSON array.
       fast-test-python-versions:
         type: string
-        default: '["3.10", "3.11", "3.12", "3.13", "3.14"]'
+        default: '["3.10", "3.11", "3.12", "3.13"]'
         description: |
           The python versions to run fast tests on, as a JSON array.
       slow-test-platforms:
@@ -19,7 +19,7 @@ on:
           The platforms to run slow tests on, as a JSON array.
       slow-test-python-versions:
         type: string
-        default: '["3.10", "3.14"]'
+        default: '["3.10"]'
         description: |
           The python versions to run slow tests on, as a JSON array.
       lowest-python-platform:
