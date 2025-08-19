@@ -80,7 +80,7 @@ jobs:
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-fast-${{ matrix.platform }}
+          name: coverage-fast-${{ join(matrix.platform, '-') }}
           overwrite: true
           path: |
             ./coverage.xml
@@ -108,7 +108,7 @@ jobs:
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-slow-${{ matrix.platform }}-${{ matrix.python-version }}
+          name: coverage-slow-${{ join(matrix.platform, '-') }}-${{ matrix.python-version }}
           overwrite: true
           path: |
             ./coverage.xml
