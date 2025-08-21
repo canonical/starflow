@@ -6,4 +6,19 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "distro>=1.8.0",
+    # setuptools >= 80.9 has a noisy warning about pkg_resources
+    "setuptools~=80.8.0",
+]
+
+[dependency-groups]
+docs = [
+    "canonical-sphinx[full]~=0.4.0",
+    "sphinx-autobuild",
+    "sphinx-lint",
+    # sphinx-sitemap>=2.7 fails to build on RTD infra, likely due to https://github.com/jdillard/sphinx-sitemap/pull/95
+    "sphinx-sitemap~=2.6.0",
+    "sphinx-toolbox",
+    "sphinxcontrib-details-directive",
+    "sphinxext-rediraffe==0.2.7",
+    "pydantic-kitbash==0.0.7",
 ]
