@@ -78,7 +78,6 @@ exclude_patterns = [
     "sphinx-docs-starter-pack",
     "how-to",
     "reference",
-    "explanation",
 ]
 
 # region Options for extensions
