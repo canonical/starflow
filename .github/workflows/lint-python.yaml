@@ -31,6 +31,6 @@ jobs:
           for job in ${{ steps.snap-install.outputs.jobs }}; do
             sudo snap watch $job
           done
-          make setup-lint
+          make -j setup-lint
       - name: Run linters
         run: make -k lint
