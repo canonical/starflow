@@ -21,3 +21,5 @@ feedback.
 
 .. toctree::
     :hidden:
+
+    explanation/index.rst
