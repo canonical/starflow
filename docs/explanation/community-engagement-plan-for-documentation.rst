@@ -208,8 +208,10 @@ Pull request lifecycle
    themself.
 
 #. The maintainer performs a basic check for new and updated tests (when applicable) and
-   verifies the result of the CI test suite. #. If the PR is missing necessary changes
-   to CI tests, they ask the contributor to add them.
+   verifies the result of the CI test suite.
+
+   #. If the PR is missing necessary changes to CI tests, they ask the contributor to
+      add them.
 
    #. If the PR fails any required checks, they ask the contributor to fix the errors.
 
