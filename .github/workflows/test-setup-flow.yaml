@@ -1,0 +1,31 @@
+name: Test setup flow
+on:
+  workflow_call:
+
+jobs:
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [ubuntu-24.04, ubuntu-24.04-arm]
+        distro:
+          - ubuntu:22.04
+          - ubuntu:24.04
+          - ubuntu:25.04
+          - ubuntu:25.10
+          - debian:stable
+          - debian:testing
+          - fedora:latest
+          - opensuse:leap
+    runs-on: ${{ matrix.host }}
+    container:
+      image: ${{ matrix.distro }}
+    steps:
+      - run: make setup-lint
+      - run: make lint
+      - run: make setup-tests
+      - run: make test-fast
+      - run: make setup
+      - run: make lint
+      - run: make test-fast
+      - run: make docs

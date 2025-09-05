@@ -1,0 +1,21 @@
+name: Self-tests for setup workflow.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/test-setup-flow.yaml"
+      - ".github/workflows/self-test-setup-flow.yaml"
+  pull_request:
+    paths:
+      - ".github/workflows/test-setup-flow.yaml"
+      - ".github/workflows/self-test-setup-flow.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    uses: ./.github/workflows/test-setup-flow.yaml
