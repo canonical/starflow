@@ -16,25 +16,27 @@ jobs:
           - debian:stable
           - debian:testing
           - fedora:latest
-          - opensuse:leap
+          - opensuse/leap:latest
     runs-on: ${{ matrix.host }}
     container:
       image: ${{ matrix.distro }}
     steps:
-      - name: Install make
+      - name: Install bare minimum
         run: |
           . /etc/os-release
           case "${ID} ${ID_LIKE}" in
             *debian*)
-              apt-get -y install make
+              apt-get update
+              apt-get -y install make snapd
               ;;
             *fedora*)
-              dnf install -y make
+              dnf install -y make which snapd
               ;;
             *suse*)
-              zypper install -n make
+              zypper install -n make snapd
               ;;
           esac
+      - uses: actions/checkout@v5
       - run: make setup-lint
       - run: make lint
       - run: make setup-tests
