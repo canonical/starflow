@@ -1,4 +1,4 @@
-name: Self-tests for setup workflow.
+name: Self-tests for setup workflow
 
 on:
   push:

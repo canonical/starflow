@@ -21,6 +21,20 @@ jobs:
     container:
       image: ${{ matrix.distro }}
     steps:
+      - name: Install make
+        run: |
+          . /etc/os-release
+          case "${ID} ${ID_LIKE}" in
+            *debian*)
+              apt-get -y install make
+              ;;
+            *fedora*)
+              dnf install -y make
+              ;;
+            *suse*)
+              zypper install -n make
+              ;;
+          esac
       - run: make setup-lint
       - run: make lint
       - run: make setup-tests
