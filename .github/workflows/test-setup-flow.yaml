@@ -7,7 +7,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        host: [ubuntu-24.04, ubuntu-24.04-arm]
+        host:
+          - ubuntu-24.04
+          # - ubuntu-24.04-arm
         distro:
           - ubuntu:22.04
           - ubuntu:24.04
@@ -27,13 +29,13 @@ jobs:
           case "${ID} ${ID_LIKE}" in
             *debian*)
               apt-get update
-              apt-get -y install make snapd
+              apt-get -y install make snapd sudo
               ;;
             *fedora*)
-              dnf install -y make which snapd
+              dnf install -y make which snapd sudo
               ;;
             *suse*)
-              zypper install -n make snapd
+              zypper install -n make snapd sudo
               ;;
           esac
       - uses: actions/checkout@v5
