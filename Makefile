@@ -46,6 +46,9 @@ endif
 setup-tests:
 	echo "Installing nothing..."
 	echo "Installed!"
+ifdef SETUP_EXTRA
+	echo "Setting up extra stuff"
+endif
 
 .PHONY: setup-docs
 setup-docs: install-uv  ##- Set up a documentation-only environment

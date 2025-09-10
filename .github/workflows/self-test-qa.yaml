@@ -20,3 +20,4 @@ jobs:
       lowest-python-platform: '["jammy", "arm64"]'
       use-lxd: true
       pytest-markers: smoketest and not steamtest
+      setup-vars: SETUP_EXTRA=1

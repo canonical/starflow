@@ -41,6 +41,10 @@ on:
         type: string
         description: |
           A pytest marker filter to add when running the tests.
+      setup-vars:
+        type: string
+        description: |
+          Additional environment variables to use during setup.
 
 jobs:
   fast:
@@ -58,7 +62,7 @@ jobs:
         run: |
           for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
-            make setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}" UV_PYTHON="${python_version}"
+            make setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}" UV_PYTHON="${python_version}" ${{ inputs.setup-vars }}
           done
       - name: Run tests
         shell: bash
@@ -99,7 +103,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install tools
         run: |
-          make setup-tests
+          make setup-tests ${{ inputs.setup-vars }}
       - name: Run tests
         env:
           MARKERS: ${{ inputs.pytest-markers }}
@@ -129,7 +133,7 @@ jobs:
           python-version: ${{ inputs.lowest-python-version }}
       - name: Install tools
         run: |
-          make setup-tests
+          make setup-tests ${{ inputs.setup-vars }}
       - name: Run tests
         env:
           MARKERS: ${{ inputs.pytest-markers }}
