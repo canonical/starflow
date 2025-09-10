@@ -192,6 +192,7 @@ jobs:
       use-lxd: true # If we should install lxd on the runner.
       pytest-markers: smoketest and not steamtest # Extra pytest marks to set, for example to break up large test sets
       setup-vars: NO_INSTALL_PLUGIN_DEPS=1 # Extra variables to pass when running setup
+      test-command-prefix: sudo # Runs the tests with sudo so we can run as root.
 ```
 
 # Other Configuration

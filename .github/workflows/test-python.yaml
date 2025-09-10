@@ -45,6 +45,11 @@ on:
         type: string
         description: |
           Additional environment variables to use during setup.
+      test-command-prefix:
+        type: string
+        description: |
+          Anything to prefix the `make test-coverage` command with. Useful when running tests as another user.
+        default: ""
 
 jobs:
   fast:
@@ -62,7 +67,7 @@ jobs:
         run: |
           for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
-            make setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}" UV_PYTHON="${python_version}" ${{ inputs.setup-vars }}
+            make -j setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}" UV_PYTHON="${python_version}" ${{ inputs.setup-vars }}
           done
       - name: Run tests
         shell: bash
@@ -73,7 +78,7 @@ jobs:
           for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             echo "::group::Python ${python_version}"
             python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
-            if ! make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}" PYTEST_ADDOPTS="-m 'not slow ${MARKERS:+and ($MARKERS)}'" UV_PYTHON="${python_version}"
+            if ! ${{ inputs.test-command-prefix }} make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}" PYTEST_ADDOPTS="-m 'not slow ${MARKERS:+and ($MARKERS)}'" UV_PYTHON="${python_version}"
             then
               exit_code=1
               echo "::error title=TESTS FAILED::Tests failed with Python ${python_version}"
@@ -103,12 +108,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install tools
         run: |
-          make setup-tests ${{ inputs.setup-vars }}
+          make -j setup-tests ${{ inputs.setup-vars }}
       - name: Run tests
         env:
           MARKERS: ${{ inputs.pytest-markers }}
         run: |
-          make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow ${MARKERS:+and ($MARKERS)}'"
+          ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow ${MARKERS:+and ($MARKERS)}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:
@@ -133,12 +138,12 @@ jobs:
           python-version: ${{ inputs.lowest-python-version }}
       - name: Install tools
         run: |
-          make setup-tests ${{ inputs.setup-vars }}
+          make -j setup-tests ${{ inputs.setup-vars }}
       - name: Run tests
         env:
           MARKERS: ${{ inputs.pytest-markers }}
         run: |
-          make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
+          ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:
