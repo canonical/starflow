@@ -20,3 +20,15 @@ jobs:
       lowest-python-platform: '["jammy", "arm64"]'
       use-lxd: true
       pytest-markers: smoketest and not steamtest
+  test-python-as-root:
+    uses: ./.github/workflows/test-python.yaml
+    with:
+      # Test on many OS's to ensure that these workflows work everywhere.
+      # Also ensure we can add a list of tags for self-hosted runners.
+      fast-test-platforms: '["ubuntu-latest"]'
+      fast-test-python-versions: '["3.14"]'
+      slow-test-platforms: '["ubuntu-latest"]'
+      slow-test-python-versions: '["3.14"]'
+      lowest-python-version: "3.8"
+      lowest-python-platform: "ubuntu-latest"
+      test-command-prefix: sudo # Test that we can run with sudo.
