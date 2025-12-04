@@ -76,7 +76,6 @@ sphinx_tabs_disable_tab_closing = True
 
 exclude_patterns = [
     "sphinx-docs-starter-pack",
-    "how-to",
     "reference",
 ]
 
