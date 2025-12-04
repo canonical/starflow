@@ -1,5 +1,4 @@
 .. meta::
-
     :description: Page meta descriptions are important for SEO of documentation for Starcraft projects. Learn how to add a meta description to a page.
 
 .. _how-to-add-a-page-meta-description:
@@ -72,15 +71,14 @@ don't match the tone of a description.
 **Don't** exceed 160 characters. Search engines will cut the snippet short.
 
 
-Add a meta description
-----------------------
+Format a meta description
+-------------------------
 
-At the top of the page, add:
+At the top of a page, add this structure:
 
 .. code-block:: rst
 
     .. meta::
-
         :description: <description>
 
 The meta description must be one line, because Sphinx options don't support line breaks.
@@ -91,4 +89,8 @@ Example
 
 This is an example of a good meta description for *Set up Starcraft*.
 
-    Learn how to install Starcraft on a local system. Starcraft is available as a snap on all GNU/Linux systems that support systemd.
+.. code-block:: rst
+    :caption: set-up-starcraft.rst
+
+    .. meta::
+        :description: Learn how to install Starcraft on a local system. Starcraft is available as a snap on all GNU/Linux systems that support systemd.
