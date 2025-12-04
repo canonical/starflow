@@ -74,4 +74,4 @@ Example
 
 This is an example of a good meta description for *Set up Starcraft*.
 
-    Learn how to install Starcraft on a local system. Starcraft is available as a snap on all GNU/Linux systems that supports systemd.
+    Learn how to install Starcraft on a local system. Starcraft is available as a snap on all GNU/Linux systems that support systemd.
