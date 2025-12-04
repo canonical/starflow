@@ -7,32 +7,37 @@
 Add a page meta description
 ===========================
 
-A *meta description* provides a machine-readable summary of a web page. Search engines
-often copy this description word-for-word in search results. Since snippets are one way
-users decide which page to visit, the meta description has a direct effect on whether
-our documentation is read.
+Search engines present *options*, and the user *chooses* from them. A search result is
+composed of the page's title, snippet, and icon. From these elements, the user
+decides what pages to visit.
 
-A well-written meta description has a better chance of being used by a search engine as
-the page's snippet.
+A *meta description* is a short summary that the page provides to web systems. Search
+engines often copy it word-for-word in the search result snippet. The meta description
+helps the user decide in advance whether a page contains what they seek. It therefore
+has a direct impact on whether the user visits our documentation.
 
-**All new pages in a product documentation set must include page metadata.**
+**All new pages in a product documentation set must include a meta description.**
 
 
 Write the meta description
 --------------------------
 
-Think of a meta description as a one-line summary that you would pass to someone in a
-hurry. It's like an elevator pitch for your page.
+Think of a meta description as a one-line summary that you would give to someone in a
+hurry, like an elevator pitch.
 
-The description doesn't have to be clever or original. Often, you can reuse simple
-descriptions from the page text itself.
+It doesn't have to be clever or original. Often, you can reuse simple descriptions from
+the page text itself.
+
+Put the most important words or phrases early in the description. If the user sees that
+the words they're thinking of are included in the title and description, they are more
+likely to visit the page.
 
 Every word counts in a meta description. Don't make it too short, or too long. An
-average of 120 characters is good to aim for. You have a maximum of 160. Cut any detail
+average of 140 characters is good to aim for. You have a maximum of 160. Cut any detail
 about the topic that isn't essential to helping the user make a decision.
 
-Think of how you're framing the meta description. It should be written as an action the
-user will perform, or a technical description of a tool, process, or the page itself.
+Frame the meta description as either an action the user will perform, or a technical
+description of a tool, process, or the page itself.
 
 .. list-table::
 
