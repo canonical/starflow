@@ -1,5 +1,5 @@
 .. meta::
-    :description: Page meta descriptions are important for SEO of documentation for Starcraft projects. Learn how to add a meta description to a page.
+    :description: Learn how to add a meta description to a page. These descriptions improve search engine optimization of documentation in Starcraft projects.
 
 .. _how-to-add-a-page-meta-description:
 
@@ -21,7 +21,7 @@ Write a meta description
 ------------------------
 
 **Do** write the meta description *after* the page is written. The meta description is a
-reflection of what's actually in the page.
+reflection of what's actually on the page.
 
 **Do** reuse text from the page itself. The meta description doesn't have to be clever
 or original.
@@ -48,7 +48,7 @@ every page of release notes, but with different version numbers.
 
         The Chef init profile sets up a basic project file for
 
-        Starcraft runs on architectures like AMD64, armhf, s390x
+        Starcraft is compatible with
 
 **Do** put key terms near the start.
 
