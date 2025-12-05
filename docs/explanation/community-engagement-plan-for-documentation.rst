@@ -18,7 +18,7 @@ documentation side of this mission with these objectives in mind:
 - Be responsive and accountable to the communities' documentation needs.
 - Provide hands-on support to documentation contributors and help them succeed.
 - Be an exemplary project in the `Canonical Open Documentation Academy (CODA)
-  <https://documentationacademy.org>`_.
+  <https://documentation.academy>`_.
 
 
 Responsibilities
