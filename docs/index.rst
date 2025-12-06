@@ -8,6 +8,13 @@ craft projects at Canonical.
 
 Starflow is for the developers and the repositories of the Starcraft team.
 
+.. list-table::
+
+    * - | :ref:`How-to guides <how-to-guides>`
+        | Step-by-step guidance for using our processes and workflows.
+    * - | :ref:`Explanation <explanation>`
+        | Discussion and clarification of key concepts.
+
 
 Project and community
 ---------------------
@@ -22,4 +29,5 @@ feedback.
 .. toctree::
     :hidden:
 
+    how-to/index.rst
     explanation/index.rst

@@ -7,3 +7,5 @@ These pages walk you through the manual processes and workflows in the Starcraft
 
 .. toctree::
     :hidden:
+
+    add-a-page-meta-description
