@@ -31,6 +31,15 @@ jobs:
           for job in ${{ steps.snap-install.outputs.jobs }}; do
             sudo snap watch $job
           done
-          make -j setup-lint
+
+          # Try setting up the linters, but if it breaks try again after an apt update.
+          # It's written this way because mostly we don't need apt-get update and it just
+          # makes the job take longer, but when we do need it it's because a package deb
+          # got removed that makes the linter setup fail. This gets fixed automatically
+          # when GitHub rebuilds the image.
+          if ! make -j setup-lint; then
+            sudo apt-get update
+            make -j setup-lint
+          fi
       - name: Run linters
         run: make -k lint
