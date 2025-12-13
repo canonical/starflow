@@ -18,7 +18,7 @@ jobs:
         run: |
           echo -n 'jobs="$(sudo snap install --no-wait codespell ruff shellcheck)"' >> $GITHUB_OUTPUT
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Sphinx's linting uses the git history when getting timestamps.
       - name: Set up uv with caching
