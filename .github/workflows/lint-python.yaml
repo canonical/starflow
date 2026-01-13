@@ -13,6 +13,15 @@ jobs:
   files:
     runs-on: ubuntu-slim
     steps:
+      - name: Install snapd if not installed
+        run: |
+          if ! $(which snap); then
+            sudo apt-get update
+            sudo apt-get --yes install snapd
+            sudo systemctl enable --now snapd.socket
+            sudo systemctl restart snapd
+            snap wait system seed.loaded
+          fi
       - name: Begin snap installs of common linters
         id: snap-install
         run: |
