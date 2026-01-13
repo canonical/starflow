@@ -11,7 +11,7 @@ on:
 
 jobs:
   files:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Begin snap installs of common linters
         id: snap-install
