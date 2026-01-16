@@ -63,7 +63,7 @@ jobs:
 
           sudo apt-get update
           sudo apt-get --yes install python3-venv python3-build ${{ inputs.packages }}
-          snap watch $uv_job
+          sudo snap watch $uv_job
           mkdir -p ${{ runner.temp }}/python-artefacts/requirements
       - name: Checkout source
         uses: actions/checkout@v5
@@ -104,8 +104,8 @@ jobs:
           uv_job=$(sudo snap install --no-wait --classic astral-uv)
           sudo apt-get update
           sudo apt-get --yes install ${{ inputs.packages }}
-          snap watch $trivy_job
-          snap watch $uv_job
+          sudo snap watch $trivy_job
+          sudo snap watch $uv_job
       - name: Download trivy database
         run: |
           timeout 30s bash -c 'while ! trivy filesystem --download-db-only; do sleep 0.1; done'
@@ -162,7 +162,7 @@ jobs:
             venv=$(mktemp -d --tmpdir=${{ runner.temp }} --suffix=.venv)
             uv venv "${venv}"
             source "${venv}/bin/activate"
-            echo Installing "${reqs}"
+            echo Installing "${wheel}"
             uv pip install "${wheel}"
             echo "::endgroup::"
             trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} "${venv}"
