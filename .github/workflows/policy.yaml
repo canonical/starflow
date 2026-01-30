@@ -2,6 +2,7 @@ name: Check policy
 on:
   workflow_call:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
     branches:
       - main
   push:
@@ -9,11 +10,12 @@ on:
       - main
 
 jobs:
-  commits:
-    name: Conventional Commits
+  conventional-commits:
+    name: Check PR title for Conventional Commits
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: webiny/action-conventional-commits@v1.3.0
+      - name: PR Conventional Commit Validation
+        uses: ytanikin/pr-conventional-commits@1.4.0
         with:
-          allowed-commit-types: "build,chore,ci,docs,feat,fix,perf,refactor,style,test"
+          task_types: '["build", "chore", "ci", "docs", "feat", "fix", "perf", "refactor", "revert", "style", "test"]'
+          add_label: "false"
