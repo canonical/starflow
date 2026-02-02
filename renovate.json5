@@ -3,6 +3,7 @@
   // NOTE: This file acts as the renovate configuration for all Starcraft repositories.
   extends: ["config:recommended", ":semanticCommitTypeAll(build)", ":enablePreCommit"],
   labels: ["PR: Dependencies"],
+  ignorePaths: ["docs/requirements.txt"],
   baseBranchPatterns: ["$default", "/^hotfix\\/.*/"],
   pip_requirements: {
     managerFilePatterns: ["/^tox.ini$/", "/(^|/)requirements([\\w-]*)\\.txt$/"],
