@@ -12,6 +12,7 @@ on:
 jobs:
   conventional-commits:
     name: Check PR title for Conventional Commits
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
       - name: PR Conventional Commit Validation
