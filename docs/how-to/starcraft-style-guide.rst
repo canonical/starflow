@@ -7,9 +7,9 @@
 Starcraft style guide
 =====================
 
-This guide is the style guide for user and developer documentation in Starcraft
-projects, including both the craft apps and the craft libraries. It's a supplement to
-the `Canonical Documentation Style Guide <https://docs.ubuntu.com/styleguide>`_.
+This is the style guide for user and developer documentation in the craft apps and
+libraries. It's a supplement to the `Canonical Documentation Style Guide
+<https://docs.ubuntu.com/styleguide>`__.
 
 
 Tone
@@ -29,7 +29,7 @@ foundation for our style:
 - Documentation is one side of an ongoing dialogue with the user. Dialogue is
   conversation, so write directly and straightforwardly, in plain language. Write like
   the user will respond to you directly -- they often do.
-- Be brief. The user's time and attention is a gift they don't handed out lightly. Be
+- Be brief. The user's time and attention is a gift they don't hand out lightly. Be
   responsible with it. Don't squander it.
 - In the course of events, identify the person in the loop. Humans come to decisions,
   have opinions, and make mistakes. Processes, systems, and machines don't.
@@ -92,8 +92,8 @@ Image alt text
 ~~~~~~~~~~~~~~
 
 All images must have alt text. The `W3C Images Tutorial
-<https://www.w3.org/WAI/tutorials/images/>`_ provides complete guidance for how to write
-one.
+<https://www.w3.org/WAI/tutorials/images/>`__ provides complete guidance for how to
+write one.
 
 
 Relative positioning
@@ -206,10 +206,10 @@ Do format feature and component names plainly:
 
     the Python plugin
 
-    the Gnome extension
+    the GNOME extension
 
 The rule of thumb is, do you always qualify the name as belonging to the class of the
-feature. In other words, does it fit the pattern *the [name] [feature type]*? If yes, it
+feature? In other words, does it fit the pattern *the [name] [feature type]*? If yes, it
 should be formatted normally.
 
 
@@ -239,28 +239,55 @@ go somewhere else. Carefully consider:
 - How the link fits into the context of the preceding discussion. Does the text
   naturally lead to this link? Does it feel like it *belongs*? If you were having a
   conversation with a friend, and they pushed their phone up to your face without
-  warning, it would be quite rude! That's what an unexpected link feels like on the
+  warning, it would be quite rude. That's what an unexpected link feels like on the
   page.
 - What *benefit* the user gets from the link. A link is a call to action. But there are
-  many actions the user could take in a document, including skipping your link. Does the
+  many actions the user could take in a document, including skipping the link. Does the
   link's text, and the text surrounding it, help the user decide whether to click on it?
-- If you start writing "See [link] for more details", don't! That sentence is of no help
+- If you start writing "See [link] for more details", don't. That sentence is of no help
   to the user. Instead, consider how to invite, or call, the user to click on the link.
 
-Don't set high expectations or make promises you can't keep for the effect of clicking a
-link:
+Don't set high expectations or make promises you can't keep with a link:
 
     You can visit `Migrations
-    <https://docs.djangoproject.com/en/6.0/topics/migrations/>`_ in the Django
+    <https://docs.djangoproject.com/en/6.0/topics/migrations/>`__ in the Django
     documentation to learn how to
 
 Do straightforwardly describe what's at the other end of the link:
 
-    `Migrations <https://docs.djangoproject.com/en/6.0/topics/migrations/>`_ in the
+    `Migrations <https://docs.djangoproject.com/en/6.0/topics/migrations/>`__ in the
     Django documentation describes how to
 
 It's better to be descriptive. You can't guarantee that a link will provide positive
 benefits like learning and discovery.
+
+
+External link format
+~~~~~~~~~~~~~~~~~~~~
+
+For named external links, avoid end-of-file links:
+
+.. code-block:: restructuredtext
+
+    `Migrations`__
+
+    # Rest of document...
+
+    .. _Migrations: https://docs.djangoproject.com/en/6.0/topics/migrations/
+
+Prefer the inline format, with two underscores (_):
+
+.. code-block:: restructuredtext
+
+  `Migrations <https://docs.djangoproject.com/en/6.0/topics/migrations/>`__
+
+In long documents, the source is more readable, comprehensible, and easier to maintain
+when external links are declared in the same location as they're used. Internal
+references are formatted inline, so the authoring experience is more congruent with this
+pattern.
+
+The double underscore blocks Sphinx from making the external link into a named
+reference.
 
 
 .. _how-to-starcraft-style-guide-examples-good-links:
@@ -270,11 +297,11 @@ Examples of good links
 
 A link to another site:
 
-    Discuss your ideas on the `Snapcraft forum <https://forum.snapcraft.io>`_.
+    Discuss your ideas on the `Snapcraft forum <https://forum.snapcraft.io>`__.
 
 A link to an action in another how-to guide:
 
-    First, `install Brew <https://brew.sh#install>`_.
+    First, `install Brew <https://brew.sh#install>`__.
 
 A link to a different section in the documentation:
 
@@ -286,14 +313,14 @@ A link to another documentation set:
 
     The ``snap`` command itself has many diagnostic features that can help with
     debugging runtime and configuration errors. `Debugging snaps
-    <https://snapcraft.io/docs/debug-snaps>`_ in the SnapD documentation covers how and
+    <https://snapcraft.io/docs/debug-snaps>`__ in the SnapD documentation covers how and
     when to use them.
 
 
-Sphinx labels
-~~~~~~~~~~~~~
+Reference labels
+----------------
 
-Format labels as:
+Format Sphinx labels as:
 
 .. code-block:: restructuredtext
 
@@ -305,8 +332,9 @@ For example:
 
     .. _how-to-starcraft-style-guide-sphinx-labels
 
-Within a documentation set, every label must be unique. The systematic approach reduces
-the changes for collisions and makes identification much easier.
+Within a documentation set, every label must be unique. A systematic and semantic
+approach reduces the chances for collisions and makes identification by humans much
+easier.
 
 Between documentation sets, they may be connected through Intersphinx. The namespaces of
 every connected documentation set are pooled. It's possible to have collisions if one
@@ -481,24 +509,24 @@ Technical terms
 
     * - Instead of...
       - Use...
-    * - app
-      - application
-    * - APT
-      - Apt
+    * - application
+      - app
+    * - Apt
 
         apt
-    * - craft app
-      - craft tool
+      - APT
+    * - craft tool
 
         crafts
-    * - Debian package
-      - DEB
+      - craft app
+    * - DEB
 
         ``.deb``
-    * - key
-      - keyword
+      - Debian package
+    * - keyword
 
         field
+      - key
 
 
 Inclusive and nonviolent terms
