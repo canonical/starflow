@@ -75,7 +75,7 @@ Don't use gendered names in examples or placeholders:
 
 Do use unisex names:
 
-    Alex
+    Aubrey
 
     Blair
 
