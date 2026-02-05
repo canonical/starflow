@@ -195,7 +195,9 @@ jobs:
       test-command-prefix: sudo # Runs the tests with sudo so we can run as root.
 ```
 
-# Other Configuration
+# Other
+
+## Renovate config
 
 This repository also contains our base renovate configuration. A repository may be
 configured to use this by adding the following to its `.github/renovate.json5` file:
@@ -205,3 +207,10 @@ configured to use this by adding the following to its `.github/renovate.json5` f
   extends: ["github>canonical/starflow"],
 }
 ```
+
+## Contributor script
+
+The `tools/contributors.py` script is used to generate a list of contributors for an application's release.
+It also generates an HTML report of commits and changes to that application to aid in writing release notes.
+
+Run `./tools/contributors.py --help` for usage and examples.
