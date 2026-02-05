@@ -7,7 +7,7 @@ if sys.version_info < (3, 11):
     raise SystemExit(
         "Error: this script requires Python 3.11 or higher for tomllib. "
         "Use a higher version of python with uv:\n"
-        "uv run --python \">=3.11\" ./contributors.py"
+        'uv run --python ">=3.11" ./contributors.py'
     )
 
 import argparse
@@ -42,7 +42,7 @@ OWNER = "canonical"
 LIBRARY_PATTERN = re.compile("^craft-.*")
 """A regex string of libraries to inspect."""
 
-PR_PATTERN = re.compile(r"(.+?)\s+\(#(\d+)\)$")
+PR_PATTERN = re.compile(r".+?\s+\(#(\d+)\)$")
 """A regex string to the PR number from a github header.
 
 For example, this extracts '1234' from 'feat: do something (#1234)'.
@@ -199,8 +199,8 @@ def get_headers() -> dict[str, str]:
     headers = {
         "Accept": "application/vnd.github.v3+json",
     }
-    if get_token():
-        headers["Authorization"] = f"Bearer {get_token()}"
+    if token := get_token():
+        headers["Authorization"] = f"Bearer {token}"
     return headers
 
 
