@@ -162,3 +162,6 @@ docs/warnings.txt
 docs/.sphinx/.wordlist.dic
 
 .DS_Store
+
+# output of contributors script
+contributors.html

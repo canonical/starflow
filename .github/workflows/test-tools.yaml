@@ -1,0 +1,19 @@
+name: Test tools
+on:
+  workflow_call:
+  pull_request:
+
+jobs:
+  contributors:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          # minimum supported version for the contributors script
+          python-version: 3.11
+      - name: Run contributor script
+        run: |
+          ./tools/contributors.py --project rockcraft --old-ref 1.16.0 --new-ref bd7109b --verbose
