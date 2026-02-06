@@ -5,9 +5,9 @@ import sys
 
 if sys.version_info < (3, 11):
     raise SystemExit(
-        "Error: this script requires Python 3.11 or higher for tomllib. "
+        "Error: this script requires Python 3.12 or higher for tomllib. "
         "Use a higher version of python with uv:\n"
-        'uv run --python ">=3.11" ./contributors.py'
+        'uv run --python ">=3.12" ./contributors.py'
     )
 
 import argparse
@@ -444,7 +444,7 @@ def hyperlink_commit(repo_name: str, commit: Commit) -> str:
     """Add an inline link to the PR."""
     match = PR_PATTERN.match(commit.header)
     if match:
-        prefix, pr_number = match.groups()
+        pr_number = match.group(1)
         pr_link = f"https://github.com/canonical/{repo_name}/pull/{pr_number}"
         return f"<a href='{html.escape(pr_link)}' target='_blank'>#{html.escape(pr_number)}</a>"
     return html.escape("n/a")
