@@ -5,7 +5,7 @@ import sys
 
 if sys.version_info < (3, 11):
     raise SystemExit(
-        "Error: this script requires Python 3.12 or higher for tomllib. "
+        "Error: this script requires Python 3.12 or higher. "
         "Use a higher version of python with uv:\n"
         'uv run --python ">=3.12" ./contributors.py'
     )
