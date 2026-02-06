@@ -12,6 +12,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
+          # minimum supported version for the contributors script
           python-version: 3.12
       - name: Run contributor script
         run: |
