@@ -5,9 +5,9 @@ import sys
 
 if sys.version_info < (3, 11):
     raise SystemExit(
-        "Error: this script requires Python 3.12 or higher. "
+        "Error: this script requires Python 3.11 or higher. "
         "Use a higher version of python with uv:\n"
-        'uv run --python ">=3.12" ./contributors.py'
+        'uv run --python ">=3.11" ./contributors.py'
     )
 
 import argparse
@@ -480,7 +480,7 @@ def generate_versions_table(repos: dict[str, Repo]) -> str:
     body = "<tbody>\n" + "\n".join(body_rows) + "\n</tbody>"
     rows.append(body)
 
-    return f"<table>{'\n'.join(rows)}</table>"
+    return "<table>" + "\n".join(rows) + "</table>"
 
 
 def generate_contributors_html(repos: dict[str, Repo]) -> str | None:
@@ -533,7 +533,7 @@ def generate_commit_table(repo_name: str, commits: list[Commit]) -> str:
     body = "<tbody>\n" + "\n".join(body_rows) + "\n</tbody>"
     rows.append(body)
 
-    return f"<table>{'\n'.join(rows)}</table>\n"
+    return "<table>" + "\n".join(rows) + "</table>"
 
 
 def generate_html(repos: dict[str, Repo]) -> None:
