@@ -25,7 +25,7 @@ runs:
       with:
         channel: ${{ inputs.lxd-channel }}
     - name: Fetch source
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
     # On mac, set up homebrew caching since we use homebrew to install dependencies.
@@ -36,7 +36,7 @@ runs:
     - name: Cache Homebrew Bundler RubyGems
       if: runner.os == 'macOS'
       id: cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ steps.set-up-homebrew.outputs.gems-path }}
         key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
