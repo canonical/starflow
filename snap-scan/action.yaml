@@ -1,0 +1,78 @@
+name: Scan one or more snaps with the Canonical security scan API
+description: |
+  Scan one or more snaps with the Canonical vulnerability management scanning client.
+  This only works on Canonical-hosted Ubuntu systems.
+
+inputs:
+  paths:
+    description: "One or more snap files to scan"
+    default: ""
+    required: false
+  store-names:
+    description: "The names of snaps from the store to scan"
+    default: ""
+    required: false
+  # Not available upstream yet
+  # channels:
+  #   description: "Store snap channels to scan"
+  #   default: "latest/stable"
+  #   required: false
+  client-channel:
+    description: "The channel from which to install canonical-secscan-client"
+    default: "latest/stable"
+    required: false
+  scanners:
+    description: "The names of the scanners to use, separated by spaces"
+    default: "osv trivy blackduck"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Install tools
+      shell: bash
+      run: |
+        sudo snap install --channel="${{ inputs.client-channel }}" canonical-secscan-client
+    - name: Submit snap files
+      shell: bash
+      if: ${{ inputs.paths != '' }}
+      run: |
+        token_dir="${{ runner.temp }}/tokens"
+        mkdir -p "${token_dir}"
+        # shellcheck disable=SC1083 # Ignore false positive due to GitHub inputs using double-braces
+        for scanner in ${{ inputs.scanners }}; do
+          # shellcheck disable=SC1083 # Ignore false positive due to GitHub inputs using double-braces
+          for snap in ${{ inputs.paths }}; do
+            snap_token="${token_dir}"/$(basename "${snap}")."${scanner}"
+            secscan-client submit --scanner "${scanner}" --type package --format snap --token "${snap_token}" "${snap}"
+          done
+        done
+    - name: Submit published snaps
+      shell: bash
+      if: ${{ inputs.store-names != '' }}
+      run: |
+        token_dir="${{ runner.temp }}/tokens"
+        mkdir -p "${token_dir}"
+        # shellcheck disable=SC1083 # Ignore false positive due to GitHub inputs using double-braces
+        for scanner in ${{ inputs.scanners }}; do
+          # shellcheck disable=SC1083 # Ignore false positive due to GitHub inputs using double-braces
+          for snap in ${{ inputs.store-names }}; do
+            secscan-client submit --scanner "${scanner}" --type package --format snap --token "${{ inputs.snap-name }}.${scanner}" "${{ inputs.snap-name }}"
+          done
+        done
+    - name: Collect reports
+      shell: bash
+      if: ${{ !cancelled() }}
+      run: |
+        mkdir -p reports
+        token_dir="${{ runner.temp }}/tokens"
+        for token in "${token_dir}"/*; do
+          echo "::group::${token}"
+          secscan-client report --token "${token_dir}/${token}" > reports/"${token}"
+          secscan-client result --token "${token_dir}/${token}"
+          echo "::endgroup::"
+        done
+    - name: Upload report artefact
+      uses: actions/upload-artifact@v4
+      with:
+        path: reports
