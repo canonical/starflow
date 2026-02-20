@@ -81,6 +81,11 @@ exclude_patterns = [
 
 # region Options for extensions
 
+intersphinx_mapping = {
+    "launchpad": ("https://documentation.ubuntu.com/launchpad", None),
+    "ubuntu": ("https://documentation.ubuntu.com/project", None),
+}
+
 # Client-side page redirects.
 rediraffe_redirects = "redirects.txt"
 
