@@ -141,5 +141,5 @@
   minimumReleaseAge: "2 days",
   automergeStrategy: "squash",
   semanticCommitType: "build",
-  reviewers: ["team:starcraft-reviewers"],
+  reviewers: ["team:starcraft-renovators"],
 }
