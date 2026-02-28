@@ -20,5 +20,5 @@ docs = [
     "sphinx-toolbox",
     "sphinxcontrib-details-directive",
     "sphinxext-rediraffe==0.2.7",
-    "pydantic-kitbash==0.0.7",
+    "pydantic-kitbash==1.0.1",
 ]
