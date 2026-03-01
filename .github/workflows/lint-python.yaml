@@ -18,12 +18,12 @@ jobs:
         run: |
           echo -n "jobs=$(sudo snap install --no-wait codespell ruff shellcheck)" >> $GITHUB_OUTPUT
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Sphinx's linting uses the git history when getting timestamps.
       - name: Set up uv with caching
         id: setup-uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
       - name: Set up linters

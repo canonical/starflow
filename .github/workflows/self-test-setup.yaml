@@ -37,7 +37,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Fetch source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: ./setup-python-runner
@@ -70,7 +70,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Fetch source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: ./setup-python-runner
@@ -90,7 +90,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Fetch source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: ./setup-python-runner
