@@ -7,7 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "distro>=1.8.0",
     # setuptools >= 80.9 has a noisy warning about pkg_resources
-    "setuptools~=80.8.0",
+    "setuptools~=80.10.2",
 ]
 
 [dependency-groups]
