@@ -12,7 +12,7 @@ dependencies = [
 
 [dependency-groups]
 docs = [
-    "canonical-sphinx[full]~=0.4.0",
+    "canonical-sphinx[full]~=0.6.0",
     "sphinx-autobuild",
     "sphinx-lint",
     # sphinx-sitemap>=2.7 fails to build on RTD infra, likely due to https://github.com/jdillard/sphinx-sitemap/pull/95
