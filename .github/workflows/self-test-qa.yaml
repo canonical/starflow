@@ -3,6 +3,18 @@ on:
   pull_request:
 
 jobs:
+  wip:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Do the test
+        run: |
+          echo "${{ github.event.pull_request.head.repo.full_name }}"
+          if [ "${{ github.event.pull_request.head.repo.full_name }}" == "canonical/starflow" ]; then
+            echo "YES it's starflow"
+          else
+            echo "NO it's not starflow"
+            exit 0
+          fi
   lint-python:
     uses: ./.github/workflows/lint-python.yaml
   test-python:
