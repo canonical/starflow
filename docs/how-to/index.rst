@@ -13,3 +13,4 @@ These pages walk you through the manual processes and workflows in the Starcraft
 
     starcraft-style-guide
     add-a-page-meta-description
+    publish-a-snap
