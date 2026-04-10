@@ -108,7 +108,7 @@ Developers and users expect packaged software to be long-lasting and stable. Fre
 and unpredictable releases give consumers the perception that the software is of low
 quality, and is potentially disruptive. A careful approach, where software is released
 infrequently and in predictable cadences, is best suited for packages. That's our
-thinking behind often and when we release our software.
+thinking behind how often and when we release our software.
 
 To develop software stably and carefully, Starcraft projects practice the `OneFlow
 <https://www.endoflineblog.com/oneflow-a-git-branching-model-and-workflow>`__ branch
