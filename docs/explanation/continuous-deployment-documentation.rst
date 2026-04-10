@@ -42,9 +42,9 @@ Releases
 
 .. image:: assets/continuous-deployment-release.svg
     :loading: lazy
-    :alt: A Git tree history of the release branch, in parallel with the history of the main branch. Each commit to the hotifx branch maps to a new publication for the hotfix's documentation version on Read the Docs. Documentation commits are represented in both histories, and publish separately until recombined in main.
+    :alt: A Git tree history of the release branch, in parallel with the history of the main branch. Each commit to the hotfix branch maps to a new publication for the hotfix's documentation version on Read the Docs. Documentation commits are represented in both histories, and publish separately until recombined in main.
 
-All documentation changes in release's hotfix branch are immediately deployed to the
+All documentation changes in the release's hotfix branch are immediately deployed to the
 corresponding documentation version on Read the Docs.
 
 The documentation process is largely the same, with a few controls related to branching.
