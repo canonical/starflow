@@ -81,6 +81,11 @@ exclude_patterns = [
 
 # region Options for extensions
 
+# A regex list of URLs that are ignored by 'make linkcheck'
+linkcheck_anchors_ignore = [
+    "p-722-import-the-code-on-launchpad-5",
+]
+
 # Client-side page redirects.
 rediraffe_redirects = "redirects.txt"
 
