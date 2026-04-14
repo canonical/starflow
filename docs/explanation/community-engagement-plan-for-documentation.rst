@@ -200,7 +200,7 @@ Pull request lifecycle
 
 #. The contributor opens a PR.
 
-#. The ``CODEOWNERS`` file automatically adds TAs as reviewers.
+#. The ``CODEOWNERS`` file automatically adds technical authors as reviewers.
 
 #. The PR is subjected to automated checks in CI workflows.
 
