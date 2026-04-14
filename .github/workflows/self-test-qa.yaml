@@ -7,8 +7,12 @@ jobs:
     uses: ./.github/workflows/lint-python.yaml
   test-python:
     uses: ./.github/workflows/test-python.yaml
+    needs: lint-python
+    if: ${{ needs.lint-python.outputs.source-files == 'true' }}
   test-python-custom:
     uses: ./.github/workflows/test-python.yaml
+    needs: lint-python
+    if: ${{ needs.lint-python.outputs.source-files == 'true' }}
     with:
       # Test on many OS's to ensure that these workflows work everywhere.
       # Also ensure we can add a list of tags for self-hosted runners.
@@ -23,6 +27,8 @@ jobs:
       setup-vars: SETUP_EXTRA=1
   test-python-as-root:
     uses: ./.github/workflows/test-python.yaml
+    needs: lint-python
+    if: ${{ needs.lint-python.outputs.source-files == 'true' }}
     with:
       # Test on many OS's to ensure that these workflows work everywhere.
       # Also ensure we can add a list of tags for self-hosted runners.
