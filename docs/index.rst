@@ -3,28 +3,39 @@
 Starflow
 ========
 
-**Starflow** is an internal project containing the shared processes and workflows for
-craft projects at Canonical.
+**Starflow** is an internal project that contains the shared processes and workflows for
+craft projects at Canonical. Starflow is for Starcraft project developers.
 
-Starflow is for the developers and the repositories of the Starcraft team.
 
-.. list-table::
+How this documentation is organized
+-----------------------------------
 
-    * - | :ref:`How-to guides <how-to-guides>`
-        | Step-by-step guidance for using our processes and workflows.
-    * - | :ref:`Explanation <explanation>`
-        | Discussion and clarification of key concepts.
+The Snapcraft documentation embodies the `Diátaxis framework <https://diataxis.fr/>`__.
+
+
+- :ref:`how-to-guides` contain directions for crafting and debugging snaps.
+- :ref:`Explanations <explanation>` aid in understanding the concepts and relationships
+  of Snapcraft as a system.
+
+.. - The :ref:`tutorial <tutorials>` is a lesson that steps through the main process of
+  the workflows.
+.. - :ref:`References <reference>` describe the structure and function of the individual
+  components in Starflow.
+
 
 
 Project and community
 ---------------------
 
-Starflow is a member of the Canonical family. It's an open source project that warmly
+Snapcraft is a member of the Canonical family. It's an open source project that warmly
 welcomes community projects, contributions, suggestions, fixes and constructive
 feedback.
 
-- `Ubuntu Code of Conduct <https://ubuntu.com/community/ethos/code-of-conduct>`_
-- `Canonical contributor licenses agreement <https://ubuntu.com/legal/contributors>`_
+
+Get involved
+~~~~~~~~~~~~
+
+* `Starcraft Matrix channel <https://matrix.to/#/!fcfzhmtmKApekMQcxX:ubuntu.com>`__
 
 .. toctree::
     :hidden:

@@ -43,6 +43,8 @@ same meta description for every page of release notes, but replace the version n
 
 **Do** frame sentences in terms of *actions* and *facts*.
 
+.. vale off
+
 .. list-table::
     :header-rows: 1
 
@@ -60,6 +62,8 @@ same meta description for every page of release notes, but replace the version n
         The Chef init profile sets up a basic project file for
 
         Starcraft is compatible with
+
+.. vale on
 
 **Do** put key terms near the start.
 

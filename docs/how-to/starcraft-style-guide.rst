@@ -128,6 +128,8 @@ Names
 Product names
 ~~~~~~~~~~~~~
 
+.. vale off
+
 Don't modify the product names, even if it's grammatical:
 
     Starcraft's
@@ -135,6 +137,8 @@ Don't modify the product names, even if it's grammatical:
     Starcrafts
 
     Starcrafty
+
+.. vale on
 
 Do keep product names discrete and unaltered:
 
@@ -535,6 +539,8 @@ Inclusive and nonviolent terms
 Some longstanding words in computing are biased, discriminatory, or violent. Use these
 replacements:
 
+.. vale off
+
 .. list-table::
     :header-rows: 1
 
@@ -591,3 +597,5 @@ replacements:
         security specialist
     * - whitelist
       - allowlist
+
+.. vale on

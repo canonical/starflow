@@ -1,101 +1,237 @@
-# Copyright 2023-2025 Canonical Ltd.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import datetime
 import os
-import pathlib
-import sys
 
+# Configuration for the Sphinx documentation builder.
+# All configuration specific to your project should be done in this file.
+#
+# A complete list of built-in Sphinx configuration values:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
+#
+# Our starter pack uses the custom Canonical Sphinx extension
+# to keep all documentation based on it consistent and on brand:
+# https://github.com/canonical/canonical-sphinx
+
+
+#######################
+# Project information #
+#######################
+
+# Project name
 project = "Starflow"
-author = "Canonical Group Ltd"
-# The version to append to the project title. Since Starflow doesn't have versions, keep
-# blank by default. Append "dev" for PR builds.
+author = "Canonical"
+
+# Format the product name + version for the TOC and HTML title
+# Since Starflow doesn't have versions, keep blank by default, and append "dev" for PR # builds.
 if (
     "READTHEDOCS_VERSION_TYPE" in os.environ
     and os.environ["READTHEDOCS_VERSION_TYPE"] == "external"
 ):
     release = "dev"
 
+# Copyright string; shown at the bottom of the page
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
 
-# region Configuration for canonical-sphinx
-ogp_site_url = "https://canonical-starflow.readthedocs-hosted.com"
+# Documentation website URL
+ogp_site_url = "https://canonical-starflow.readthedocs-hosted.com/"
+
+# Preview name of the documentation website
 ogp_site_name = project
 
-# Project slug; see https://meta.discourse.org/t/what-is-category-slug/87897
+# Preview image URL
 #
-# TODO: If your documentation is hosted on https://docs.ubuntu.com/,
-#       uncomment and update as needed.
+# TODO: To customise the preview image, update as needed.
+ogp_image = "https://assets.ubuntu.com/v1/cc828679-docs_illustration.svg"
 
-# slug = "starflow"
+# Product favicon; shown in bookmarks, browser tabs, etc.
+# html_favicon = '.sphinx/_static/favicon.png'
 
+# Dictionary of values to pass into the Sphinx context for all pages:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-html_context
 html_context = {
+    # Product page URL; can be different from product docs URL
     "product_page": "github.com/canonical/starflow",
+    # Product tag image; the orange part of your logo, shown in the page header
+    # 'product_tag': '_static/tag.png',
+    # "discourse": "",
+    # Your Mattermost channel URL
+    # "mattermost": "https://chat.canonical.com/canonical/channels/documentation",
+    # Your Matrix channel URL
+    "matrix": "https://matrix.to/#/#starcraft-development:ubuntu.com",
+    # Your documentation GitHub repository URL
     "github_url": "https://github.com/canonical/starflow",
-    "repo_default_branch": "main",
+    # Docs branch in the repo; used in links for viewing the source files
+    'repo_default_branch': 'main',
+    # Docs location in the repo; used in links for viewing the source files
     "repo_folder": "/docs/",
-    "github_issues": "enabled",
-    "discourse": "https://discourse.canonical.com",
+    # List contributors on individual pages
     "display_contributors": False,
+    # Required for feedback button
+    'github_issues': 'enabled',
 }
 
-# Target repository for the edit button on pages
+#html_extra_path = []
+
+# Enable the edit button on pages
 html_theme_options = {
-    "source_edit_link": "https://github.com/canonical/starflow",
+  'source_edit_link': "https://github.com/canonical/starflow",
 }
 
-extensions = [
-    "canonical_sphinx",
-    "sphinx_sitemap",
-    "pydantic_kitbash",
-    "sphinx.ext.ifconfig",
-    "sphinx.ext.intersphinx",
-    "sphinxcontrib.details.directive",
-    "sphinx_toolbox.collapse",
-    "sphinxext.rediraffe",
+# Project slug; see https://meta.discourse.org/t/what-is-category-slug/87897
+# slug = ''
+
+
+#########################
+# Sitemap configuration #
+#########################
+
+# Use RTD canonical URL to ensure duplicate pages have a specific canonical URL
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
+
+# sphinx-sitemap uses html_baseurl to generate the full URL for each page:
+sitemap_url_scheme = '{link}'
+
+# Include `lastmod` dates in the sitemap:
+# sitemap_show_lastmod = True
+
+# Exclude generated pages from the sitemap:
+sitemap_excludes = [
+    '404/',
+    'genindex/',
+    'search/',
 ]
 
-sphinx_tabs_disable_tab_closing = True
-# endregion
 
-#rst_epilog = """
-#.. include:: /reuse/links.txt
-#"""
+################################
+# Template and asset locations #
+################################
 
-exclude_patterns = [
-    "sphinx-docs-starter-pack",
-    "reference",
-]
+html_static_path = ["_static"]
+templates_path = ["_templates"]
 
-# region Options for extensions
+
+#############
+# Redirects #
+#############
+
+rediraffe_redirects = "redirects.txt"
+
+
+###########################
+# Link checker exceptions #
+###########################
 
 # A regex list of URLs that are ignored by 'make linkcheck'
 linkcheck_anchors_ignore = [
     "p-722-import-the-code-on-launchpad-5",
 ]
+linkcheck_ignore = [
+    # Ignore releases, since we'll include the next release before it exists.
+    r"^https://github.com/canonical/[a-z]*craft[a-z-]*/releases/.*",
+    # Entire domains to ignore due to flakiness or issues
+    r"^https://www.gnu.org/",
+    r"^https://crates.io/",
+    r"^https://([\w-]*\.)?npmjs.org",
+    r"^https://rsync.samba.org",
+    r"^https://ubuntu.com",
+    r"^https://matrix.to",
+]
 
-# Client-side page redirects.
-rediraffe_redirects = "redirects.txt"
+# Give linkcheck multiple tries on failure
+linkcheck_retries = 20
 
-# Sitemap configuration: https://sphinx-sitemap.readthedocs.io/
-html_baseurl = "https://canonical-starflow.readthedocs-hosted.com"
 
-if "READTHEDOCS_VERSION" in os.environ:
-    version = os.environ["READTHEDOCS_VERSION"]
-    sitemap_url_scheme = "{version}{link}"
-else:
-    sitemap_url_scheme = "latest/{link}"
+########################
+# Configuration extras #
+########################
 
-# endregion
+# Custom Sphinx extensions; see
+# https://www.sphinx-doc.org/en/master/usage/extensions/index.html
+# NOTE: The canonical_sphinx extension is required for the starter pack.
+extensions = [
+    "canonical_sphinx",
+    "notfound.extension",
+    "sphinx_design",
+    # "sphinx_tabs.tabs",
+    # "sphinxcontrib.jquery"
+    "sphinxext.opengraph",
+    # "sphinx_config_options",
+    # "sphinx_contributor_listing",
+    # "sphinx_filtered_toctree",
+    "sphinx_related_links",
+    "sphinx_roles",
+    "sphinx_terminal",
+    # "sphinx_ubuntu_images",
+    # "sphinx_youtube_links",
+    # "sphinxcontrib.cairosvgconverter",
+    # "sphinx_last_updated_by_git",
+    "sphinx.ext.intersphinx",
+    "sphinx_sitemap",
+    # Custom Craft extensions
+    "sphinxext.rediraffe",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.doctest",
+    "sphinx.ext.viewcode",
+]
+
+# Excludes files or directories from processing
+exclude_patterns = [
+    "README.md",  # Docs README
+    "reuse",
+    "reference"
+]
+
+# Adds custom CSS files, located under 'html_static_path'
+html_css_files = [
+    'css/cookie-banner.css'
+]
+
+# Adds custom JavaScript files, located under 'html_static_path'
+html_js_files = [
+    'js/bundle.js',
+]
+
+# Specifies a reST snippet to be appended to each .rst file
+rst_epilog = """
+"""
+
+# Feedback button at the top; enabled by default
+# disable_feedback_button = True
+
+# Your manpage URL
+# manpages_url = 'https://manpages.ubuntu.com/manpages/{codename}/en/' + \
+#     'man{section}/{page}.{section}.html'
+
+# Specifies a reST snippet to be prepended to each .rst file
+# This defines a :center: role that centers table cell content.
+# This defines a :h2: role that styles content for use with PDF generation.
+rst_prolog = """
+.. role:: center
+   :class: align-center
+.. role:: h2
+    :class: hclass2
+.. role:: woke-ignore
+    :class: woke-ignore
+.. role:: vale-ignore
+    :class: vale-ignore
+"""
+
+# Workaround for https://github.com/canonical/canonical-sphinx/issues/34
+if "discourse_prefix" not in html_context and "discourse" in html_context:
+    html_context["discourse_prefix"] = f"{html_context['discourse']}/t/"
+
+# Add configuration for intersphinx mapping
+intersphinx_mapping = {}
+
+# Block Intersphinx from looking up external sources with internal references. In other
+# words, only :external+<project>... will search in other projects.
+intersphinx_disabled_reftypes = ["std:*"]
+
+
+##############################
+# Custom Craft configuration #
+##############################
+
+# Type hints configuration
+set_type_checking_flag = True
+typehints_fully_qualified = False
+always_document_param_types = True
