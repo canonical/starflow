@@ -30,12 +30,12 @@ to the ``latest`` documentation version on Read the Docs.
 
 To make a documentation change for ``main``:
 
-1. A contributor proposes a document.
-2. Both technical authors review the document.
-3. The continuous integration (CI) system runs the documentation test suite against the
+#. A contributor proposes a document.
+#. Both technical authors review the document.
+#. The continuous integration (CI) system runs the documentation test suite against the
    document. If product code was changed, the CI system runs the full test suite.
-4. A technical author approves and merges the document.
-5. Read the Docs publishes the update to ``https://<docs>/latest``
+#. A technical author approves and merges the document.
+#. Read the Docs publishes the update to ``https://<docs>/latest``
 
 
 Current releases
