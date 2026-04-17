@@ -46,16 +46,15 @@ Current releases
     :alt: A Git tree history of the release branch, in parallel with the history of the main branch. Each commit to the hotfix branch maps to a new publication for the hotfix's documentation version on Read the Docs. Documentation commits are represented in both histories, and publish separately until recombined in main.
 
 All documentation changes in a current release's branch are immediately deployed to the
-corresponding documentation version on Read the Docs. The documentation process is
-largely the same as with the ``main`` branch, with some differences in the branch
-controls.
+corresponding documentation version on Read the Docs. The process is largely the same as
+with the ``main`` branch, with some differences in the branch controls.
 
 Let's take the minor version 1.3 in a product as an example. To release 1.3:
 
 #. The main engineer merges any changes on the ``main`` branch destined for the upcoming
    version.
 #. The main engineer proposes the 1.3 release notes on the ``main`` branch.
-#. The CI checks run all tests against the release notes.
+#. The CI system runs all tests against the release notes.
 #. A technical author reviews and approves the release notes.
 #. The main engineer merges the release notes.
 #. The main engineer tags the commit of the release notes, signifying in the source code
@@ -82,12 +81,12 @@ Key factors
 ~~~~~~~~~~~
 
 **Versioned documentation is deployed from hotfix branches.** The most important trait
-in the process is that a current release's docs are republished with every commit. Every
+of the process is that a current release's docs are republished with every commit. Every
 commit to the release's hotfix branch republishes the documentation. They *do not*
 *wait* for a new release. That way, improvements to the documentation are continuous.
 
-If documentation is deployed parallel with the software's releases, why not merge to
-``main`` and cherry pick changes to hotfix branches, instead? First, because hotfixes
+If documentation is deployed parallel to the software's releases, why not merge to
+``main`` and cherry pick changes to hotfix branches instead? First, because hotfixes
 and ``main`` don't have feature parity. Documentation derived from product code, like
 CLI references, can have incompatible differences. Second, the history between branches
 isn't always linear. Patches and fixes are ported forward *and* backward. Resolving
@@ -185,8 +184,8 @@ Contributors
 
 - When I open a PR that only changes documentation, the CI system only runs the
   documentation checks.
-- When reviewing my PR, I can expect that simple changes are merged within a day after
-  approval by the technical authors.
+- When reviewing my PR, I can expect that simple changes are merged within a day of
+  receiving approval by the technical authors.
 - In product code, like the CLI strings, I can link to ``https://<docs>/1.3``, and not
   worry about the patch number.
 
