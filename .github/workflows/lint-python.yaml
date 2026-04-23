@@ -25,6 +25,8 @@ jobs:
           echo -n "jobs=$(sudo snap install --no-wait codespell ruff shellcheck)" >> $GITHUB_OUTPUT
       - name: Check out code
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
       - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: filter
         with:
