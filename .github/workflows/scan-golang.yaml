@@ -43,7 +43,7 @@ jobs:
         run: |
           timeout 30s bash -c 'while ! trivy filesystem --download-db-only; do sleep 0.1; done'
       - name: Checkout source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Scan project
         if: ${{ !cancelled() }}
         run: |
@@ -63,7 +63,7 @@ jobs:
           fi
           sudo snap watch $osv_job
       - name: Checkout source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Scan project
         if: ${{ !cancelled() }}
         run: |
