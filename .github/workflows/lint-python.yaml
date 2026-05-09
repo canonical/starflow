@@ -34,7 +34,7 @@ jobs:
           # If we ever need to filter only for docs, glob 'docs/**/*' and '**/*.md'
           filters: |
             source-files:
-              - '!({docs/**,*.md,**/*.md})'
+              - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
       - name: Set up uv with caching
         id: setup-uv
         uses: astral-sh/setup-uv@v8.1.0
