@@ -89,7 +89,7 @@ jobs:
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-fast-${{ join(matrix.platform, '-') }}
+          name: coverage-${{ github.job }}-fast-${{ join(matrix.platform, '-') }}
           overwrite: true
           path: |
             ./coverage.xml
@@ -117,7 +117,7 @@ jobs:
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-slow-${{ join(matrix.platform, '-') }}-${{ matrix.python-version }}
+          name: coverage-${{ github.job }}-slow-${{ join(matrix.platform, '-') }}-${{ matrix.python-version }}
           overwrite: true
           path: |
             ./coverage.xml
@@ -147,7 +147,7 @@ jobs:
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-lowest-py${{ inputs.lowest-python-version }}
+          name: coverage-${{ github.job }}-lowest-py${{ inputs.lowest-python-version }}
           overwrite: true
           path: |
             ./coverage.xml
