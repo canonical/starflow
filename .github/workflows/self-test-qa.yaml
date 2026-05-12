@@ -33,8 +33,9 @@ jobs:
       # Test on many OS's to ensure that these workflows work everywhere.
       # Also ensure we can add a list of tags for self-hosted runners.
       # Intentionally overlaps with test-python-custom to verify that
-      # coverage artifact names are unique across callers (github.job
-      # is included in the artifact name to prevent 409 Conflict errors).
+      # coverage artifact names are unique across callers (the reusable
+      # workflow includes the caller job identifier in the artifact name
+      # to prevent 409 Conflict errors).
       fast-test-platforms: '["ubuntu-latest"]'
       fast-test-python-versions: '["3.14"]'
       slow-test-platforms: '["ubuntu-latest"]'
@@ -80,6 +81,6 @@ jobs:
             done
           done
 
-          total=$(echo "$coverage" | wc -l)
+          total=$(printf %s "$coverage" | grep -c .)
           echo "Total: ${total} unique coverage artifacts"
           exit $exit_code
