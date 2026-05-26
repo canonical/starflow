@@ -3,16 +3,29 @@ on:
   pull_request:
 
 jobs:
+  filter:
+    runs-on: ubuntu-slim
+    outputs:
+      source-files: ${{ steps.filter.outputs.source-files }}
+    steps:
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          # Combine multiple negation checks into a union (¬A ∧ ¬B ∧ ¬C), because individual entries are checked independently (A ∨ B ∨ C).
+          # If we ever need to filter only for docs, glob 'docs/**/*' and '**/*.md'
+          filters: |
+            source-files:
+              - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
   lint-python:
     uses: ./.github/workflows/lint-python.yaml
   test-python:
     uses: ./.github/workflows/test-python.yaml
-    needs: lint-python
-    if: ${{ needs.lint-python.outputs.source-files == 'true' }}
+    needs: filter
+    with:
+      source-files: ${{ needs.filter.output.source-files }}
   test-python-custom:
     uses: ./.github/workflows/test-python.yaml
-    needs: lint-python
-    if: ${{ needs.lint-python.outputs.source-files == 'true' }}
+    needs: filter
     with:
       # Test on many OS's to ensure that these workflows work everywhere.
       # Also ensure we can add a list of tags for self-hosted runners.
@@ -25,9 +38,10 @@ jobs:
       use-lxd: true
       pytest-markers: smoketest and not steamtest
       setup-vars: SETUP_EXTRA=1
+      source-files: ${{ needs.filter.output.source-files }}
   test-python-as-root:
     uses: ./.github/workflows/test-python.yaml
-    needs: lint-python
+    needs: filter
     if: ${{ needs.lint-python.outputs.source-files == 'true' }}
     with:
       # Test on many OS's to ensure that these workflows work everywhere.
@@ -39,3 +53,4 @@ jobs:
       lowest-python-version: "3.8"
       lowest-python-platform: "ubuntu-latest"
       test-command-prefix: sudo # Test that we can run with sudo.
+      source-files: ${{ needs.filter.output.source-files }}

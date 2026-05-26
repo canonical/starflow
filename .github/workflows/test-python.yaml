@@ -5,7 +5,7 @@ on:
       source-files:
         description: "Whether the changes affect source files"
         type: string
-        default: "true"
+        default: '["source-files"]'
       fast-test-platforms:
         type: string
         default: '["jammy", "noble"]'
@@ -63,7 +63,7 @@ jobs:
       matrix:
         platform: ${{ fromJson(inputs.fast-test-platforms) }}
     runs-on: ${{ matrix.platform }}
-    if: ${{ inputs.source-files == 'true' }}
+    if: ${{ contains(fromJson(inputs.source-files), 'source-files') }}
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
@@ -106,7 +106,7 @@ jobs:
         platform: ${{ fromJson(inputs.slow-test-platforms) }}
         python-version: ${{ fromJson(inputs.slow-test-python-versions) }}
     runs-on: ${{ matrix.platform }}
-    if: ${{ inputs.source-files == 'true' }}
+    if: ${{ contains(fromJson(inputs.source-files), 'source-files') }}
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
@@ -136,7 +136,7 @@ jobs:
     runs-on: ${{ startsWith(inputs.lowest-python-platform, '[') && fromJson(inputs.lowest-python-platform) || inputs.lowest-python-platform }}
     env:
       UV_RESOLUTION: lowest
-    if: ${{ inputs.lowest-python-version != '' && inputs.source-files == 'true' }}
+    if: ${{ inputs.lowest-python-version != '' && contains(fromJson(inputs.source-files), 'source-files') }}
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
