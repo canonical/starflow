@@ -21,7 +21,7 @@ jobs:
       slow-test-platforms: '["ubuntu-latest"]'
       slow-test-python-versions: '["3.14"]'
       lowest-python-version: "3.8"
-      lowest-python-platform: '["jammy", "arm64"]'
+      lowest-python-platform: '["focal", "amd64"]'
       use-lxd: true
       pytest-markers: smoketest and not steamtest
       setup-vars: SETUP_EXTRA=1
@@ -32,6 +32,10 @@ jobs:
     with:
       # Test on many OS's to ensure that these workflows work everywhere.
       # Also ensure we can add a list of tags for self-hosted runners.
+      # Intentionally overlaps with test-python-custom to verify that
+      # coverage artifact names are unique across callers (the reusable
+      # workflow includes the caller job identifier in the artifact name
+      # to prevent 409 Conflict errors).
       fast-test-platforms: '["ubuntu-latest"]'
       fast-test-python-versions: '["3.14"]'
       slow-test-platforms: '["ubuntu-latest"]'
@@ -39,3 +43,44 @@ jobs:
       lowest-python-version: "3.8"
       lowest-python-platform: "ubuntu-latest"
       test-command-prefix: sudo # Test that we can run with sudo.
+  verify-coverage-artifacts:
+    name: Verify coverage artifacts
+    if: ${{ !cancelled() }}
+    needs: [test-python, test-python-custom, test-python-as-root]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify coverage artifacts are unique and present
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          artifacts=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
+            --paginate --jq '.artifacts[].name')
+          coverage=$(echo "$artifacts" | grep '^coverage-' | sort)
+
+          echo "=== Coverage artifacts ==="
+          echo "$coverage"
+          echo ""
+
+          # Verify no duplicate artifact names
+          dupes=$(echo "$coverage" | uniq -d)
+          if [ -n "$dupes" ]; then
+            echo "::error::Duplicate coverage artifact names:"
+            echo "$dupes"
+            exit 1
+          fi
+
+          exit_code=0
+
+          # Verify each caller job produced fast, slow, and lowest artifacts
+          for job in test-python test-python-custom test-python-as-root; do
+            for type in fast slow lowest; do
+              if ! echo "$coverage" | grep -q "^coverage-${job}-${type}-"; then
+                echo "::error::Missing coverage-${job}-${type}-* artifact"
+                exit_code=1
+              fi
+            done
+          done
+
+          total=$(printf %s "$coverage" | grep -c .)
+          echo "Total: ${total} unique coverage artifacts"
+          exit $exit_code

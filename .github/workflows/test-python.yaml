@@ -91,10 +91,20 @@ jobs:
             echo "::endgroup::"
           done
           exit $exit_code
+      - name: Resolve caller job name
+        id: ctx
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name=$(gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${{ job.check_run_id }}" --jq '.name')
+          caller="${name%% / *}"
+          echo "caller-job=${caller}" >> "$GITHUB_OUTPUT"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-fast-${{ join(matrix.platform, '-') }}
+          name: coverage-${{ steps.ctx.outputs.caller-job }}-fast-${{ join(matrix.platform, '-') }}
           overwrite: true
           path: |
             ./coverage.xml
@@ -120,10 +130,20 @@ jobs:
           MARKERS: ${{ inputs.pytest-markers }}
         run: |
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow ${MARKERS:+and ($MARKERS)}'"
+      - name: Resolve caller job name
+        id: ctx
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name=$(gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${{ job.check_run_id }}" --jq '.name')
+          caller="${name%% / *}"
+          echo "caller-job=${caller}" >> "$GITHUB_OUTPUT"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-slow-${{ join(matrix.platform, '-') }}-${{ matrix.python-version }}
+          name: coverage-${{ steps.ctx.outputs.caller-job }}-slow-${{ join(matrix.platform, '-') }}-${{ matrix.python-version }}
           overwrite: true
           path: |
             ./coverage.xml
@@ -150,10 +170,20 @@ jobs:
           MARKERS: ${{ inputs.pytest-markers }}
         run: |
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
+      - name: Resolve caller job name
+        id: ctx
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name=$(gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${{ job.check_run_id }}" --jq '.name')
+          caller="${name%% / *}"
+          echo "caller-job=${caller}" >> "$GITHUB_OUTPUT"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-lowest-py${{ inputs.lowest-python-version }}
+          name: coverage-${{ steps.ctx.outputs.caller-job }}-lowest-py${{ inputs.lowest-python-version }}
           overwrite: true
           path: |
             ./coverage.xml
