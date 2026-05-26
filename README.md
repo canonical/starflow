@@ -1,5 +1,27 @@
 # starflow
 
+[![Canonical Starcraft][starcraft-badge]][canonical-link]
+[![GitHub License][license-badge]][license-link]
+[![QA][qa-badge]][qa-link]
+[![Renovate][renovate-badge]][renovate-link]
+[![Security scanners][scan-badge]][scan-link]
+[![Setup][setup-badge]][setup-link]
+
+[//]: # "Once the Starcraft matrix channel gets a canonical URL we should add it."
+[//]: # "What's the correct discussion forum for our libraries?"
+[canonical-link]: https://canonical.com
+[license-badge]: https://img.shields.io/github/license/canonical/starflow
+[license-link]: https://github.com/canonical/starflow/blob/main/LICENSE
+[qa-badge]: https://github.com/canonical/starflow/actions/workflows/self-test-qa.yaml/badge.svg
+[qa-link]: https://github.com/canonical/starflow/actions/workflows/self-test-qa.yaml
+[renovate-badge]: https://github.com/canonical/starflow/actions/workflows/self-test-renovate.yaml/badge.svg
+[renovate-link]: https://github.com/canonical/starflow/actions/workflows/self-test-renovate.yaml
+[scan-badge]: https://github.com/canonical/starflow/actions/workflows/self-test-scan.yaml/badge.svg?branch=main
+[scan-link]: https://github.com/canonical/starflow/actions/workflows/self-test-scan.yaml
+[setup-badge]: https://github.com/canonical/starflow/actions/workflows/self-test-setup.yaml/badge.svg?branch=main
+[setup-link]: https://github.com/canonical/starflow/actions/workflows/self-test-setup.yaml
+[starcraft-badge]: https://img.shields.io/badge/Canonical-%E2%AD%90craft-772953?logo=canonical&labelColor=333333
+
 Starcraft team GHA Workflows
 
 # Reusable Workflows
