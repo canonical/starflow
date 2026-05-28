@@ -55,6 +55,9 @@ on:
           Anything to prefix the `make test-coverage` command with. Useful when running tests as another user.
         default: ""
 
+# We add the same conditional to every job's steps, because GitHub doesn't count a
+# required-but-skipped job as complete if a matrix spawned it. This is an ugly
+# workaround that could be resolved if we had isolated CI chains.
 jobs:
   fast:
     name: Fast tests
@@ -63,11 +66,12 @@ jobs:
       matrix:
         platform: ${{ fromJson(inputs.fast-test-platforms) }}
     runs-on: ${{ matrix.platform }}
-    if: ${{ inputs.source-files == 'true' }}
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
+        if: ${{ inputs.source-files == 'true' }}
       - name: Set up tests
+        if: ${{ inputs.source-files == 'true' }}
         shell: bash
         run: |
           for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
@@ -75,6 +79,7 @@ jobs:
             make -j setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}" UV_PYTHON="${python_version}" ${{ inputs.setup-vars }}
           done
       - name: Run tests
+        if: ${{ inputs.source-files == 'true' }}
         shell: bash
         env:
           MARKERS: ${{ inputs.pytest-markers }}
@@ -92,6 +97,7 @@ jobs:
           done
           exit $exit_code
       - name: Upload test coverage
+        if: ${{ inputs.source-files == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: coverage-fast-${{ join(matrix.platform, '-') }}
@@ -106,22 +112,25 @@ jobs:
         platform: ${{ fromJson(inputs.slow-test-platforms) }}
         python-version: ${{ fromJson(inputs.slow-test-python-versions) }}
     runs-on: ${{ matrix.platform }}
-    if: ${{ inputs.source-files == 'true' }}
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
+        if: ${{ inputs.source-files == 'true' }}
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tools
+        if: ${{ inputs.source-files == 'true' }}
         run: |
           make -j setup-tests ${{ inputs.setup-vars }}
       - name: Run tests
+        if: ${{ inputs.source-files == 'true' }}
         env:
           MARKERS: ${{ inputs.pytest-markers }}
         run: |
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow ${MARKERS:+and ($MARKERS)}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
+        if: ${{ inputs.source-files == 'true' }}
         with:
           name: coverage-slow-${{ join(matrix.platform, '-') }}-${{ matrix.python-version }}
           overwrite: true
@@ -140,18 +149,22 @@ jobs:
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
+        if: ${{ inputs.source-files == 'true' }}
         with:
           python-version: ${{ inputs.lowest-python-version }}
       - name: Install tools
+        if: ${{ inputs.source-files == 'true' }}
         run: |
           make -j setup-tests ${{ inputs.setup-vars }}
       - name: Run tests
+        if: ${{ inputs.source-files == 'true' }}
         env:
           MARKERS: ${{ inputs.pytest-markers }}
         run: |
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
+        if: ${{ inputs.source-files == 'true' }}
         with:
           name: coverage-lowest-py${{ inputs.lowest-python-version }}
           overwrite: true
