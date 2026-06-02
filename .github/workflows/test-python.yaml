@@ -2,6 +2,10 @@ name: Test Python
 on:
   workflow_call:
     inputs:
+      source-files:
+        description: "Whether the changes affect source files"
+        type: string
+        default: "true"
       fast-test-platforms:
         type: string
         default: '["jammy", "noble"]'
@@ -59,6 +63,7 @@ jobs:
       matrix:
         platform: ${{ fromJson(inputs.fast-test-platforms) }}
     runs-on: ${{ matrix.platform }}
+    if: ${{ inputs.source-files == 'true' }}
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
@@ -101,6 +106,7 @@ jobs:
         platform: ${{ fromJson(inputs.slow-test-platforms) }}
         python-version: ${{ fromJson(inputs.slow-test-python-versions) }}
     runs-on: ${{ matrix.platform }}
+    if: ${{ inputs.source-files == 'true' }}
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
@@ -124,13 +130,13 @@ jobs:
             htmlcov/**
   lowest:
     name: Minimum dependencies (all tests)
-    if: ${{ inputs.lowest-python-version != '' }}
     # Allows either a string containing the platform or a JSON list of tags.
     # This is done for backwards compatibility with a string lowest-python version while
     # still allowing a list of tags if needed.
     runs-on: ${{ startsWith(inputs.lowest-python-platform, '[') && fromJson(inputs.lowest-python-platform) || inputs.lowest-python-platform }}
     env:
       UV_RESOLUTION: lowest
+    if: ${{ inputs.lowest-python-version != '' && inputs.source-files == 'true' }}
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
