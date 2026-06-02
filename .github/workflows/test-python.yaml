@@ -136,7 +136,8 @@ jobs:
             expanded_line=${expanded_line//\$SECRET_1/$SECRET_1}
             export "$expanded_line"
           done <<< "$EXTRA_VARS"
-
+          # Unset raw secret slots so they don't leak into make or sudo -E
+          unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
           exit_code=0
           for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             echo "::group::Python ${python_version}"
