@@ -246,12 +246,20 @@ jobs:
           SECRET_10: ${{ secrets.secret-10 }}
         run: |
           while IFS= read -r line; do
-            if [[ -n "$line" ]]; then
-              # Replace $SECRET_1..$SECRET_10 with their actual values
-              expanded_line=$(echo "$line" | sed "s/\$SECRET_1\b/$SECRET_1/g;s/\$SECRET_2\b/$SECRET_2/g;s/\$SECRET_3\b/$SECRET_3/g;s/\$SECRET_4\b/$SECRET_4/g;s/\$SECRET_5\b/$SECRET_5/g;s/\$SECRET_6\b/$SECRET_6/g;s/\$SECRET_7\b/$SECRET_7/g;s/\$SECRET_8\b/$SECRET_8/g;s/\$SECRET_9\b/$SECRET_9/g;s/\$SECRET_10\b/$SECRET_10/g")
-              export "$expanded_line"
-            fi
-          done <<< "${EXTRA_VARS}"
+            [[ -z "$line" ]] && continue
+            # Replace literal $SECRET_1..$SECRET_10 placeholders (10..1 avoids $SECRET_10 matching $SECRET_1 prefix)
+            expanded_line=${line//\$SECRET_10/$SECRET_10}
+            expanded_line=${expanded_line//\$SECRET_9/$SECRET_9}
+            expanded_line=${expanded_line//\$SECRET_8/$SECRET_8}
+            expanded_line=${expanded_line//\$SECRET_7/$SECRET_7}
+            expanded_line=${expanded_line//\$SECRET_6/$SECRET_6}
+            expanded_line=${expanded_line//\$SECRET_5/$SECRET_5}
+            expanded_line=${expanded_line//\$SECRET_4/$SECRET_4}
+            expanded_line=${expanded_line//\$SECRET_3/$SECRET_3}
+            expanded_line=${expanded_line//\$SECRET_2/$SECRET_2}
+            expanded_line=${expanded_line//\$SECRET_1/$SECRET_1}
+            export "$expanded_line"
+          done <<< "$EXTRA_VARS"
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
