@@ -54,6 +54,12 @@ on:
         description: |
           Anything to prefix the `make test-coverage` command with. Useful when running tests as another user.
         default: ""
+      extra-env-vars:
+        type: string
+        description: |
+          Additional environment variables to set on the runner, as a newline-separated list of KEY=VALUE pairs.
+        default: ""
+
 
 # We add the same conditional to every job's steps, because GitHub doesn't count a
 # required-but-skipped job as complete if a matrix spawned it. This is an ugly
@@ -83,7 +89,14 @@ jobs:
         shell: bash
         env:
           MARKERS: ${{ inputs.pytest-markers }}
+          EXTRA_VARS: ${{ inputs.extra-env-vars }}
         run: |
+          while IFS= read -r line; do
+            if [[ -n "$line" ]]; then
+              export "$line"
+            fi
+          done <<< "${EXTRA_VARS}"
+
           exit_code=0
           for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             echo "::group::Python ${python_version}"
@@ -124,9 +137,16 @@ jobs:
           make -j setup-tests ${{ inputs.setup-vars }}
       - name: Run tests
         if: ${{ inputs.source-files == 'true' }}
+        shell: bash
         env:
           MARKERS: ${{ inputs.pytest-markers }}
+          EXTRA_VARS: ${{ inputs.extra-env-vars }}
         run: |
+          while IFS= read -r line; do
+            if [[ -n "$line" ]]; then
+              export "$line"
+            fi
+          done <<< "${EXTRA_VARS}"
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow ${MARKERS:+and ($MARKERS)}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
@@ -158,9 +178,16 @@ jobs:
           make -j setup-tests ${{ inputs.setup-vars }}
       - name: Run tests
         if: ${{ inputs.source-files == 'true' }}
+        shell: bash
         env:
           MARKERS: ${{ inputs.pytest-markers }}
+          EXTRA_VARS: ${{ inputs.extra-env-vars }}
         run: |
+          while IFS= read -r line; do
+            if [[ -n "$line" ]]; then
+              export "$line"
+            fi
+          done <<< "${EXTRA_VARS}"
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7

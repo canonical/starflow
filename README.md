@@ -168,6 +168,11 @@ In order to do so, it expects the following `make` targets:
 - `test-coverage`: Runs tests with test coverage. Fast and slow tests will use the
   `PYTEST_ADDOPTS` environment variable to run with or without the `slow` mark.
 
+Additional environment variables (such as secrets) can be passed to the test runner using the
+`extra-env-vars` input. This input takes a newline-separated list of `KEY=VALUE` pairs which will be
+exported before the tests are run. This can be combined with `secrets: inherit` to pass secrets
+to the tests.
+
 Because we use the snaps of [codespell](https://snapcraft.io/codespell),
 [ruff](https://snapcraft.io/ruff) and [shellcheck](https://snapcraft.io/shellcheck)
 frequently, this workflow installs those as well as uv.
@@ -182,6 +187,7 @@ on:
 jobs:
   test:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    secrets: inherit
     with:
       fast-test-platforms: '["ubuntu-22.04", "windows-latest", "macos-latest"]'
       fast-test-python-versions: '["3.14"]'
@@ -193,6 +199,9 @@ jobs:
       pytest-markers: smoketest and not steamtest # Extra pytest marks to set, for example to break up large test sets
       setup-vars: NO_INSTALL_PLUGIN_DEPS=1 # Extra variables to pass when running setup
       test-command-prefix: sudo # Runs the tests with sudo so we can run as root.
+      extra-env-vars: | # Extra environment variables to pass to the tests
+        MY_SECRET_KEY=${{ secrets.MY_SECRET_KEY }}
+        MY_VAR=value
 ```
 
 # Other
