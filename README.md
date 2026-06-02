@@ -170,12 +170,12 @@ In order to do so, it expects the following `make` targets:
 
 Additional environment variables (such as secrets) can be passed to the test runner using the
 `extra-env-vars` input. This input takes a newline-separated list of `KEY=VALUE` pairs which will be
-exported before the tests are run. This can be combined with `secrets: inherit` to pass secrets
-to the tests.
+exported before the tests are run.
 
-Because we use the snaps of [codespell](https://snapcraft.io/codespell),
-[ruff](https://snapcraft.io/ruff) and [shellcheck](https://snapcraft.io/shellcheck)
-frequently, this workflow installs those as well as uv.
+Due to GitHub Actions limitations, secrets cannot be passed directly into the `extra-env-vars`
+string. Instead, you can map your secrets to generic slots (`secret-1` through `secret-10`) in the
+`secrets` block of the call, and then reference them as `$SECRET_1` through `$SECRET_10` in
+`extra-env-vars`.
 
 An example workflow:
 
@@ -187,20 +187,12 @@ on:
 jobs:
   test:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
-    secrets: inherit
+    secrets:
+      secret-1: ${{ secrets.MY_SECRET_KEY }}
     with:
-      fast-test-platforms: '["ubuntu-22.04", "windows-latest", "macos-latest"]'
-      fast-test-python-versions: '["3.14"]'
-      slow-test-platforms: '["ubuntu-latest"]'
-      slow-test-python-versions: '["3.14"]'
-      lowest-python-version: "3.8"
-      lowest-python-platform: '["jammy", "arm64"]'
-      use-lxd: true # If we should install lxd on the runner.
-      pytest-markers: smoketest and not steamtest # Extra pytest marks to set, for example to break up large test sets
-      setup-vars: NO_INSTALL_PLUGIN_DEPS=1 # Extra variables to pass when running setup
-      test-command-prefix: sudo # Runs the tests with sudo so we can run as root.
+      ...
       extra-env-vars: | # Extra environment variables to pass to the tests
-        MY_SECRET_KEY=${{ secrets.MY_SECRET_KEY }}
+        MY_SECRET_KEY=$SECRET_1
         MY_VAR=value
 ```
 
