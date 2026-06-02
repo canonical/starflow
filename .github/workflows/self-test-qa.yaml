@@ -7,8 +7,6 @@ jobs:
     uses: ./.github/workflows/lint-python.yaml
   test-python:
     uses: ./.github/workflows/test-python.yaml
-    needs: lint-python
-    if: ${{ needs.lint-python.outputs.source-files == 'true' }}
     secrets:
       secret-1: ${{ secrets.REPO_SECRET }}
     with:
@@ -17,8 +15,6 @@ jobs:
         REPO_SECRET=$SECRET_1
   test-python-custom:
     uses: ./.github/workflows/test-python.yaml
-    needs: lint-python
-    if: ${{ needs.lint-python.outputs.source-files == 'true' }}
     secrets:
       secret-1: ${{ secrets.REPO_SECRET }}
     with:
@@ -38,8 +34,6 @@ jobs:
         REPO_SECRET=$SECRET_1
   test-python-as-root:
     uses: ./.github/workflows/test-python.yaml
-    needs: lint-python
-    if: ${{ needs.lint-python.outputs.source-files == 'true' }}
     secrets:
       secret-1: ${{ secrets.REPO_SECRET }}
     with:
