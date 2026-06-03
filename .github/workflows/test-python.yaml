@@ -2,6 +2,10 @@ name: Test Python
 on:
   workflow_call:
     inputs:
+      source-files:
+        description: "Whether the changes affect source files"
+        type: string
+        default: "true"
       fast-test-platforms:
         type: string
         default: '["jammy", "noble"]'
@@ -50,7 +54,36 @@ on:
         description: |
           Anything to prefix the `make test-coverage` command with. Useful when running tests as another user.
         default: ""
+      extra-env-vars:
+        type: string
+        description: |
+          Additional environment variables to set on the runner, as a newline-separated list of KEY=VALUE pairs.
+        default: ""
+    secrets:
+      secret-1:
+        required: false
+      secret-2:
+        required: false
+      secret-3:
+        required: false
+      secret-4:
+        required: false
+      secret-5:
+        required: false
+      secret-6:
+        required: false
+      secret-7:
+        required: false
+      secret-8:
+        required: false
+      secret-9:
+        required: false
+      secret-10:
+        required: false
 
+# We add the same conditional to every job's steps, because GitHub doesn't count a
+# required-but-skipped job as complete if a matrix spawned it. This is an ugly
+# workaround that could be resolved if we had isolated CI chains.
 jobs:
   fast:
     name: Fast tests
@@ -62,7 +95,9 @@ jobs:
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
+        if: ${{ inputs.source-files == 'true' }}
       - name: Set up tests
+        if: ${{ inputs.source-files == 'true' }}
         shell: bash
         run: |
           for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
@@ -70,10 +105,39 @@ jobs:
             make -j setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}" UV_PYTHON="${python_version}" ${{ inputs.setup-vars }}
           done
       - name: Run tests
+        if: ${{ inputs.source-files == 'true' }}
         shell: bash
         env:
           MARKERS: ${{ inputs.pytest-markers }}
+          EXTRA_VARS: ${{ inputs.extra-env-vars }}
+          SECRET_1: ${{ secrets.secret-1 }}
+          SECRET_2: ${{ secrets.secret-2 }}
+          SECRET_3: ${{ secrets.secret-3 }}
+          SECRET_4: ${{ secrets.secret-4 }}
+          SECRET_5: ${{ secrets.secret-5 }}
+          SECRET_6: ${{ secrets.secret-6 }}
+          SECRET_7: ${{ secrets.secret-7 }}
+          SECRET_8: ${{ secrets.secret-8 }}
+          SECRET_9: ${{ secrets.secret-9 }}
+          SECRET_10: ${{ secrets.secret-10 }}
         run: |
+          while IFS= read -r line; do
+            [[ -z "$line" ]] && continue
+            # Replace literal $SECRET_1..$SECRET_10 placeholders (10..1 avoids $SECRET_10 matching $SECRET_1 prefix)
+            expanded_line=${line//\$SECRET_10/$SECRET_10}
+            expanded_line=${expanded_line//\$SECRET_9/$SECRET_9}
+            expanded_line=${expanded_line//\$SECRET_8/$SECRET_8}
+            expanded_line=${expanded_line//\$SECRET_7/$SECRET_7}
+            expanded_line=${expanded_line//\$SECRET_6/$SECRET_6}
+            expanded_line=${expanded_line//\$SECRET_5/$SECRET_5}
+            expanded_line=${expanded_line//\$SECRET_4/$SECRET_4}
+            expanded_line=${expanded_line//\$SECRET_3/$SECRET_3}
+            expanded_line=${expanded_line//\$SECRET_2/$SECRET_2}
+            expanded_line=${expanded_line//\$SECRET_1/$SECRET_1}
+            export "$expanded_line"
+          done <<< "$EXTRA_VARS"
+          # Unset raw secret slots so they don't leak into make or sudo -E
+          unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
           exit_code=0
           for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
             echo "::group::Python ${python_version}"
@@ -87,6 +151,7 @@ jobs:
           done
           exit $exit_code
       - name: Upload test coverage
+        if: ${{ inputs.source-files == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: coverage-fast-${{ join(matrix.platform, '-') }}
@@ -104,18 +169,51 @@ jobs:
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
+        if: ${{ inputs.source-files == 'true' }}
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tools
+        if: ${{ inputs.source-files == 'true' }}
         run: |
           make -j setup-tests ${{ inputs.setup-vars }}
       - name: Run tests
+        if: ${{ inputs.source-files == 'true' }}
+        shell: bash
         env:
           MARKERS: ${{ inputs.pytest-markers }}
+          EXTRA_VARS: ${{ inputs.extra-env-vars }}
+          SECRET_1: ${{ secrets.secret-1 }}
+          SECRET_2: ${{ secrets.secret-2 }}
+          SECRET_3: ${{ secrets.secret-3 }}
+          SECRET_4: ${{ secrets.secret-4 }}
+          SECRET_5: ${{ secrets.secret-5 }}
+          SECRET_6: ${{ secrets.secret-6 }}
+          SECRET_7: ${{ secrets.secret-7 }}
+          SECRET_8: ${{ secrets.secret-8 }}
+          SECRET_9: ${{ secrets.secret-9 }}
+          SECRET_10: ${{ secrets.secret-10 }}
         run: |
+          while IFS= read -r line; do
+            [[ -z "$line" ]] && continue
+            # Replace literal $SECRET_1..$SECRET_10 placeholders (10..1 avoids $SECRET_10 matching $SECRET_1 prefix)
+            expanded_line=${line//\$SECRET_10/$SECRET_10}
+            expanded_line=${expanded_line//\$SECRET_9/$SECRET_9}
+            expanded_line=${expanded_line//\$SECRET_8/$SECRET_8}
+            expanded_line=${expanded_line//\$SECRET_7/$SECRET_7}
+            expanded_line=${expanded_line//\$SECRET_6/$SECRET_6}
+            expanded_line=${expanded_line//\$SECRET_5/$SECRET_5}
+            expanded_line=${expanded_line//\$SECRET_4/$SECRET_4}
+            expanded_line=${expanded_line//\$SECRET_3/$SECRET_3}
+            expanded_line=${expanded_line//\$SECRET_2/$SECRET_2}
+            expanded_line=${expanded_line//\$SECRET_1/$SECRET_1}
+            export "$expanded_line"
+          done <<< "$EXTRA_VARS"
+          # Unset raw secret slots so they don't leak into make or sudo -E
+          unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow ${MARKERS:+and ($MARKERS)}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
+        if: ${{ inputs.source-files == 'true' }}
         with:
           name: coverage-slow-${{ join(matrix.platform, '-') }}-${{ matrix.python-version }}
           overwrite: true
@@ -124,28 +222,61 @@ jobs:
             htmlcov/**
   lowest:
     name: Minimum dependencies (all tests)
-    if: ${{ inputs.lowest-python-version != '' }}
     # Allows either a string containing the platform or a JSON list of tags.
     # This is done for backwards compatibility with a string lowest-python version while
     # still allowing a list of tags if needed.
     runs-on: ${{ startsWith(inputs.lowest-python-platform, '[') && fromJson(inputs.lowest-python-platform) || inputs.lowest-python-platform }}
     env:
       UV_RESOLUTION: lowest
+    if: ${{ inputs.lowest-python-version != '' && inputs.source-files == 'true' }}
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
+        if: ${{ inputs.source-files == 'true' }}
         with:
           python-version: ${{ inputs.lowest-python-version }}
       - name: Install tools
+        if: ${{ inputs.source-files == 'true' }}
         run: |
           make -j setup-tests ${{ inputs.setup-vars }}
       - name: Run tests
+        if: ${{ inputs.source-files == 'true' }}
+        shell: bash
         env:
           MARKERS: ${{ inputs.pytest-markers }}
+          EXTRA_VARS: ${{ inputs.extra-env-vars }}
+          SECRET_1: ${{ secrets.secret-1 }}
+          SECRET_2: ${{ secrets.secret-2 }}
+          SECRET_3: ${{ secrets.secret-3 }}
+          SECRET_4: ${{ secrets.secret-4 }}
+          SECRET_5: ${{ secrets.secret-5 }}
+          SECRET_6: ${{ secrets.secret-6 }}
+          SECRET_7: ${{ secrets.secret-7 }}
+          SECRET_8: ${{ secrets.secret-8 }}
+          SECRET_9: ${{ secrets.secret-9 }}
+          SECRET_10: ${{ secrets.secret-10 }}
         run: |
+          while IFS= read -r line; do
+            [[ -z "$line" ]] && continue
+            # Replace literal $SECRET_1..$SECRET_10 placeholders (10..1 avoids $SECRET_10 matching $SECRET_1 prefix)
+            expanded_line=${line//\$SECRET_10/$SECRET_10}
+            expanded_line=${expanded_line//\$SECRET_9/$SECRET_9}
+            expanded_line=${expanded_line//\$SECRET_8/$SECRET_8}
+            expanded_line=${expanded_line//\$SECRET_7/$SECRET_7}
+            expanded_line=${expanded_line//\$SECRET_6/$SECRET_6}
+            expanded_line=${expanded_line//\$SECRET_5/$SECRET_5}
+            expanded_line=${expanded_line//\$SECRET_4/$SECRET_4}
+            expanded_line=${expanded_line//\$SECRET_3/$SECRET_3}
+            expanded_line=${expanded_line//\$SECRET_2/$SECRET_2}
+            expanded_line=${expanded_line//\$SECRET_1/$SECRET_1}
+            export "$expanded_line"
+          done <<< "$EXTRA_VARS"
+          # Unset raw secret slots so they don't leak into make or sudo -E
+          unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
+        if: ${{ inputs.source-files == 'true' }}
         with:
           name: coverage-lowest-py${{ inputs.lowest-python-version }}
           overwrite: true
