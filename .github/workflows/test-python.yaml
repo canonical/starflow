@@ -208,6 +208,8 @@ jobs:
             expanded_line=${expanded_line//\$SECRET_1/$SECRET_1}
             export "$expanded_line"
           done <<< "$EXTRA_VARS"
+          # Unset raw secret slots so they don't leak into make or sudo -E
+          unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow ${MARKERS:+and ($MARKERS)}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
@@ -269,6 +271,8 @@ jobs:
             expanded_line=${expanded_line//\$SECRET_1/$SECRET_1}
             export "$expanded_line"
           done <<< "$EXTRA_VARS"
+          # Unset raw secret slots so they don't leak into make or sudo -E
+          unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
