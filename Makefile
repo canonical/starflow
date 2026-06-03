@@ -169,6 +169,9 @@ test-coverage:
 	$(info "Running tests with extra pytest options: ${PYTEST_ADDOPTS}")
 	$(info "Markers set: $(MARKERS)")
 	$(info "Using Python ${UV_PYTHON}")
+	@if [ -z "$${REPO_VARIABLE}" ]; then echo "::error::REPO_VARIABLE is not set or empty"; exit 1; fi
+	@if [ -z "$${REPO_SECRET}" ]; then echo "::error::REPO_SECRET is not set or empty"; exit 1; fi
+	@echo "All required environment variables are set."
 	@touch coverage.xml
 
 # Below are intermediate targets for setup. They are not included in help as they should
