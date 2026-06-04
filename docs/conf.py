@@ -85,7 +85,7 @@ html_theme_options = {
 #########################
 
 # Use RTD canonical URL to ensure duplicate pages have a specific canonical URL
-html_baseurl = ogp_site_url
+html_baseurl = f"{ogp_site_url}/"
 
 # sphinx-sitemap uses html_baseurl to generate the full URL for each page:
 sitemap_url_scheme = '{link}'
