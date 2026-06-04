@@ -49,3 +49,15 @@ jobs:
       extra-env-vars: |
         REPO_VARIABLE=${{ vars.REPO_VARIABLE }}
         REPO_SECRET=$SECRET_1
+  test-python-noop-platforms: # Test that the Python tests are all skipped when platforms are empty
+    uses: ./.github/workflows/test-python.yaml
+    with:
+      fast-test-platforms: ""
+      slow-test-platforms: ""
+      lowest-python-platform: ""
+  test-python-noop-versions: # Test that the Python tests are all skipped when versions are empty
+    uses: ./.github/workflows/test-python.yaml
+    with:
+      fast-test-python-versions: ""
+      slow-test-python-versions: ""
+      lowest-python-version: ""

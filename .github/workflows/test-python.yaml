@@ -81,12 +81,14 @@ on:
       secret-10:
         required: false
 
-# We add the same conditional to every job's steps, because GitHub doesn't count a
-# required-but-skipped job as complete if a matrix spawned it. This is an ugly
-# workaround that could be resolved if we had isolated CI chains.
+# We use step-level conditionals for 'source-files' because GitHub doesn't count
+# a required-but-skipped job as complete if a matrix spawned it (transient skip).
+# However, we use job-level conditionals for platforms/versions to avoid
+# strategy evaluation errors when they are empty (configuration-based skip).
 jobs:
   fast:
     name: Fast tests
+    if: ${{ inputs.fast-test-platforms != '' && inputs.fast-test-python-versions != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -161,6 +163,7 @@ jobs:
             htmlcov/**
   slow:
     name: Slow tests
+    if: ${{ inputs.slow-test-platforms != '' && inputs.slow-test-python-versions != '' }}
     strategy:
       matrix:
         platform: ${{ fromJson(inputs.slow-test-platforms) }}
@@ -228,7 +231,7 @@ jobs:
     runs-on: ${{ startsWith(inputs.lowest-python-platform, '[') && fromJson(inputs.lowest-python-platform) || inputs.lowest-python-platform }}
     env:
       UV_RESOLUTION: lowest
-    if: ${{ inputs.lowest-python-version != '' && inputs.source-files == 'true' }}
+    if: ${{ inputs.lowest-python-platform != '' && inputs.lowest-python-version != '' && inputs.source-files == 'true' }}
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
