@@ -110,6 +110,10 @@
       prPriority: -4,
       matchBaseBranches: ["main"],
     },
+    {
+      matchJsonata: ["managerData.depGroup = 'docs-sphinx-stack'"],
+      enabled: false,
+    },
   ],
   customManagers: [
     {
