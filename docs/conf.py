@@ -32,7 +32,7 @@ if (
 copyright = "2015-%s, %s" % (datetime.date.today().year, author)
 
 # Documentation website URL
-ogp_site_url = "https://canonical-starflow.readthedocs-hosted.com/"
+ogp_site_url = "https://ubuntu.com/docs/starflow"
 
 # Preview name of the documentation website
 ogp_site_name = project
@@ -85,7 +85,7 @@ html_theme_options = {
 #########################
 
 # Use RTD canonical URL to ensure duplicate pages have a specific canonical URL
-html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "/")
+html_baseurl = f"{ogp_site_url}/"
 
 # sphinx-sitemap uses html_baseurl to generate the full URL for each page:
 sitemap_url_scheme = '{link}'
@@ -99,6 +99,10 @@ sitemap_excludes = [
     'genindex/',
     'search/',
 ]
+
+# Since there's only one version for Starflow, the default sitemap URL will conflict
+# with RTD's sitemap. This changes the filename so they don't collide.
+sitemap_filename = "doc-sitemap.xml"
 
 
 ################################
@@ -188,6 +192,7 @@ html_css_files = [
 # Adds custom JavaScript files, located under 'html_static_path'
 html_js_files = [
     'js/bundle.js',
+    'js/overwrite-links.js',
 ]
 
 # Specifies a reST snippet to be appended to each .rst file
