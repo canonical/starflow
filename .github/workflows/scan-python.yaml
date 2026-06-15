@@ -197,6 +197,9 @@ jobs:
         if: ${{ !cancelled() && hashFiles('requirements/') != '' }}
         run: |
           for reqs in $(ls -1 requirements/*); do
+            if [[ "$(basename "${reqs}")" =~ ^uv-requirements\..*\.txt$ ]]; then
+              continue
+            fi
             osv-scanner ${{ inputs.osv-extra-args }} --lockfile requirements.txt:${reqs}
           done
       - name: Scan source
