@@ -1,0 +1,11 @@
+name: Example Action
+description: Replace this with your action description
+
+inputs:
+  my-input:
+    description: "An example input"
+    required: true
+
+runs:
+  using: node24
+  main: dist/index.js

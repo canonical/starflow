@@ -165,3 +165,6 @@ docs/.sphinx/.wordlist.dic
 
 # output of contributors script
 contributors.html
+
+# PNPM
+node_modules/
