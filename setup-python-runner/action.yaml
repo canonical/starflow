@@ -12,6 +12,9 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Pristine Ubuntu
+      if: ${{ runner.os == 'Linux' && runner.environment == 'github-hosted' }}
+      uses: lengau/pristine-ubuntu-action@v0
     - name: Start apt update
       if: runner.os == 'Linux'
       id: apt
