@@ -99130,7 +99130,6 @@ If the error persists, please check whether Actions and API requests are operati
 
 // ../node_modules/.pnpm/@actions+artifact@6.2.1/node_modules/@actions/artifact/lib/artifact.js
 var client = new DefaultArtifactClient();
-var artifact_default = client;
 
 // src/index.ts
 import { mkdir as mkdir2, readdir as readdir2, rm as rm2, writeFile as writeFile2 } from "fs/promises";
@@ -99189,7 +99188,7 @@ async function readInputs() {
 async function runScanner(scanner, inputs, tokensDir, resultsDir) {
   const tokenFile = join4(tokensDir, `${scanner}-token.txt`);
   const scannerResultsDir = join4(resultsDir, scanner);
-  await mkdir2(scannerResultsDir);
+  await mkdir2(scannerResultsDir, { recursive: true });
   await exec("secscan-client", [
     "--batch",
     "submit",
@@ -99266,9 +99265,7 @@ async function run() {
   try {
     await runInner(tokensDir, resultsDir);
   } catch (error2) {
-    if (error2 instanceof Error) {
-      setFailed(error2.message);
-    }
+    setFailed(error2 instanceof Error ? error2.message : String(error2));
   } finally {
     await rm2(tokensDir, { recursive: true });
   }
@@ -99298,7 +99295,11 @@ async function runInner(tokensDir, resultsDir) {
     const files = (await readdir2(resultsDir, { recursive: true })).map(
       (f) => join4(resultsDir, f)
     );
-    await artifact_default.uploadArtifact("secscan-results", files, resultsDir);
+    await new DefaultArtifactClient().uploadArtifact(
+      "secscan-results",
+      files,
+      resultsDir
+    );
     setOutput("secscan-results", resultsDir);
   }
 }

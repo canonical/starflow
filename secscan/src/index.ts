@@ -83,7 +83,7 @@ export async function runScanner(
 ): Promise<void> {
   const tokenFile = join(tokensDir, `${scanner}-token.txt`);
   const scannerResultsDir = join(resultsDir, scanner);
-  await mkdir(scannerResultsDir);
+  await mkdir(scannerResultsDir, { recursive: true });
 
   await exec.exec("secscan-client", [
     "--batch",
@@ -181,9 +181,7 @@ async function run(): Promise<void> {
   try {
     await runInner(tokensDir, resultsDir);
   } catch (error) {
-    if (error instanceof Error) {
-      core.setFailed(error.message);
-    }
+    core.setFailed(error instanceof Error ? error.message : String(error));
   } finally {
     await rm(tokensDir, { recursive: true });
   }
@@ -221,7 +219,11 @@ async function runInner(tokensDir: string, resultsDir: string): Promise<void> {
     const files = (await readdir(resultsDir, { recursive: true })).map((f) =>
       join(resultsDir, f),
     );
-    await artifact.default.uploadArtifact("secscan-results", files, resultsDir);
+    await new artifact.DefaultArtifactClient().uploadArtifact(
+      "secscan-results",
+      files,
+      resultsDir,
+    );
     core.setOutput("secscan-results", resultsDir);
   }
 }
