@@ -8,7 +8,7 @@
     "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"],
+    "types": ["node"]
   },
-  "include": ["*/src/**/*.ts", "*/tests/**/*.ts"],
+  "include": ["*/src/**/*.ts", "*/tests/**/*.ts"]
 }

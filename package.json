@@ -15,7 +15,7 @@
     "packageManager": {
       "name": "pnpm",
       "version": "^11.7.0",
-      "onFail": "download"
+      "onFail": "warn"
     }
   },
   "type": "module",
