@@ -1,3 +1,4 @@
+import { createRequire as __require__ } from 'module'; globalThis.require = __require__(import.meta.url);
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
