@@ -3,8 +3,8 @@
 
 .. _how-to-github-secrets-setup:
 
-Set up GitHub secrets for staging
-=================================
+Set up GitHub Actions variables and secrets for staging
+=======================================================
 
 This guide explains how to configure the credentials for the Starcraft team's Ubuntu One staging account used by CI workflows.
 
