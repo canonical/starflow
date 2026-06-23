@@ -1,0 +1,77 @@
+.. meta::
+    :description: How to configure staging GitHub Actions variables and secrets for the Starcraft team's Ubuntu One staging account.
+
+.. _how-to-github-secrets-setup:
+
+Set up GitHub secrets for staging
+=================================
+
+This guide explains how to configure the credentials for the Starcraft team's Ubuntu One staging account used by CI workflows.
+
+Prerequisites
+-------------
+
+Before starting, ensure you have:
+
+* Administrator access to the target GitHub repository.
+* Access to the corporate password manager.
+* Access to the **Starcraft Shared Accounts** collection.
+
+Step-by-step guide
+------------------
+
+Navigate to repository settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Go to your repository on GitHub.
+2. Click **Settings**.
+3. In the left sidebar, select **Secrets and variables** > **Actions**.
+
+Retrieve the Starcraft team's Ubuntu One staging account credentials
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Open the **Ubuntu SSO Staging** login for the Starcraft team's Ubuntu One staging
+   account in the **Starcraft Shared Accounts** collection.
+2. Confirm the username is ``starcraft-team+staging-sso@groups.canonical.com``.
+3. Copy the login password when you are ready to paste it into GitHub.
+
+Create the required GitHub entries
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Add one Actions variable and one Actions secret to match the workflow configuration.
+
+1. Under **Secrets and variables** > **Actions**, open the **Variables** tab.
+2. Create a variable named ``STAGING_SSO_USERNAME`` with value
+   ``starcraft-team+staging-sso@groups.canonical.com``.
+3. Open the **Secrets** tab.
+4. Create a secret named ``STAGING_SSO_PASSWORD`` with the password from the Starcraft
+   team's Ubuntu One staging account.
+
+Configure workflow access
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Ensure the workflow job can access both the Actions variable and Actions secret.
+2. If credentials fail to load during a workflow run, check:
+
+   * ``STAGING_SSO_USERNAME`` exists as a GitHub variable.
+   * ``STAGING_SSO_PASSWORD`` exists as a GitHub secret.
+   * The names match the workflow YAML exactly.
+
+Use these values in ``qa.yaml``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This example shows how to pass the variable and secret into a reusable workflow and expose
+them as environment variables for tests:
+
+.. code-block:: yaml
+
+    jobs:
+      test:
+        uses: canonical/starflow/.github/workflows/test-python.yaml@main
+        with:
+          extra-env-vars: |
+            STAGING_SSO_USERNAME=$SECRET_1
+            STAGING_SSO_PASSWORD=$SECRET_2
+        secrets:
+          secret-1: ${{ vars.STAGING_SSO_USERNAME }}
+          secret-2: ${{ secrets.STAGING_SSO_PASSWORD }}
