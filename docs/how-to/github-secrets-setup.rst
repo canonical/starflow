@@ -68,10 +68,9 @@ them as environment variables for tests:
     jobs:
       test:
         uses: canonical/starflow/.github/workflows/test-python.yaml@main
+        secrets:
+          secret-1: ${{ secrets.STAGING_SSO_PASSWORD }}
         with:
           extra-env-vars: |
-            STAGING_SSO_USERNAME=$SECRET_1
-            STAGING_SSO_PASSWORD=$SECRET_2
-        secrets:
-          secret-1: ${{ vars.STAGING_SSO_USERNAME }}
-          secret-2: ${{ secrets.STAGING_SSO_PASSWORD }}
+            STAGING_SSO_USERNAME=${{ vars.STAGING_SSO_USERNAME }}
+            STAGING_SSO_PASSWORD=$SECRET_1
