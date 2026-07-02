@@ -57,7 +57,7 @@ Configure workflow access
    * ``STAGING_SSO_PASSWORD`` exists as a GitHub secret.
    * The names match the workflow YAML exactly.
 
-Use these values in ``qa.yaml``
+Use these values in a workflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example shows how to pass the variable and secret into a reusable workflow and expose
