@@ -7,9 +7,11 @@ These pages walk you through the manual processes and workflows in the Starcraft
 
 - :ref:`how-to-starcraft-style-guide`
 - :ref:`how-to-add-a-page-meta-description`
+- :ref:`how-to-github-secrets-setup`
 
 .. toctree::
     :hidden:
 
     starcraft-style-guide
     add-a-page-meta-description
+    github-secrets-setup
