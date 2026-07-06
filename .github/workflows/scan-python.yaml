@@ -7,18 +7,13 @@ on:
         required: false
         type: string
         description: |
-          Packages to install with apt when building the wheel or scanning with trivy
+          Packages to install with apt when building the wheel.
           This can be useful if creating a virtual environment has extra build-deps.
       uv-export:
         type: boolean
         default: true
         description: |
           Whether to export requirements files from uv. Defaults to true.
-      uv-sync-extra-args:
-        type: string
-        default: ""
-        description: |
-          Extra arguments to pass to uv when using sync to generate a virtual environment.
       requirements-find-args:
         required: false
         type: string
@@ -43,7 +38,9 @@ on:
         required: false
         type: string
         default: "--severity HIGH,CRITICAL --ignore-unfixed"
-        description: Additional arguments to pass to trivy.
+        description: |
+          Deprecated: Trivy has been removed. This input is accepted but ignored.
+          It will be removed in a future version.
 
 jobs:
   build-artefacts:
@@ -91,89 +88,6 @@ jobs:
         with:
           name: artefacts
           path: ${{ runner.temp }}/python-artefacts
-  scan-trivy:
-    name: Trivy
-    needs: build-artefacts
-    runs-on: [ubuntu-latest]
-    env:
-      UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
-    steps:
-      - name: Install tools
-        run: |
-          trivy_job=$(sudo snap install --no-wait trivy)
-          uv_job=$(sudo snap install --no-wait --classic astral-uv)
-          sudo apt-get update
-          sudo apt-get --yes install ${{ inputs.packages }}
-          sudo snap watch $trivy_job
-          sudo snap watch $uv_job
-      - name: Download trivy database
-        run: |
-          timeout 30s bash -c 'while ! trivy filesystem --download-db-only; do sleep 0.1; done'
-      - name: Checkout source
-        uses: actions/checkout@v6
-        with:
-          path: source
-      - name: Download artefacts
-        uses: actions/download-artifact@v8
-        with:
-          name: artefacts
-      - name: Cache uv packages
-        uses: actions/cache@v5
-        id: cache-uv
-        with:
-          path: ${{ env.UV_CACHE_DIR }}
-          key: ${{ github.workflow }}-uv-${{ hashFiles('requirements/*') }}
-      - name: Scan requirements files
-        if: ${{ !cancelled() && hashFiles('requirements/') != '' }}
-        run: |
-          for reqs in $(ls -1 requirements/*); do
-            trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} "${reqs}"
-          done
-      - name: Scan wheel files
-        if: ${{ !cancelled() && hashFiles('*.whl') != '' }}
-        run: |
-          for wheel in $(ls -1 *.whl); do
-            echo "::group::Scanning ${wheel}"
-            wheel_dir=$(mktemp -d --tmpdir=${{ runner.temp }} --suffix=.whl-dir)
-            unzip -q "${wheel}" -d "${wheel_dir}"
-            trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} "${wheel_dir}"
-            echo "::endgroup::"
-          done
-      - name: Scan source
-        if: ${{ !cancelled() }}
-        run: |
-          trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} source
-      - name: Scan virtual environments
-        run: |
-          snap watch --last=install
-          for reqs in $(ls -1 requirements/*); do
-            echo "::group::Setup ${reqs}"
-            venv=$(mktemp -d --tmpdir=${{ runner.temp }} --suffix=.venv)
-            uv venv "${venv}"
-            source "${venv}/bin/activate"
-            echo Installing "${reqs}"
-            uv pip install --requirement="${reqs}"
-            echo "::endgroup::"
-            trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} "${venv}"
-            deactivate
-          done
-          for wheel in $(ls -1 *.whl); do
-            echo "::group::Setup ${wheel}"
-            venv=$(mktemp -d --tmpdir=${{ runner.temp }} --suffix=.venv)
-            uv venv "${venv}"
-            source "${venv}/bin/activate"
-            echo Installing "${wheel}"
-            uv pip install "${wheel}"
-            echo "::endgroup::"
-            trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} "${venv}"
-            deactivate
-          done
-      - name: Scan uv workspace
-        if: ${{ hashFiles('source/uv.lock') != ''}}
-        run: |
-          cd source
-          uv sync ${{ inputs.uv-sync-extra-args }}
-          trivy filesystem --exit-code 1 ${{ inputs.trivy-extra-args }} .venv
   scan-osv:
     name: OSV-scanner
     needs: build-artefacts
