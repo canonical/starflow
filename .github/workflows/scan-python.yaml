@@ -7,8 +7,7 @@ on:
         required: false
         type: string
         description: |
-          Packages to install with apt when building the wheel.
-          This can be useful if creating a virtual environment has extra build-deps.
+          Additional packages to install with apt when building the wheel.
       uv-export:
         type: boolean
         default: true
@@ -37,7 +36,7 @@ on:
       trivy-extra-args:
         required: false
         type: string
-        default: "--severity HIGH,CRITICAL --ignore-unfixed"
+        default: ""
         description: |
           Deprecated: Trivy has been removed. This input is accepted but ignored.
           It will be removed in a future version.
