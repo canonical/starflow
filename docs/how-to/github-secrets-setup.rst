@@ -22,7 +22,7 @@ Before starting, ensure you have:
 Retrieve the Starcraft team's Ubuntu One staging account credentials
 --------------------------------------------------------------------
 
-1. In the corporate password manager, locate the **Starcraft Shared Accounts** 
+1. In the corporate password manager, locate the **Starcraft Shared Accounts**
    collection. Open the **Ubuntu SSO Staging** login.
 2. Confirm the username is ``starcraft-team+staging-sso@groups.canonical.com``.
 3. Copy the login password when you are ready to paste it into GitHub.
@@ -42,11 +42,10 @@ Add one Actions variable and one Actions secret to match the workflow configurat
 Configure workflow access
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Ensure the workflow job can access both the Actions variable and Actions secret.
-2. If credentials fail to load during a workflow run, check:
+If credentials fail to load during a workflow run, check:
 
-   * ``STAGING_SSO_USERNAME`` exists as a GitHub variable.
-   * ``STAGING_SSO_PASSWORD`` exists as a GitHub secret.
+   * ``vars.STAGING_SSO_USERNAME`` exists.
+   * ``secrets.STAGING_SSO_PASSWORD`` exists.
    * The names match the workflow YAML exactly.
 
 Use these values in a workflow
