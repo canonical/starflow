@@ -17,21 +17,13 @@ Before starting, ensure you have:
 * Access to the corporate password manager.
 * Access to the **Starcraft Shared Accounts** collection.
 
-Step-by-step guide
-------------------
 
-Navigate to repository settings
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-1. Go to your repository on GitHub.
-2. Click **Settings**.
-3. In the left sidebar, select **Secrets and variables** > **Actions**.
 
 Retrieve the Starcraft team's Ubuntu One staging account credentials
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------------------------
 
-1. Open the **Ubuntu SSO Staging** login for the Starcraft team's Ubuntu One staging
-   account in the **Starcraft Shared Accounts** collection.
+1. In the corporate password manager, locate the **Starcraft Shared Accounts** 
+   collection. Open the **Ubuntu SSO Staging** login.
 2. Confirm the username is ``starcraft-team+staging-sso@groups.canonical.com``.
 3. Copy the login password when you are ready to paste it into GitHub.
 
@@ -40,7 +32,7 @@ Create the required GitHub entries
 
 Add one Actions variable and one Actions secret to match the workflow configuration.
 
-1. Under **Secrets and variables** > **Actions**, open the **Variables** tab.
+1. In the repository's settings, under **Secrets and variables** > **Actions**, open the **Variables** tab.
 2. Create a variable named ``STAGING_SSO_USERNAME`` with value
    ``starcraft-team+staging-sso@groups.canonical.com``.
 3. Open the **Secrets** tab.
