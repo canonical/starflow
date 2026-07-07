@@ -11,3 +11,16 @@ jobs:
     uses: ./.github/workflows/scan-golang.yaml
   python:
     uses: ./.github/workflows/scan-python.yaml
+    with:
+      # Include all groups so the exclusions below are actually exercised.
+      uv-export-extra-args: "--all-extras --all-groups"
+      # Exclude all docs dependency groups. evil-mode contains an intentionally
+      # vulnerable version to smoke test the exclusion, while the others are
+      # genuine exclusions for things we want to ignore.
+      uv-export-no-groups: |
+        docs
+        docs-starter-pack
+        evil-mode
+      # Exclude the docs/ directory from the recursive source scan to suppress
+      # findings from docs/requirements.dummy.txt, also intentionally vulnerable
+      osv-source-exclude-paths: "docs/"

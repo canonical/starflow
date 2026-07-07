@@ -67,22 +67,19 @@ jobs:
 The Python security scanner workflow uses [OSV-scanner](https://google.github.io/osv-scanner/)
 to scan a Python project for security issues. It does the following:
 
-1. Creates a wheel of the project.
-2. Exports a `uv.lock` file (if present in the project) as two requirements files:
-   a. `requirements.txt` with no extras
-   b. `requirements-all.txt` with all available extras
+1. Exports a `uv.lock` file (if present) as a requirements file using `uv export`. The export
+   can be customised with `uv-export-extra-args` (e.g. to include all extras or dependency
+   groups), and specific dependency groups can be excluded with `uv-export-no-groups`.
+2. Scans the exported requirements file for known vulnerabilities.
+3. Recursively scans the project source tree for any other lockfiles. If `uv-export-no-groups`
+   is set, `uv.lock` is excluded from this scan since the filtered export replaces it.
 
-If there are any existing `requirements*.txt` files in your project, it will scan those
-below too. Exporting a `uv.lock` file can be disabled by setting `uv-export: false`.
-
-With [OSV-scanner](https://google.github.io/osv-scanner/) it:
-
-1. Scans the requirements files
-2. Scans the project directory
+Exporting a `uv.lock` file can be disabled by setting `uv-export: false`.
 
 ### Usage
 
-An example workflow for your own Python project that will use this workflow:
+An example workflow for a Python project that excludes documentation dependencies from
+the scan and suppresses findings from the `docs/` directory:
 
 ```yaml
 name: Security scan
@@ -98,13 +95,15 @@ jobs:
     name: Scan Python project
     uses: canonical/starflow/.github/workflows/scan-python.yaml@main
     with:
-      # Additional packages to install on the Ubuntu runners for building
-      packages: python-apt-dev cargo
-      # Additional arguments to `find` when finding requirements files.
-      # This example ignores 'requirements-noble.txt'
-      requirements-find-args: "! -name requirements-noble.txt"
-      # Additional arguments to pass to osv-scanner.
-      # This example adds configuration from your project.
+      # Include all dependency groups in the export, then exclude the docs groups.
+      # The docs-sphinx-stack group must be defined in pyproject.toml.
+      uv-export-extra-args: "--all-extras --all-groups"
+      uv-export-no-groups: |
+        docs
+        docs-sphinx-stack
+      # Exclude docs/ from the recursive source scan (e.g. to ignore example lockfiles).
+      osv-source-exclude-paths: "docs/"
+      # Pass additional arguments to osv-scanner, e.g. a project config file.
       osv-extra-args: "--config=source/osv-scanner.toml"
 ```
 

@@ -16,6 +16,12 @@ docs = [
     "sphinxext-rediraffe==0.3.0",
     {include-group = "docs-starter-pack"},
 ]
+evil-mode = [
+    # Intentionally vulnerable package — used to self-test that uv-export-no-groups
+    # exclusion works in .github/workflows/self-test-scan.yaml.
+    "cryptography==3.3.2",
+]
+
 # We disable the unused but default SP dependencies slated for removal
 # https://warthogs.atlassian.net/browse/DOCPR-2387
 docs-starter-pack = [
