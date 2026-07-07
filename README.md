@@ -64,8 +64,8 @@ jobs:
 
 ## Python security scanner
 
-The Python security scanner workflow uses several tools (trivy, osv-scanner) to scan a
-Python project for security issues. It does the following:
+The Python security scanner workflow uses [OSV-scanner](https://google.github.io/osv-scanner/)
+to scan a Python project for security issues. It does the following:
 
 1. Creates a wheel of the project.
 2. Exports a `uv.lock` file (if present in the project) as two requirements files:
@@ -74,15 +74,6 @@ Python project for security issues. It does the following:
 
 If there are any existing `requirements*.txt` files in your project, it will scan those
 below too. Exporting a `uv.lock` file can be disabled by setting `uv-export: false`.
-
-With [Trivy](https://github.com/aquasecurity/trivy), it:
-
-1. Scans the requirements files
-2. Scans the wheel file(s)
-3. Scans the project directory
-4. Installs each combination of (requirements, wheel) in a virtual environment and scans that environment.
-5. If a `uv.lock` file exists for the project, creates a virtual environment using `uv sync` and
-   scans that environment. `uv sync` can be configured with the `uv-sync-extra-args` input.
 
 With [OSV-scanner](https://google.github.io/osv-scanner/) it:
 
@@ -115,8 +106,6 @@ jobs:
       # Additional arguments to pass to osv-scanner.
       # This example adds configuration from your project.
       osv-extra-args: "--config=source/osv-scanner.toml"
-      # Use the standard extra args and ignore spread tests
-      trivy-extra-args: '--severity HIGH,CRITICAL --ignore-unfixed --skip-dirs "tests/spread/**"'
 ```
 
 ## Go security scanner
