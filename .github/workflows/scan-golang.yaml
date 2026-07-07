@@ -62,13 +62,14 @@ jobs:
           unset IFS
       - name: Scan source
         if: ${{ !cancelled() }}
+        working-directory: source
         run: |
           exclude_args=""
           if [[ -n "${{ inputs.osv-exclude-paths }}" ]]; then
             IFS=$'\n'
             for path in $(echo "${{ inputs.osv-exclude-paths }}"); do
-              exclude_args="${exclude_args} --experimental-exclude source/${path}"
+              exclude_args="${exclude_args} --experimental-exclude ${path}"
             done
             unset IFS
           fi
-          osv-scanner scan --recursive --allow-no-lockfiles ${{ inputs.osv-extra-args }} ${exclude_args} source
+          osv-scanner scan --recursive --allow-no-lockfiles ${{ inputs.osv-extra-args }} ${exclude_args} .

@@ -67,13 +67,12 @@ jobs:
 The Python security scanner workflow uses [OSV-scanner](https://google.github.io/osv-scanner/)
 to scan a Python project for security issues. It does the following:
 
-1. Exports a `uv.lock` file (if present) as a requirements file using `uv export`. The export
-   can be customised with `uv-export-extra-args` (e.g. to include all extras or dependency
-   groups), and specific dependency groups can be excluded with `uv-export-no-groups`.
+1. Runs `uv export` to extract a project's requirements from its `uv.lock` file. The workflow can
+  dictate the [export command's options](https://docs.astral.sh/uv/reference/cli/#uv-export) with
+  the `uv-export-extra-args` input. The workflow can also exclude a dependency group by listing it
+  in the `uv-export-no-groups` input.
 2. Scans the exported requirements file for known vulnerabilities.
-3. Recursively scans the project source tree for any other lockfiles. When `uv-export` is
-   enabled, `uv.lock` is excluded from this scan since the requirements export already covers
-   it.
+3. Recursively scans the project source tree for any other lockfiles.
 
 Exporting a `uv.lock` file can be disabled by setting `uv-export: false`.
 
@@ -105,7 +104,7 @@ jobs:
       # Exclude docs/ from the recursive source scan (e.g. to ignore example lockfiles).
       osv-exclude-paths: "docs/"
       # Pass additional arguments to osv-scanner, e.g. a project config file.
-      osv-extra-args: "--config=source/osv-scanner.toml"
+      osv-extra-args: "--config=osv-scanner.toml"
 ```
 
 ## Go security scanner
@@ -135,7 +134,7 @@ jobs:
       # Exclude docs/ from the recursive source scan (e.g. to ignore example lockfiles).
       osv-exclude-paths: "docs/"
       # Pass additional arguments to osv-scanner, e.g. a project config file.
-      osv-extra-args: "--config=source/osv-scanner.toml"
+      osv-extra-args: "--config=osv-scanner.toml"
 ```
 
 ## Python test runner
