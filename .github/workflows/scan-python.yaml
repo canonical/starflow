@@ -163,4 +163,4 @@ jobs:
             done
             unset IFS
           fi
-          osv-scanner scan --recursive ${{ inputs.osv-extra-args }} ${exclude_args} source
+          osv-scanner scan --recursive --allow-no-lockfiles ${{ inputs.osv-extra-args }} ${exclude_args} source
