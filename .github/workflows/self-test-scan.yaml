@@ -11,6 +11,7 @@ jobs:
     uses: ./.github/workflows/scan-golang.yaml
     with:
       osv-source-exclude-paths: "docs/"
+      osv-exclude-files: "uv.lock"
   python:
     uses: ./.github/workflows/scan-python.yaml
     with:
