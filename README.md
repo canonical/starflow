@@ -68,9 +68,9 @@ The Python security scanner workflow uses [OSV-scanner](https://google.github.io
 to scan a Python project for security issues. It does the following:
 
 1. Runs `uv export` to extract a project's requirements from its `uv.lock` file. The workflow can
-  dictate the [export command's options](https://docs.astral.sh/uv/reference/cli/#uv-export) with
-  the `uv-export-extra-args` input. The workflow can also exclude a dependency group by listing it
-  in the `uv-export-no-groups` input.
+   dictate the [export command's options](https://docs.astral.sh/uv/reference/cli/#uv-export) with
+   the `uv-export-extra-args` input. The workflow can also exclude a dependency group by listing it
+   in the `uv-export-no-groups` input.
 2. Scans the exported requirements file for known vulnerabilities.
 3. Recursively scans the project source tree for any other lockfiles.
 
