@@ -109,12 +109,13 @@ jobs:
 
 ## Go security scanner
 
-The Go security scanner workflow uses several tools (trivy, osv-scanner) to scan a
-Go project for security issues.
+The Go security scanner workflow uses [OSV-scanner](https://google.github.io/osv-scanner/)
+to scan a Go project for security issues. It recursively scans the project source tree for
+known vulnerabilities in any lockfiles it finds.
 
 ### Usage
 
-An example workflow for your own Go project that will use this workflow:
+An example workflow for a Go project that excludes the `docs/` directory from the scan:
 
 ```yaml
 name: Security scan
@@ -130,13 +131,10 @@ jobs:
     name: Scan Go project
     uses: canonical/starflow/.github/workflows/scan-golang.yaml@main
     with:
-      # Additional packages to install on the Ubuntu runners for building
-      packages: protoc-gen-go-1-3
-      # Additional arguments to pass to osv-scanner.
-      # This example adds configuration from your project.
-      osv-extra-args: "--config=.osv-scanner.toml"
-      # Use the standard extra args and ignore spread tests
-      trivy-extra-args: '--skip-dirs "tests/spread/**"'
+      # Exclude docs/ from the recursive source scan (e.g. to ignore example lockfiles).
+      osv-source-exclude-paths: "docs/"
+      # Pass additional arguments to osv-scanner, e.g. a project config file.
+      osv-extra-args: "--config=source/osv-scanner.toml"
 ```
 
 ## Python test runner

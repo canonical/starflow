@@ -9,6 +9,8 @@ on:
 jobs:
   golang:
     uses: ./.github/workflows/scan-golang.yaml
+    with:
+      osv-source-exclude-paths: "docs/"
   python:
     uses: ./.github/workflows/scan-python.yaml
     with:
