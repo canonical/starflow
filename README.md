@@ -71,8 +71,9 @@ to scan a Python project for security issues. It does the following:
    can be customised with `uv-export-extra-args` (e.g. to include all extras or dependency
    groups), and specific dependency groups can be excluded with `uv-export-no-groups`.
 2. Scans the exported requirements file for known vulnerabilities.
-3. Recursively scans the project source tree for any other lockfiles. If `uv-export-no-groups`
-   is set, `uv.lock` is excluded from this scan since the filtered export replaces it.
+3. Recursively scans the project source tree for any other lockfiles. When `uv-export` is
+   enabled, `uv.lock` is excluded from this scan since the requirements export already covers
+   it.
 
 Exporting a `uv.lock` file can be disabled by setting `uv-export: false`.
 
