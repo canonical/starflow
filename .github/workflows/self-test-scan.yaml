@@ -10,7 +10,7 @@ jobs:
   golang:
     uses: ./.github/workflows/scan-golang.yaml
     with:
-      osv-source-exclude-paths: "docs/"
+      osv-exclude-paths: "docs/"
       osv-exclude-files: "uv.lock"
   python:
     uses: ./.github/workflows/scan-python.yaml
@@ -26,4 +26,4 @@ jobs:
         evil-mode
       # Exclude the docs/ directory from the recursive source scan to suppress
       # findings from docs/requirements.dummy.txt, also intentionally vulnerable
-      osv-source-exclude-paths: "docs/"
+      osv-exclude-paths: "docs/"

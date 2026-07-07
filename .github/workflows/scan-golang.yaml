@@ -29,7 +29,7 @@ on:
           Files to remove from the source checkout before the OSV source scan, relative to the
           repository root. Useful for excluding root-level lockfiles that belong to a different
           ecosystem or are already covered by another scan. Each filename on its own line.
-      osv-source-exclude-paths:
+      osv-exclude-paths:
         required: false
         type: string
         description: |
@@ -64,9 +64,9 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           exclude_args=""
-          if [[ -n "${{ inputs.osv-source-exclude-paths }}" ]]; then
+          if [[ -n "${{ inputs.osv-exclude-paths }}" ]]; then
             IFS=$'\n'
-            for path in $(echo "${{ inputs.osv-source-exclude-paths }}"); do
+            for path in $(echo "${{ inputs.osv-exclude-paths }}"); do
               exclude_args="${exclude_args} --experimental-exclude source/${path}"
             done
             unset IFS

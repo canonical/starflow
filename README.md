@@ -102,7 +102,7 @@ jobs:
         docs
         docs-sphinx-stack
       # Exclude docs/ from the recursive source scan (e.g. to ignore example lockfiles).
-      osv-source-exclude-paths: "docs/"
+      osv-exclude-paths: "docs/"
       # Pass additional arguments to osv-scanner, e.g. a project config file.
       osv-extra-args: "--config=source/osv-scanner.toml"
 ```
@@ -132,7 +132,7 @@ jobs:
     uses: canonical/starflow/.github/workflows/scan-golang.yaml@main
     with:
       # Exclude docs/ from the recursive source scan (e.g. to ignore example lockfiles).
-      osv-source-exclude-paths: "docs/"
+      osv-exclude-paths: "docs/"
       # Pass additional arguments to osv-scanner, e.g. a project config file.
       osv-extra-args: "--config=source/osv-scanner.toml"
 ```
