@@ -52,13 +52,6 @@ on:
 
           See https://google.github.io/osv-scanner/usage/scan-source#excluding-paths for more
           information.
-      uv-sync-extra-args:
-        required: false
-        type: string
-        default: ""
-        description: |
-          Deprecated: Trivy has been removed. This input is accepted but ignored.
-          It will be removed in a future version.
       osv-extra-args:
         required: false
         type: string
