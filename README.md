@@ -72,7 +72,8 @@ to scan a Python project for security issues. It does the following:
    the `uv-export-extra-args` input. The workflow can also exclude a dependency group by listing it
    in the `uv-export-no-groups` input.
 2. Scans the exported requirements file for known vulnerabilities.
-3. Recursively scans the project source tree for any other lockfiles.
+3. Recursively searches the project source tree for any other lockfiles.
+4. Scans any found lockfiles for known vulnerabilities.
 
 Exporting a `uv.lock` file can be disabled by setting `uv-export: false`.
 
