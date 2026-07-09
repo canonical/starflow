@@ -123,8 +123,10 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: artefacts
+          path: source
       - name: Scan requirements files
-        if: ${{ !cancelled() && hashFiles('requirements/') != '' }}
+        if: ${{ !cancelled() && hashFiles('source/requirements/') != '' }}
+        working-directory: source
         run: |
           for reqs in $(ls -1 requirements/*); do
             osv-scanner ${{ inputs.osv-extra-args }} --lockfile requirements.txt:${reqs}
