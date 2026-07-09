@@ -7,7 +7,8 @@ on:
         required: false
         type: string
         description: |
-          Additional packages to install with apt when building the wheel.
+          Deprecated: wheel building has been removed. This input is accepted but ignored.
+          It will be removed in a future version.
       uv-export:
         type: boolean
         default: true
@@ -18,8 +19,8 @@ on:
         type: string
         default: ""
         description: |
-          Additional arguments to use for find when finding requirements files. Can
-          be used to find additional files or to exclude files.
+          Deprecated: requirements files are now discovered via the recursive source scan.
+          This input is accepted but ignored. It will be removed in a future version.
       uv-export-extra-args:
         required: false
         type: string
@@ -27,6 +28,30 @@ on:
         description: |
           List of additional arguments for uv export commands (for example to ignore certain extras).
           Use multiline string to provide several sets of arguments.
+      uv-export-no-groups:
+        required: false
+        type: string
+        description: |
+          Dependency groups to exclude from uv export (e.g. docs-sphinx-stack). Each group on its
+          own line. The group must exist in the project's dependency-groups table and must not be
+          transitively included by any other active group (via include-group).
+      osv-exclude-files:
+        required: false
+        type: string
+        description: |
+          Files to remove from the source checkout before the OSV source scan, relative to the
+          repository root. Useful for excluding root-level lockfiles that belong to a different
+          ecosystem or are already covered by a filtered export. Each filename on its own line.
+      osv-exclude-paths:
+        required: false
+        type: string
+        description: |
+          Paths to exclude from the OSV source scan, passed as repeated --experimental-exclude
+          flags. Useful for ignoring example projects or fixtures in docs/ or tests/ that contain
+          their own lockfiles. Each path on its own line.
+
+          See https://google.github.io/osv-scanner/usage/scan-source#excluding-paths for more
+          information.
       osv-extra-args:
         required: false
         type: string
@@ -44,43 +69,35 @@ on:
 jobs:
   build-artefacts:
     name: Build artefacts
-    runs-on: [ubuntu-24.04] # Needs Noble specifically
+    runs-on: [ubuntu-latest]
     env:
       UV_CACHE_DIR: ${{ github.workspace }}/.cache/uv
     steps:
       - name: Install tools
         shell: bash
         run: |
-          uv_job=$(sudo snap install --no-wait --classic astral-uv)
-
-          # Workaround for https://github.com/actions/runner-images/issues/10977
-          echo "set man-db/auto-update false" | sudo debconf-communicate
-          sudo dpkg-reconfigure --frontend noninteractive man-db
-
-          sudo apt-get update
-          sudo apt-get --yes install python3-venv python3-build ${{ inputs.packages }}
-          sudo snap watch $uv_job
+          sudo snap install --classic astral-uv
           mkdir -p ${{ runner.temp }}/python-artefacts/requirements
       - name: Checkout source
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Find any existing requirements files
-        shell: bash
-        run: |
-          find -type f -name 'requirements*.txt' ${{ inputs.requirements-find-args }} -exec cp '{}' "${{ runner.temp }}/python-artefacts/requirements" \;
-      - name: Build wheel
-        shell: bash
-        run: |
-          python -m build --wheel --outdir ${{ runner.temp }}/python-artefacts
       - name: Create requirements files from uv
         if: ${{ inputs.uv-export && hashFiles('uv.lock') != ''}}
         run: |
+          no_group_args=""
+          if [[ -n "${{ inputs.uv-export-no-groups }}" ]]; then
+            IFS=$'\n'
+            for group in $(echo "${{ inputs.uv-export-no-groups }}"); do
+              no_group_args="${no_group_args} --no-group ${group}"
+            done
+            unset IFS
+          fi
           IFS=$'\n'
           for extras in $(echo "${{ inputs.uv-export-extra-args }}"); do
             unset IFS
             filename=uv-requirements.$(echo $extras | tr ' ' '_').txt
-            uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt $extras --output-file=${{ runner.temp }}/python-artefacts/requirements/$filename
+            uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt $extras ${no_group_args} --output-file=${{ runner.temp }}/python-artefacts/requirements/$filename
           done
       - name: Upload artefacts
         uses: actions/upload-artifact@v7
@@ -112,7 +129,32 @@ jobs:
           for reqs in $(ls -1 requirements/*); do
             osv-scanner ${{ inputs.osv-extra-args }} --lockfile requirements.txt:${reqs}
           done
-      - name: Scan source
+      - name: Remove files from source scan
         if: ${{ !cancelled() }}
         run: |
-          osv-scanner ${{ inputs.osv-extra-args }} source
+          files_to_remove="${{ inputs.osv-exclude-files }}"
+          # Implicitly ignore uv.lock if we exported, as it would be redundant to scan both
+          # Additionally, if `uv-export-no-groups` is set, scanning the lockfile would raise
+          # OSVs for groups the user tried to ignore anyways
+          if [[ "${{ inputs.uv-export }}" == "true" ]]; then
+            files_to_remove="uv.lock
+          ${files_to_remove}"
+          fi
+          IFS=$'\n'
+          for file in ${files_to_remove}; do
+            [[ -n "${file}" ]] && rm -f "source/${file}"
+          done
+          unset IFS
+      - name: Scan source
+        if: ${{ !cancelled() }}
+        working-directory: source
+        run: |
+          exclude_args=""
+          if [[ -n "${{ inputs.osv-exclude-paths }}" ]]; then
+            IFS=$'\n'
+            for path in $(echo "${{ inputs.osv-exclude-paths }}"); do
+              exclude_args="${exclude_args} --experimental-exclude ${path}"
+            done
+            unset IFS
+          fi
+          osv-scanner scan --recursive --allow-no-lockfiles ${{ inputs.osv-extra-args }} ${exclude_args} .
