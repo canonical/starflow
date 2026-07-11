@@ -325,20 +325,23 @@ wheels = [
 
 [[package]]
 name = "cryptography"
-version = "3.3.2"
+version = "3.4.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cffi" },
-    { name = "six" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d4/85/38715448253404186029c575d559879912eb8a1c5d16ad9f25d35f7c4f4c/cryptography-3.3.2.tar.gz", hash = "sha256:5a60d3780149e13b7a6ff7ad6526b38846354d11a15e21068e57073e29e19bed", size = 539883, upload-time = "2021-02-07T16:51:10.548Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/98/8a258ab4787e6f835d350639792527d2eb7946ff9fc0caca9c3f4cf5dcfe/cryptography-3.4.8.tar.gz", hash = "sha256:94cc5ed4ceaefcbe5bf38c8fba6a21fc1d365bb8fb826ea1688e3370b2e24a1c", size = 546907, upload-time = "2021-08-24T17:18:55.931Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4f/ea/6169c15d2f031fd8e950736fcba58a1e78e30f94dcd4e13de3acad9682d7/cryptography-3.3.2-cp36-abi3-macosx_10_10_x86_64.whl", hash = "sha256:0d7b69674b738068fa6ffade5c962ecd14969690585aaca0a1b1fc9058938a72", size = 1806119, upload-time = "2021-02-07T17:00:14.93Z" },
-    { url = "https://files.pythonhosted.org/packages/32/48/ec2a3e98d8b61d2c65e4c6905aad370049c4bd4a6b1b1d78f8983d38effe/cryptography-3.3.2-cp36-abi3-manylinux1_x86_64.whl", hash = "sha256:922f9602d67c15ade470c11d616f2b2364950602e370c76f0c94c94ae672742e", size = 2655339, upload-time = "2021-02-07T17:00:16.218Z" },
-    { url = "https://files.pythonhosted.org/packages/c6/d1/800ec785c9e66cc6d0ac587bd666eb22f7b2ff6c150e053d35881acd2f57/cryptography-3.3.2-cp36-abi3-manylinux2010_x86_64.whl", hash = "sha256:a0f0b96c572fc9f25c3f4ddbf4688b9b38c69836713fb255f4a2715d93cbaf44", size = 2617074, upload-time = "2021-02-07T17:00:18.26Z" },
-    { url = "https://files.pythonhosted.org/packages/b6/e2/23313cd9d15c93c26d000c8917c3400ce1e4f0ae91a7bc7132578c2a69e3/cryptography-3.3.2-cp36-abi3-manylinux2014_aarch64.whl", hash = "sha256:a777c096a49d80f9d2979695b835b0f9c9edab73b59e4ceb51f19724dda887ed", size = 2596498, upload-time = "2021-02-07T17:01:08.926Z" },
-    { url = "https://files.pythonhosted.org/packages/8d/d1/3167f1890afe03f8a6345351fb55cb7daa231f43ad2e0ca4b0d0bad85e23/cryptography-3.3.2-cp36-abi3-win32.whl", hash = "sha256:3c284fc1e504e88e51c428db9c9274f2da9f73fdf5d7e13a36b8ecb039af6e6c", size = 1274098, upload-time = "2021-02-07T17:00:19.659Z" },
-    { url = "https://files.pythonhosted.org/packages/49/f1/6f03c4bdb33de207fe97fe771b0c671dfe30b55842f7d193205a1303d9e5/cryptography-3.3.2-cp36-abi3-win_amd64.whl", hash = "sha256:7951a966613c4211b6612b0352f5bf29989955ee592c4a885d8c7d0f830d0433", size = 1513103, upload-time = "2021-02-07T17:00:21.346Z" },
+    { url = "https://files.pythonhosted.org/packages/00/e4/da1509e64a92e32ec8df97f5c4372e7f0e56b5b0bad299da61a9632b900c/cryptography-3.4.8-cp36-abi3-macosx_10_10_x86_64.whl", hash = "sha256:a00cf305f07b26c351d8d4e1af84ad7501eca8a342dedf24a7acb0e7b7406e14", size = 1984242, upload-time = "2021-08-24T17:28:41.209Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/d1/41c840255bd2b416e3653f4fef31224ba87576cc6b75b791de5c752126cb/cryptography-3.4.8-cp36-abi3-macosx_11_0_arm64.whl", hash = "sha256:f44d141b8c4ea5eb4dbc9b3ad992d45580c1d22bf5e24363f2fbf50c2d7ae8a7", size = 1890436, upload-time = "2021-08-24T17:23:47.114Z" },
+    { url = "https://files.pythonhosted.org/packages/28/d4/35dc171f470704403e35d639b1b4ad38f6a6e07c39aab2fad9437b88d4c3/cryptography-3.4.8-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:0a7dcbcd3f1913f664aca35d47c1331fce738d44ec34b7be8b9d332151b0b01e", size = 3074656, upload-time = "2021-08-24T17:28:45.7Z" },
+    { url = "https://files.pythonhosted.org/packages/f5/2e/a61d992645593be442b2666252f5d2fceb0777dfd2675a75d8914a353cd3/cryptography-3.4.8-cp36-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:34dae04a0dce5730d8eb7894eab617d8a70d0c97da76b905de9efb7128ad7085", size = 3036678, upload-time = "2021-08-24T17:29:59.174Z" },
+    { url = "https://files.pythonhosted.org/packages/96/07/4d23f8e34e56d8eeb2c37cd5924928a01c3dd756a1d99e470181bc57551e/cryptography-3.4.8-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1eb7bb0df6f6f583dd8e054689def236255161ebbcf62b226454ab9ec663746b", size = 3157688, upload-time = "2021-08-24T17:28:49.902Z" },
+    { url = "https://files.pythonhosted.org/packages/17/7e/cec41c164b42db6364b10e13d218c40e604cc6745448b9fcd9318f2d9556/cryptography-3.4.8-cp36-abi3-manylinux_2_24_x86_64.whl", hash = "sha256:9965c46c674ba8cc572bc09a03f4c649292ee73e1b683adb1ce81e82e9a6a0fb", size = 2993982, upload-time = "2021-08-24T17:28:54.006Z" },
+    { url = "https://files.pythonhosted.org/packages/31/6b/12678b9f4aade4cdd322d2366421cb9bca978d82a4b2ad556f7dd80811ed/cryptography-3.4.8-cp36-abi3-musllinux_1_1_aarch64.whl", hash = "sha256:3c4129fc3fdc0fa8e40861b5ac0c673315b3c902bbdc05fc176764815b43dd1d", size = 3122039, upload-time = "2021-09-20T19:57:59.894Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/05/01b2482b88edc0ad8f99bbf763dd34895c71f0a87ce61e89813eba481187/cryptography-3.4.8-cp36-abi3-musllinux_1_1_x86_64.whl", hash = "sha256:695104a9223a7239d155d7627ad912953b540929ef97ae0c34c7b8bf30857e89", size = 3234876, upload-time = "2021-09-19T01:30:11.231Z" },
+    { url = "https://files.pythonhosted.org/packages/03/27/e2ccbfcdaa6768110676bfdc60012322e0d09b83227d52b25a89cb6e2914/cryptography-3.4.8-cp36-abi3-win32.whl", hash = "sha256:21ca464b3a4b8d8e86ba0ee5045e103a1fcfac3b39319727bc0fc58c09c6aff7", size = 1364558, upload-time = "2021-08-24T17:28:57.353Z" },
+    { url = "https://files.pythonhosted.org/packages/b6/32/e82e51a64280b16647af538bbfe4424285a41f01687899405e997a6e39b4/cryptography-3.4.8-cp36-abi3-win_amd64.whl", hash = "sha256:3520667fda779eb788ea00080124875be18f2d8f0848ec00733c0ec3bb8219fc", size = 1611019, upload-time = "2021-08-24T17:29:00.632Z" },
 ]
 
 [[package]]
@@ -364,7 +367,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -828,15 +831,6 @@ wheels = [
 ]
 
 [[package]]
-name = "six"
-version = "1.17.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz", hash = "sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81", size = 34031, upload-time = "2024-12-04T17:35:28.174Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
-]
-
-[[package]]
 name = "snowballstemmer"
 version = "3.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -890,12 +884,12 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 dependencies = [
-    { name = "colorama", marker = "python_full_version < '3.11'" },
-    { name = "sphinx", marker = "python_full_version < '3.11'" },
-    { name = "starlette", marker = "python_full_version < '3.11'" },
-    { name = "uvicorn", marker = "python_full_version < '3.11'" },
-    { name = "watchfiles", marker = "python_full_version < '3.11'" },
-    { name = "websockets", marker = "python_full_version < '3.11'" },
+    { name = "colorama" },
+    { name = "sphinx" },
+    { name = "starlette" },
+    { name = "uvicorn" },
+    { name = "watchfiles" },
+    { name = "websockets" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a5/2c/155e1de2c1ba96a72e5dba152c509a8b41e047ee5c2def9e9f0d812f8be7/sphinx_autobuild-2024.10.3.tar.gz", hash = "sha256:248150f8f333e825107b6d4b86113ab28fa51750e5f9ae63b59dc339be951fb1", size = 14023, upload-time = "2024-10-02T23:15:30.172Z" }
 wheels = [
@@ -910,12 +904,12 @@ resolution-markers = [
     "python_full_version >= '3.11'",
 ]
 dependencies = [
-    { name = "colorama", marker = "python_full_version >= '3.11'" },
-    { name = "sphinx", marker = "python_full_version >= '3.11'" },
-    { name = "starlette", marker = "python_full_version >= '3.11'" },
-    { name = "uvicorn", marker = "python_full_version >= '3.11'" },
-    { name = "watchfiles", marker = "python_full_version >= '3.11'" },
-    { name = "websockets", marker = "python_full_version >= '3.11'" },
+    { name = "colorama" },
+    { name = "sphinx" },
+    { name = "starlette" },
+    { name = "uvicorn" },
+    { name = "watchfiles" },
+    { name = "websockets" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e0/3c/a59a3a453d4133777f7ed2e83c80b7dc817d43c74b74298ca0af869662ad/sphinx_autobuild-2025.8.25.tar.gz", hash = "sha256:9cf5aab32853c8c31af572e4fecdc09c997e2b8be5a07daf2a389e270e85b213", size = 15200, upload-time = "2025-08-25T18:44:55.436Z" }
 wheels = [
@@ -954,7 +948,7 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 dependencies = [
-    { name = "sphinx", marker = "python_full_version < '3.11'" },
+    { name = "sphinx" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/2b/69/b34e0cb5336f09c6866d53b4a19d76c227cdec1bbc7ac4de63ca7d58c9c7/sphinx_design-0.6.1.tar.gz", hash = "sha256:b44eea3719386d04d765c1a8257caca2b3e6f8421d7b3a5e742c0fd45f84e632", size = 2193689, upload-time = "2024-08-02T13:48:44.277Z" }
 wheels = [
@@ -969,7 +963,7 @@ resolution-markers = [
     "python_full_version >= '3.11'",
 ]
 dependencies = [
-    { name = "sphinx", marker = "python_full_version >= '3.11'" },
+    { name = "sphinx" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/13/7b/804f311da4663a4aecc6cf7abd83443f3d4ded970826d0c958edc77d4527/sphinx_design-0.7.0.tar.gz", hash = "sha256:d2a3f5b19c24b916adb52f97c5f00efab4009ca337812001109084a740ec9b7a", size = 2203582, upload-time = "2026-01-19T13:12:53.297Z" }
 wheels = [
@@ -1250,7 +1244,7 @@ docs-starter-pack = [
     { name = "sphinxext-opengraph", specifier = ">=0.13.0" },
     { name = "vale", specifier = ">=3.13.0.0" },
 ]
-evil-mode = [{ name = "cryptography", specifier = "==3.3.2" }]
+evil-mode = [{ name = "cryptography", specifier = "==3.4.8" }]
 
 [[package]]
 name = "starlette"
