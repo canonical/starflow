@@ -19,7 +19,7 @@ docs = [
 evil-mode = [
     # Intentionally vulnerable package — used to self-test that uv-export-no-groups
     # exclusion works in .github/workflows/self-test-scan.yaml.
-    "cryptography==3.3.2",
+    "cryptography==49.0.0",
 ]
 
 # We disable the unused but default SP dependencies slated for removal
