@@ -37,6 +37,12 @@
       matchPackageNames: ["/^craft-.*/"],
     },
     {
+      description: "Disable major and minor updates on hotfix branches",
+      matchBaseBranches: ["/^hotfix\\/.*/"],
+      matchUpdateTypes: ["major", "minor"],
+      enabled: false,
+    },
+    {
       groupName: "bugfixes",
       matchUpdateTypes: ["patch", "pin", "digest"],
       prPriority: 3,
