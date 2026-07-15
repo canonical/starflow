@@ -53,8 +53,6 @@ GITHUB_API = f"https://api.github.com/repos/{OWNER}"
 
 AUTHOR_FILTER = {
     "Copilot",
-    "dependabot[bot]",
-    "renovate[bot]",
 }
 """Authors to ignore."""
 
