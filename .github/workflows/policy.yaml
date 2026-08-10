@@ -22,7 +22,7 @@ jobs:
           add_label: "false"
   zizmor:
     name: GitHub Actions security audit
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       security-events: write
     steps:
