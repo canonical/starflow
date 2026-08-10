@@ -236,34 +236,23 @@ Do qualify what the name is to disambiguate it:
 Links
 -----
 
-The prose of a document should be naturally-flowing, plain English. Whenever a link
-appears in the text, it threatens to harm that flow, because a link is an invitation to
-go somewhere else. Carefully consider:
+A link is an invitation to the user to go somewhere else. Whenever a link appears in a
+document, it could interrupt the natural flow of the language.
 
-- How the link fits into the context of the preceding discussion. Does the text
-  naturally lead to this link? Does it feel like it *belongs*? If you were having a
-  conversation with a friend, and they pushed their phone up to your face without
-  warning, it would be quite rude. That's what an unexpected link feels like on the
-  page.
-- What *benefit* the user gets from the link. A link is a call to action. But there are
-  many actions the user could take in a document, including skipping the link. Does the
-  link's text, and the text surrounding it, help the user decide whether to click on it?
-- If you start writing "See [link] for more details", don't. That sentence is of no help
-  to the user. Instead, consider how to invite, or call, the user to click on the link.
+First, consider how the link fits into the context of the preceding discussion. Does the
+text feel like it leads to the link? Does it feel like the link *belongs*? If you were
+having a conversation with a friend, and they pushed their phone up to your face without
+warning, it would be quite rude. That's what an unexpected link feels like on the page.
 
-Don't set high expectations or make promises you can't keep with a link:
+Second, decide what *benefit* the user gets from the link. A link is a call to action.
+But there are many actions the user could take in a document, including skipping the
+link. Does the link's text, and the text surrounding it, help the user decide whether to
+click on it?
 
-    You can visit `Migrations
-    <https://docs.djangoproject.com/en/6.0/topics/migrations/>`__ in the Django
-    documentation to learn how to
-
-Do straightforwardly describe what's at the other end of the link:
-
-    `Migrations <https://docs.djangoproject.com/en/6.0/topics/migrations/>`__ in the
-    Django documentation describes how to
-
-It's better to be descriptive. You can't guarantee that a link will provide positive
-benefits like learning and discovery.
+Lastly, take into account the Web Content Accessibility Guidelines for `Link Purpose
+<https://www.w3.org/WAI/WCAG21/Understanding/link-purpose-in-context.html>`__. Place the
+context for the link at the start of the sentence, and the link itself after, near or at
+the end of the sentence.
 
 
 External link format
@@ -296,14 +285,14 @@ reference.
 
 .. _how-to-starcraft-style-guide-examples-good-links:
 
-Examples of good links
-~~~~~~~~~~~~~~~~~~~~~~
+Good links
+~~~~~~~~~~
 
 A link to another site:
 
     Discuss your ideas on the `Snapcraft forum <https://forum.snapcraft.io>`__.
 
-A link to an action in another how-to guide:
+A link to a procedure in another how-to guide:
 
     First, `install Brew <https://brew.sh#install>`__.
 
@@ -316,9 +305,25 @@ A link to a different section in the documentation:
 A link to another documentation set:
 
     The ``snap`` command itself has many diagnostic features that can help with
-    debugging runtime and configuration errors. :ref:`Debugging snaps
-    <how-to-starcraft-style-guide-examples-good-links>` in the SnapD documentation
-    covers how and when to use them.
+    debugging runtime and configuration errors. For how and when to use them, see
+    :ref:`Debugging snaps <how-to-starcraft-style-guide-examples-good-links>` in the
+    SnapD documentation.
+
+
+Bad links
+~~~~~~~~~
+
+This link uses a conventional and meaningless pattern (*for more... see...*), which
+doesn't assist the user:
+
+    For more details, see `Migrations
+    <https://docs.djangoproject.com/en/6.0/topics/migrations/>`__.
+
+This link makes a promise the text can't keep. We can't guarantee that a link will
+provide positive benefits like learning and discovery:
+
+    To learn how to migrate Django versions, see `Migrations
+    <https://docs.djangoproject.com/en/6.0/topics/migrations/>`__.
 
 
 Reference labels

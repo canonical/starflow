@@ -53,8 +53,6 @@ GITHUB_API = f"https://api.github.com/repos/{OWNER}"
 
 AUTHOR_FILTER = {
     "Copilot",
-    "dependabot[bot]",
-    "renovate[bot]",
 }
 """Authors to ignore."""
 
@@ -251,7 +249,7 @@ def get_commits(name: str, old: str, new: str) -> list[Commit]:
             author = commit["author"]["login"]
         else:
             author = "unknown"
-        if author in AUTHOR_FILTER:
+        if author in AUTHOR_FILTER or "[bot]" in author:
             continue
         commits.append(Commit(sha, message, author))
     return commits
