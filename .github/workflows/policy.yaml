@@ -24,6 +24,7 @@ jobs:
     name: GitHub Actions security audit
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       security-events: write
     steps:
       - name: Checkout
