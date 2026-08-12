@@ -15,7 +15,7 @@ github
 GitHub
 GPG
 gyre
-hotfix
+hotfix(es)?
 html
 https
 Intersphinx

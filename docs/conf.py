@@ -220,7 +220,9 @@ if "discourse_prefix" not in html_context and "discourse" in html_context:
     html_context["discourse_prefix"] = f"{html_context['discourse']}/t/"
 
 # Add configuration for intersphinx mapping
-intersphinx_mapping = {}
+intersphinx_mapping = {
+    "snapcraft": ("https://documentation.ubuntu.com/snapcraft/stable", None),
+}
 
 # Block Intersphinx from looking up external sources with internal references. In other
 # words, only :external+<project>... will search in other projects.
