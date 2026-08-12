@@ -2,6 +2,10 @@ name: QA self-test
 on:
   pull_request:
 
+permissions:
+  actions: read
+  contents: read
+
 jobs:
   lint-python:
     uses: ./.github/workflows/lint-python.yaml
