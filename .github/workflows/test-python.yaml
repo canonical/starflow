@@ -152,11 +152,21 @@ jobs:
             echo "::endgroup::"
           done
           exit $exit_code
+      - name: Resolve caller job name
+        id: ctx
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name=$(gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${{ job.check_run_id }}" --jq '.name')
+          caller="${name%% / *}"
+          echo "caller-job=${caller}" >> "$GITHUB_OUTPUT"
       - name: Upload test coverage
         if: ${{ inputs.source-files == 'true' }}
         uses: actions/upload-artifact@v7
         with:
-          name: coverage-fast-${{ join(matrix.platform, '-') }}
+          name: coverage-${{ steps.ctx.outputs.caller-job }}-fast-${{ join(matrix.platform, '-') }}
           overwrite: true
           path: |
             ./coverage.xml
@@ -214,11 +224,21 @@ jobs:
           # Unset raw secret slots so they don't leak into make or sudo -E
           unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow ${MARKERS:+and ($MARKERS)}'"
+      - name: Resolve caller job name
+        id: ctx
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name=$(gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${{ job.check_run_id }}" --jq '.name')
+          caller="${name%% / *}"
+          echo "caller-job=${caller}" >> "$GITHUB_OUTPUT"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
         if: ${{ inputs.source-files == 'true' }}
         with:
-          name: coverage-slow-${{ join(matrix.platform, '-') }}-${{ matrix.python-version }}
+          name: coverage-${{ steps.ctx.outputs.caller-job }}-slow-${{ join(matrix.platform, '-') }}-${{ matrix.python-version }}
           overwrite: true
           path: |
             ./coverage.xml
@@ -277,11 +297,21 @@ jobs:
           # Unset raw secret slots so they don't leak into make or sudo -E
           unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
+      - name: Resolve caller job name
+        id: ctx
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name=$(gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${{ job.check_run_id }}" --jq '.name')
+          caller="${name%% / *}"
+          echo "caller-job=${caller}" >> "$GITHUB_OUTPUT"
       - name: Upload test coverage
         uses: actions/upload-artifact@v7
         if: ${{ inputs.source-files == 'true' }}
         with:
-          name: coverage-lowest-py${{ inputs.lowest-python-version }}
+          name: coverage-${{ steps.ctx.outputs.caller-job }}-lowest-py${{ inputs.lowest-python-version }}
           overwrite: true
           path: |
             ./coverage.xml
