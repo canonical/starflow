@@ -40,7 +40,7 @@ on:
         type: boolean
         description: |
           Whether to set up LXD on Linux runners.
-        default: false
+        default: true
       pytest-markers:
         type: string
         description: |
@@ -98,6 +98,8 @@ jobs:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
         if: ${{ inputs.source-files == 'true' }}
+        with:
+          use-lxd: ${{ inputs.use-lxd }}
       - name: Set up tests
         if: ${{ inputs.source-files == 'true' }}
         shell: bash
@@ -185,6 +187,7 @@ jobs:
         if: ${{ inputs.source-files == 'true' }}
         with:
           python-version: ${{ matrix.python-version }}
+          use-lxd: ${{ inputs.use-lxd }}
       - name: Install tools
         if: ${{ inputs.source-files == 'true' }}
         run: |
@@ -258,6 +261,7 @@ jobs:
         if: ${{ inputs.source-files == 'true' }}
         with:
           python-version: ${{ inputs.lowest-python-version }}
+          use-lxd: ${{ inputs.use-lxd }}
       - name: Install tools
         if: ${{ inputs.source-files == 'true' }}
         run: |
