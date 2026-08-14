@@ -25,7 +25,7 @@ runs:
         nohup sudo apt-get update > /dev/null &
         echo "apt-pid=$!" >> "${GITHUB_OUTPUT}"
     - name: Setup LXD
-      if: ${{ runner.os == 'Linux' && inputs.use-lxd == 'true' }}
+      if: ${{ runner.os == 'Linux' && fromJSON(inputs.use-lxd) }}
       uses: canonical/setup-lxd@v1
       with:
         channel: ${{ inputs.lxd-channel }}
