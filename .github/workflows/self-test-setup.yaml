@@ -102,12 +102,15 @@ jobs:
           [[ $(lxc --version) =~ 5.0* ]]
   no-lxd:
     name: use-lxd disabled
+    permissions:
+      contents: read
     runs-on: ubuntu-26.04
     steps:
       - name: Fetch source
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: ./setup-python-runner
         with:
           use-lxd: false
