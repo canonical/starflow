@@ -40,7 +40,7 @@ on:
         type: boolean
         description: |
           Whether to set up LXD on Linux runners.
-        default: false
+        default: true
       pytest-markers:
         type: string
         description: |

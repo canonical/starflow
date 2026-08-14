@@ -100,3 +100,20 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           [[ $(lxc --version) =~ 5.0* ]]
+  no-lxd:
+    name: use-lxd disabled
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Fetch source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: ./setup-python-runner
+        with:
+          use-lxd: false
+      - name: Check lxd is not installed
+        run: |
+          if [ -e /snap/bin/lxc ]; then
+            echo "::error::/snap/bin/lxc should not exist when use-lxd is false"
+            exit 1
+          fi

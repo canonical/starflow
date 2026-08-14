@@ -69,6 +69,52 @@ jobs:
       fast-test-python-versions: ""
       slow-test-python-versions: ""
       lowest-python-version: ""
+  test-python-no-lxd: # Regression test: use-lxd: false must actually skip setting up LXD
+    uses: ./.github/workflows/test-python.yaml
+    with:
+      fast-test-platforms: '["jammy"]'
+      fast-test-python-versions: '["3.14"]'
+      slow-test-platforms: ""
+      lowest-python-version: ""
+      use-lxd: false
+  verify-lxd-setup:
+    name: Verify use-lxd input is honored
+    if: ${{ !cancelled() }}
+    needs: [test-python-custom, test-python-no-lxd]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Setup LXD step outcomes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          jobs=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs" \
+            --paginate --jq '.jobs[] | {name, steps}')
+
+          # test-python-custom passes use-lxd: true, so at least one of its Linux
+          # runners must have successfully run the "Setup LXD" step.
+          lxd_true_success=$(echo "$jobs" | jq -s '[.[]
+            | select(.name | startswith("test-python-custom"))
+            | .steps[]? | select(.name == "Setup LXD" and .conclusion == "success")] | length')
+
+          # test-python-no-lxd passes use-lxd: false, so "Setup LXD" must never
+          # succeed (it should be skipped instead).
+          lxd_false_success=$(echo "$jobs" | jq -s '[.[]
+            | select(.name | startswith("test-python-no-lxd"))
+            | .steps[]? | select(.name == "Setup LXD" and .conclusion == "success")] | length')
+
+          echo "Setup LXD successes with use-lxd=true: ${lxd_true_success}"
+          echo "Setup LXD successes with use-lxd=false: ${lxd_false_success}"
+
+          exit_code=0
+          if [ "${lxd_true_success}" -lt 1 ]; then
+            echo "::error::Expected at least one successful 'Setup LXD' step when use-lxd is true"
+            exit_code=1
+          fi
+          if [ "${lxd_false_success}" -ne 0 ]; then
+            echo "::error::Expected no successful 'Setup LXD' steps when use-lxd is false"
+            exit_code=1
+          fi
+          exit $exit_code
   verify-coverage-artifacts:
     name: Verify coverage artifacts
     if: ${{ !cancelled() }}
