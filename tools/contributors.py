@@ -442,13 +442,22 @@ HTML_TEMPLATE = textwrap.dedent(
 
     function toggleCommitType(commitType) {
       // matches conventional-commit headers like 'type:' or 'type(scope):'
-      const regex = new RegExp('^' + commitType + '(\\\\(.*\\\\))?!?:', 'i');
+      const escapedType = commitType.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+      const regex = new RegExp('^' + escapedType + '(\\(.*\\))?!?:', 'i');
+      const matches = [];
       document.querySelectorAll('table.commit-table tbody tr').forEach((tr) => {
         const headerCell = tr.cells[1];
         const checkbox = tr.cells[0] && tr.cells[0].querySelector('input[type="checkbox"]');
         if (!headerCell || !checkbox) return;
         if (regex.test(headerCell.textContent.trim())) {
-          checkbox.checked = !checkbox.checked;
+          matches.push(checkbox);
+        }
+      });
+      // if every match is already checked, uncheck them all; otherwise check them all
+      const nextChecked = !matches.every((checkbox) => checkbox.checked);
+      matches.forEach((checkbox) => {
+        if (checkbox.checked !== nextChecked) {
+          checkbox.checked = nextChecked;
           checkbox.dispatchEvent(new Event('change'));
         }
       });
@@ -587,7 +596,8 @@ def generate_toggle_buttons_html() -> str:
     for commit_type in TOGGLE_TYPES:
         escaped = html.escape(commit_type)
         row += (
-            f"<button onclick=\"toggleCommitType('{escaped}')\">{escaped}</button>\n"
+            f"<button data-type='{escaped}' onclick='toggleCommitType(this.dataset.type)'>"
+            f"{escaped}</button>\n"
         )
     row += "</div>\n"
     return row
