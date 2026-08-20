@@ -48,6 +48,9 @@ PR_PATTERN = re.compile(r".+?\s+\(#(\d+)\)$")
 For example, this extracts '1234' from 'feat: do something (#1234)'.
 """
 
+TOGGLE_TYPES = ("build", "style", "ci", "test")
+"""Conventional-commit types shown as quick-toggle buttons on the report."""
+
 GITHUB_API = f"https://api.github.com/repos/{OWNER}"
 """URL for Github API requests."""
 
@@ -386,6 +389,24 @@ HTML_TEMPLATE = textwrap.dedent(
       color: #888;
     }
     tr.done a { color: #888; }
+
+    /* toggle-commits button section */
+    .toggle-buttons {
+        margin-bottom: 1em;
+    }
+    .toggle-buttons button {
+        font-family: monospace;
+        background-color: #3c3c3c;
+        color: #f0f0f0;
+        border: 1px solid #555;
+        padding: 4px 12px;
+        margin-right: 0.5em;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+    .toggle-buttons button:hover {
+        background-color: #555;
+    }
     </style>
     <script>
     function sortTable(th, col, type) {
@@ -408,6 +429,38 @@ HTML_TEMPLATE = textwrap.dedent(
 
       // reattach in new order
       rows.forEach(r => tbody.appendChild(r));
+    }
+
+    function toggleCheckbox(event, cell) {
+      // clicking the checkbox itself already toggles it; avoid double-toggling
+      if (event.target.tagName === 'INPUT') return;
+      const checkbox = cell.querySelector('input[type="checkbox"]');
+      if (!checkbox) return;
+      checkbox.checked = !checkbox.checked;
+      checkbox.dispatchEvent(new Event('change'));
+    }
+
+    function toggleCommitType(commitType) {
+      // matches conventional-commit headers like 'type:' or 'type(scope):'
+      const escapedType = commitType.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+      const regex = new RegExp('^' + escapedType + '(\\(.*\\))?!?:', 'i');
+      const matches = [];
+      document.querySelectorAll('table.commit-table tbody tr').forEach((tr) => {
+        const headerCell = tr.cells[1];
+        const checkbox = tr.cells[0] && tr.cells[0].querySelector('input[type="checkbox"]');
+        if (!headerCell || !checkbox) return;
+        if (regex.test(headerCell.textContent.trim())) {
+          matches.push(checkbox);
+        }
+      });
+      // if every match is already checked, uncheck them all; otherwise check them all
+      const nextChecked = !matches.every((checkbox) => checkbox.checked);
+      matches.forEach((checkbox) => {
+        if (checkbox.checked !== nextChecked) {
+          checkbox.checked = nextChecked;
+          checkbox.dispatchEvent(new Event('change'));
+        }
+      });
     }
     </script>
 
@@ -519,7 +572,10 @@ def generate_commit_table(repo_name: str, commits: list[Commit]) -> str:
     for commit in commits:
         row_html = (
             "<tr>"
-            "<td><input type='checkbox' onchange='this.closest(\"tr\").classList.toggle(\"done\", this.checked)'></td>"
+            "<td onclick='toggleCheckbox(event, this)'>"
+            "<input type='checkbox' "
+            "onchange='this.closest(\"tr\").classList.toggle(\"done\", this.checked)'>"
+            "</td>"
             f"<td>{html.escape(commit.header)}</td>"
             f"<td>{hyperlink_commit(repo_name, commit)}</td>"
             f"<td>{html.escape(commit.author)}</td>"
@@ -531,7 +587,20 @@ def generate_commit_table(repo_name: str, commits: list[Commit]) -> str:
     body = "<tbody>\n" + "\n".join(body_rows) + "\n</tbody>"
     rows.append(body)
 
-    return "<table>" + "\n".join(rows) + "</table>"
+    return "<table class='commit-table'>" + "\n".join(rows) + "</table>"
+
+
+def generate_toggle_buttons_html() -> str:
+    """Generate a section of buttons to bulk-toggle commits by type."""
+    row = "<h2>Toggle commits</h2>\n<div class='toggle-buttons'>\n"
+    for commit_type in TOGGLE_TYPES:
+        escaped = html.escape(commit_type)
+        row += (
+            f"<button data-type='{escaped}' onclick='toggleCommitType(this.dataset.type)'>"
+            f"{escaped}</button>\n"
+        )
+    row += "</div>\n"
+    return row
 
 
 def generate_html(repos: dict[str, Repo]) -> None:
@@ -541,6 +610,8 @@ def generate_html(repos: dict[str, Repo]) -> None:
     row = "<h2>Summary</h2>\n"
     row += generate_versions_table(repos)
     repo_rows.append(row)
+
+    repo_rows.append(generate_toggle_buttons_html())
 
     for repo_name, repo in repos.items():
         row = f"<h2>{hyperlink_project(repo_name)} ({repo.old or 'n/a'} → {repo.new or 'n/a'})</h2>\n"
@@ -554,6 +625,7 @@ def generate_html(repos: dict[str, Repo]) -> None:
             row += generate_commit_table(repo_name, repo.commits)
 
         repo_rows.append(row)
+
 
     if contributors_html := generate_contributors_html(repos):
         repo_rows.append(contributors_html)
