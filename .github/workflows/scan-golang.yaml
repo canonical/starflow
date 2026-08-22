@@ -49,7 +49,7 @@ jobs:
         run: |
           sudo snap install osv-scanner
       - name: Checkout source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: source
       - name: Remove files from source scan
