@@ -14,5 +14,9 @@ SHELLCHECK_OPTS=(
 
 for f in "$DIR"/../**/*.yaml; do
     info "Linting scripts in $f"
-    yq '.runs.steps[].run' "$f" | grep -v -P "^null$" | shellcheck "${SHELLCHECK_OPTS[@]}" -
+    # Filter out scripts that don't have any shell scripts in them
+    scripts=$(yq '.runs.steps[].run' "$f" | (grep -v -P "^null$" || true))
+    if [[ -n "$scripts" ]]; then
+        echo "$scripts" | shellcheck "${SHELLCHECK_OPTS[@]}" -
+    fi
 done
