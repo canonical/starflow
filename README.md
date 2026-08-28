@@ -165,7 +165,7 @@ string. Instead, you can map your secrets to generic slots (`secret-1` through `
 `extra-env-vars`.
 
 Each of these test suites (fast, slow, or lowest) can be selectively disabled by passing an empty string
-(`''`) to any of their platform or version inputs. This is useful for projects that only need a subset
+(`''`) or empty JSON array (`'[]'`) to any of their platform or version inputs. This is useful for projects that only need a subset
 of the testing suite.
 
 An example workflow demonstrating secret mapping and selective skipping:
@@ -182,7 +182,7 @@ jobs:
       secret-1: ${{ secrets.MY_SECRET_KEY }}
     with:
       # Disable slow tests by providing an empty platform list
-      slow-test-platforms: ""
+      slow-test-platforms: "[]" # or ""
       extra-env-vars: | # Extra environment variables to pass to the tests
         MY_SECRET_KEY=$SECRET_1
         MY_VAR=value

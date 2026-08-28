@@ -88,7 +88,7 @@ on:
 jobs:
   fast:
     name: Fast tests
-    if: ${{ inputs.fast-test-platforms != '' && inputs.fast-test-python-versions != '' }}
+    if: ${{ inputs.fast-test-platforms != '' && inputs.fast-test-platforms != '[]' && inputs.fast-test-python-versions != '' && inputs.fast-test-python-versions != '[]' }}
     strategy:
       fail-fast: false
       matrix:
@@ -175,7 +175,7 @@ jobs:
             htmlcov/**
   slow:
     name: Slow tests
-    if: ${{ inputs.slow-test-platforms != '' && inputs.slow-test-python-versions != '' }}
+    if: ${{ inputs.slow-test-platforms != '' && inputs.slow-test-platforms != '[]' && inputs.slow-test-python-versions != '' && inputs.slow-test-python-versions != '[]' }}
     strategy:
       matrix:
         platform: ${{ fromJson(inputs.slow-test-platforms) }}
@@ -254,7 +254,7 @@ jobs:
     runs-on: ${{ startsWith(inputs.lowest-python-platform, '[') && fromJson(inputs.lowest-python-platform) || inputs.lowest-python-platform }}
     env:
       UV_RESOLUTION: lowest
-    if: ${{ inputs.lowest-python-platform != '' && inputs.lowest-python-version != '' && inputs.source-files == 'true' }}
+    if: ${{ inputs.lowest-python-platform != '' && inputs.lowest-python-platform != '[]' && inputs.lowest-python-version != '' && inputs.lowest-python-version != '[]' && inputs.source-files == 'true' }}
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main

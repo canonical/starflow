@@ -57,18 +57,27 @@ jobs:
       extra-env-vars: |
         REPO_VARIABLE=${{ vars.REPO_VARIABLE }}
         REPO_SECRET=$SECRET_1
-  test-python-noop-platforms: # Test that the Python tests are all skipped when platforms are empty
+  test-python-noop-platforms: # Test that the Python tests are all skipped when platforms are empty strings
     uses: ./.github/workflows/test-python.yaml
     with:
       fast-test-platforms: ""
       slow-test-platforms: ""
       lowest-python-platform: ""
-  test-python-noop-versions: # Test that the Python tests are all skipped when versions are empty
+  test-python-noop-versions: # Test that the Python tests are all skipped when versions are empty strings
     uses: ./.github/workflows/test-python.yaml
     with:
       fast-test-python-versions: ""
       slow-test-python-versions: ""
       lowest-python-version: ""
+  test-python-noop-empty-arrays: # Test that the Python tests are all skipped when platforms/versions are empty JSON arrays
+    uses: ./.github/workflows/test-python.yaml
+    with:
+      fast-test-platforms: "[]"
+      fast-test-python-versions: "[]"
+      slow-test-platforms: "[]"
+      slow-test-python-versions: "[]"
+      lowest-python-platform: "[]"
+      lowest-python-version: "[]"
   verify-coverage-artifacts:
     name: Verify coverage artifacts
     if: ${{ !cancelled() }}
