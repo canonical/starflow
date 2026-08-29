@@ -1,2 +1,2 @@
 # Used for self-testing, this is an intentionally terrifying file for OSV Scanner.
-urllib3==1
+urllib3==1.26.20
