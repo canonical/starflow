@@ -37,7 +37,7 @@ runs:
     - name: Set up Homebrew
       if: runner.os == 'macOS'
       id: set-up-homebrew
-      uses: Homebrew/actions/setup-homebrew@master
+      uses: Homebrew/actions/setup-homebrew@082c94ee19e776205cfa8e43802917d1425e2fe7
     - name: Cache Homebrew Bundler RubyGems
       if: runner.os == 'macOS'
       id: cache
