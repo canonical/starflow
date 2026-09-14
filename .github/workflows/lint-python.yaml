@@ -16,6 +16,8 @@ on:
 
 jobs:
   files:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
