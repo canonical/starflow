@@ -8,11 +8,15 @@ on:
 
 jobs:
   golang:
+    permissions:
+      contents: read
     uses: ./.github/workflows/scan-golang.yaml
     with:
       osv-exclude-paths: "docs/"
       osv-exclude-files: "uv.lock"
   python:
+    permissions:
+      contents: read
     uses: ./.github/workflows/scan-python.yaml
     with:
       # Include all groups so the exclusions below are actually exercised.

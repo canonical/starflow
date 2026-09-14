@@ -19,6 +19,8 @@ on:
   workflow_call:
 jobs:
   renovate:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

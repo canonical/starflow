@@ -5,6 +5,8 @@ on:
 
 jobs:
   contributors:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Check out code

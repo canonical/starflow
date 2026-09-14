@@ -43,6 +43,8 @@ on:
 jobs:
   scan-osv:
     name: OSV-scanner
+    permissions:
+      contents: read
     runs-on: [ubuntu-latest]
     steps:
       - name: Install tools
