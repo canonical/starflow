@@ -10,7 +10,6 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -165,3 +164,6 @@ docs/.sphinx/.wordlist.dic
 
 # output of contributors script
 contributors.html
+
+# PNPM
+node_modules/
