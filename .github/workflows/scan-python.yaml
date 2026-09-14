@@ -87,17 +87,20 @@ jobs:
           persist-credentials: false
       - name: Create requirements files from uv
         if: ${{ inputs.uv-export && hashFiles('uv.lock') != ''}}
+        env:
+          UV_EXPORT_NO_GROUPS: ${{ inputs.uv-export-no-groups }}
+          UV_EXPORT_EXTRA_ARGS: ${{ inputs.uv-export-extra-args }}
         run: |
           no_group_args=""
-          if [[ -n "${{ inputs.uv-export-no-groups }}" ]]; then
+          if [[ -n "${UV_EXPORT_NO_GROUPS}" ]]; then
             IFS=$'\n'
-            for group in $(echo "${{ inputs.uv-export-no-groups }}"); do
+            for group in $(echo "${UV_EXPORT_NO_GROUPS}"); do
               no_group_args="${no_group_args} --no-group ${group}"
             done
             unset IFS
           fi
           IFS=$'\n'
-          for extras in $(echo "${{ inputs.uv-export-extra-args }}"); do
+          for extras in $(echo "${UV_EXPORT_EXTRA_ARGS}"); do
             unset IFS
             filename=uv-requirements.$(echo $extras | tr ' ' '_').txt
             uv export --frozen --no-editable --no-emit-workspace --format=requirements-txt $extras ${no_group_args} --output-file=${{ runner.temp }}/python-artefacts/requirements/$filename
@@ -133,18 +136,23 @@ jobs:
       - name: Scan requirements files
         if: ${{ !cancelled() && hashFiles('source/requirements/') != '' }}
         working-directory: source
+        env:
+          OSV_EXTRA_ARGS: ${{ inputs.osv-extra-args }}
         run: |
           for reqs in $(ls -1 requirements/*); do
-            osv-scanner ${{ inputs.osv-extra-args }} --lockfile requirements.txt:${reqs}
+            osv-scanner ${OSV_EXTRA_ARGS} --lockfile requirements.txt:${reqs}
           done
       - name: Remove files from source scan
         if: ${{ !cancelled() }}
+        env:
+          OSV_EXCLUDE_FILES: ${{ inputs.osv-exclude-files }}
+          UV_EXPORT: ${{ inputs.uv-export }}
         run: |
-          files_to_remove="${{ inputs.osv-exclude-files }}"
+          files_to_remove="${OSV_EXCLUDE_FILES}"
           # Implicitly ignore uv.lock if we exported, as it would be redundant to scan both
           # Additionally, if `uv-export-no-groups` is set, scanning the lockfile would raise
           # OSVs for groups the user tried to ignore anyways
-          if [[ "${{ inputs.uv-export }}" == "true" ]]; then
+          if [[ "${UV_EXPORT}" == "true" ]]; then
             files_to_remove="uv.lock
           ${files_to_remove}"
           fi
@@ -156,13 +164,16 @@ jobs:
       - name: Scan source
         if: ${{ !cancelled() }}
         working-directory: source
+        env:
+          OSV_EXCLUDE_PATHS: ${{ inputs.osv-exclude-paths }}
+          OSV_EXTRA_ARGS: ${{ inputs.osv-extra-args }}
         run: |
           exclude_args=""
-          if [[ -n "${{ inputs.osv-exclude-paths }}" ]]; then
+          if [[ -n "${OSV_EXCLUDE_PATHS}" ]]; then
             IFS=$'\n'
-            for path in $(echo "${{ inputs.osv-exclude-paths }}"); do
+            for path in $(echo "${OSV_EXCLUDE_PATHS}"); do
               exclude_args="${exclude_args} --experimental-exclude ${path}"
             done
             unset IFS
           fi
-          osv-scanner scan --recursive --allow-no-lockfiles ${{ inputs.osv-extra-args }} ${exclude_args} .
+          osv-scanner scan --recursive --allow-no-lockfiles ${OSV_EXTRA_ARGS} ${exclude_args} .

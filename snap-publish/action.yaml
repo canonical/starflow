@@ -45,17 +45,21 @@ runs:
     - name: Setup Snapcraft
       id: snapcraft-setup
       shell: bash
+      env:
+        SNAPCRAFT_CHANNEL: ${{ inputs.snapcraft-channel }}
       run: |
-        sudo snap install snapcraft --channel "${{inputs.snapcraft-channel}}" --classic
+        sudo snap install snapcraft --channel "${SNAPCRAFT_CHANNEL}" --classic
 
     - name: Setup Launchpad credentials
       id: launchpad-credentials
       shell: bash
+      env:
+        LAUNCHPAD_TOKEN: ${{ inputs.launchpad-token }}
       run: |
         # For versions of snapcraft after 8.2.0, the path is different
         mkdir -p ~/.local/share/snapcraft/provider/launchpad ~/.local/share/snapcraft
-        echo "${{ inputs.launchpad-token }}" > ~/.local/share/snapcraft/provider/launchpad/credentials
-        echo "${{ inputs.launchpad-token }}" > ~/.local/share/snapcraft/launchpad-credentials
+        echo "${LAUNCHPAD_TOKEN}" > ~/.local/share/snapcraft/provider/launchpad/credentials
+        echo "${LAUNCHPAD_TOKEN}" > ~/.local/share/snapcraft/launchpad-credentials
 
     - name: Find and parse snapcraft.yaml
       id: snapcraft-yaml

@@ -43,8 +43,10 @@ jobs:
         with:
           enable-cache: true
       - name: Set up linters
+        env:
+          SNAP_JOBS: ${{ steps.snap-install.outputs.jobs }}
         run: |
-          for job in ${{ steps.snap-install.outputs.jobs }}; do
+          for job in ${SNAP_JOBS}; do
             sudo snap watch $job
           done
 

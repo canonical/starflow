@@ -57,22 +57,27 @@ jobs:
           persist-credentials: false
       - name: Remove files from source scan
         if: ${{ !cancelled() }}
+        env:
+          OSV_EXCLUDE_FILES: ${{ inputs.osv-exclude-files }}
         run: |
           IFS=$'\n'
-          for file in ${{ inputs.osv-exclude-files }}; do
+          for file in ${OSV_EXCLUDE_FILES}; do
             [[ -n "${file}" ]] && rm -f "source/${file}"
           done
           unset IFS
       - name: Scan source
         if: ${{ !cancelled() }}
         working-directory: source
+        env:
+          OSV_EXCLUDE_PATHS: ${{ inputs.osv-exclude-paths }}
+          OSV_EXTRA_ARGS: ${{ inputs.osv-extra-args }}
         run: |
           exclude_args=""
-          if [[ -n "${{ inputs.osv-exclude-paths }}" ]]; then
+          if [[ -n "${OSV_EXCLUDE_PATHS}" ]]; then
             IFS=$'\n'
-            for path in $(echo "${{ inputs.osv-exclude-paths }}"); do
+            for path in $(echo "${OSV_EXCLUDE_PATHS}"); do
               exclude_args="${exclude_args} --experimental-exclude ${path}"
             done
             unset IFS
           fi
-          osv-scanner scan --recursive --allow-no-lockfiles ${{ inputs.osv-extra-args }} ${exclude_args} .
+          osv-scanner scan --recursive --allow-no-lockfiles ${OSV_EXTRA_ARGS} ${exclude_args} .
