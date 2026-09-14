@@ -2,4 +2,4 @@ rules:
   unpinned-uses:
     config:
       policies: # Allow unpinned references to starflow.
-        canonical/starflow/\*: ref-pin
+        canonical/starflow/*: ref-pin
