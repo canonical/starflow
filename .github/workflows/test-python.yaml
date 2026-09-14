@@ -103,15 +103,20 @@ jobs:
       - name: Set up tests
         if: ${{ inputs.source-files == 'true' }}
         shell: bash
+        env:
+          FAST_TEST_PYTHON_VERSIONS: ${{ inputs.fast-test-python-versions }}
+          SETUP_VARS: ${{ inputs.setup-vars }}
         run: |
-          for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
-            python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
-            make -j setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}" UV_PYTHON="${python_version}" ${{ inputs.setup-vars }}
+          for python_version in $(echo "${FAST_TEST_PYTHON_VERSIONS}" | jq -r .[] | tr '\n' ' '); do
+            python_dirname=$(echo "${RUNNER_TEMP}" | tr '\\' /)/venv_$(echo $python_version | tr . _)
+            make -j setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}" UV_PYTHON="${python_version}" ${SETUP_VARS}
           done
       - name: Run tests
         if: ${{ inputs.source-files == 'true' }}
         shell: bash
         env:
+          FAST_TEST_PYTHON_VERSIONS: ${{ inputs.fast-test-python-versions }}
+          TEST_COMMAND_PREFIX: ${{ inputs.test-command-prefix }}
           MARKERS: ${{ inputs.pytest-markers }}
           EXTRA_VARS: ${{ inputs.extra-env-vars }}
           SECRET_1: ${{ secrets.secret-1 }}
@@ -143,10 +148,10 @@ jobs:
           # Unset raw secret slots so they don't leak into make or sudo -E
           unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
           exit_code=0
-          for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
+          for python_version in $(echo "${FAST_TEST_PYTHON_VERSIONS}" | jq -r .[] | tr '\n' ' '); do
             echo "::group::Python ${python_version}"
-            python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
-            if ! ${{ inputs.test-command-prefix }} make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}" PYTEST_ADDOPTS="-m 'not slow ${MARKERS:+and ($MARKERS)}'" UV_PYTHON="${python_version}"
+            python_dirname=$(echo "${RUNNER_TEMP}" | tr '\\' /)/venv_$(echo $python_version | tr . _)
+            if ! ${TEST_COMMAND_PREFIX} make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}" PYTEST_ADDOPTS="-m 'not slow ${MARKERS:+and ($MARKERS)}'" UV_PYTHON="${python_version}"
             then
               exit_code=1
               echo "::error title=TESTS FAILED::Tests failed with Python ${python_version}"
@@ -190,12 +195,15 @@ jobs:
           use-lxd: ${{ inputs.use-lxd }}
       - name: Install tools
         if: ${{ inputs.source-files == 'true' }}
+        env:
+          SETUP_VARS: ${{ inputs.setup-vars }}
         run: |
-          make -j setup-tests ${{ inputs.setup-vars }}
+          make -j setup-tests ${SETUP_VARS}
       - name: Run tests
         if: ${{ inputs.source-files == 'true' }}
         shell: bash
         env:
+          TEST_COMMAND_PREFIX: ${{ inputs.test-command-prefix }}
           MARKERS: ${{ inputs.pytest-markers }}
           EXTRA_VARS: ${{ inputs.extra-env-vars }}
           SECRET_1: ${{ secrets.secret-1 }}
@@ -226,7 +234,7 @@ jobs:
           done <<< "$EXTRA_VARS"
           # Unset raw secret slots so they don't leak into make or sudo -E
           unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
-          ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow ${MARKERS:+and ($MARKERS)}'"
+          ${TEST_COMMAND_PREFIX} make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow ${MARKERS:+and ($MARKERS)}'"
       - name: Resolve caller job name
         id: ctx
         if: ${{ !cancelled() }}
@@ -264,12 +272,15 @@ jobs:
           use-lxd: ${{ inputs.use-lxd }}
       - name: Install tools
         if: ${{ inputs.source-files == 'true' }}
+        env:
+          SETUP_VARS: ${{ inputs.setup-vars }}
         run: |
-          make -j setup-tests ${{ inputs.setup-vars }}
+          make -j setup-tests ${SETUP_VARS}
       - name: Run tests
         if: ${{ inputs.source-files == 'true' }}
         shell: bash
         env:
+          TEST_COMMAND_PREFIX: ${{ inputs.test-command-prefix }}
           MARKERS: ${{ inputs.pytest-markers }}
           EXTRA_VARS: ${{ inputs.extra-env-vars }}
           SECRET_1: ${{ secrets.secret-1 }}
@@ -300,7 +311,7 @@ jobs:
           done <<< "$EXTRA_VARS"
           # Unset raw secret slots so they don't leak into make or sudo -E
           unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
-          ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
+          ${TEST_COMMAND_PREFIX} make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
       - name: Resolve caller job name
         id: ctx
         if: ${{ !cancelled() }}
