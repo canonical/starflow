@@ -37,7 +37,7 @@ runs:
   using: composite
   steps:
     - name: Checkout source
-      uses: actions/checkout@v6
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
 
@@ -120,7 +120,7 @@ runs:
 
     - name: Publish snap to ${{ inputs.channel }}
       id: snapcraft-publish
-      uses: canonical/action-publish@master
+      uses: canonical/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40 # v1.2.0
       with:
         snap: ${{ steps.snapcraft-remote-build.outputs.snap }}
         release: ${{ inputs.channel }}

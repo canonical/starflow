@@ -26,11 +26,11 @@ runs:
         echo "apt-pid=$!" >> "${GITHUB_OUTPUT}"
     - name: Setup LXD
       if: ${{ runner.os == 'Linux' && fromJSON(inputs.use-lxd) }}
-      uses: canonical/setup-lxd@v1
+      uses: canonical/setup-lxd@8c6a87bfb56aa48f3fb9b830baa18562d8bfd4ee # v1
       with:
         channel: ${{ inputs.lxd-channel }}
     - name: Fetch source
-      uses: actions/checkout@v6
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
     # On mac, set up homebrew caching since we use homebrew to install dependencies.
@@ -41,7 +41,7 @@ runs:
     - name: Cache Homebrew Bundler RubyGems
       if: runner.os == 'macOS'
       id: cache
-      uses: actions/cache@v5
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ steps.set-up-homebrew.outputs.gems-path }}
         key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -57,7 +57,7 @@ runs:
         echo "cache-hash=$(echo "${{ toJSON(matrix.platform) }}" | sha1sum | cut -f1 -d' ')" >> "${GITHUB_OUTPUT}"
     - name: Set up uv with caching
       id: setup-uv
-      uses: astral-sh/setup-uv@v8.1.0
+      uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
       with:
         enable-cache: true
         cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
