@@ -66,7 +66,6 @@ jobs:
           - ubuntu-22.04
           - ubuntu-24.04
           - ubuntu-24.04-arm
-          - [focal, medium, amd64]
           - [jammy, medium, amd64]
           - [jammy, medium, arm64]
           - [noble, medium, amd64]
