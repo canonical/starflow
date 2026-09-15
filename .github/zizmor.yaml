@@ -8,3 +8,5 @@ rules:
       # test-python.yaml needs actions:read, blocked on downstream coordination.
       # https://github.com/canonical/starflow/issues/174
       - .github/workflows/test-python.yaml
+      # needs pull-requests:read, same reasoning as above
+      - .github/workflows/policy.yaml
