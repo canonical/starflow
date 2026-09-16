@@ -1,0 +1,56 @@
+name: Test Dev Environment
+on:
+  workflow_call:
+    inputs:
+      test-platforms:
+        type: string
+        default: '["ubuntu-24.04", "ubuntu-24.04-arm"]'
+        description: |
+          The platforms to run fast tests on, as a JSON array.
+      use-lxd:
+        type: boolean
+        description: |
+          Whether to set up LXD on Linux runners.
+        default: true
+      lxd-images:
+        type: string
+        default: '["ubuntu:24.04", "ubuntu:22.04", "images:debian/trixie/default"]'
+        description: |
+          the lxd container images to run
+jobs:
+  test:
+    name: Test Environment
+    strategy:
+      matrix:
+        platform: ${{ fromJson(inputs.test-platforms) }}
+        lxd-images: ${{ fromJson(inputs.lxd-images) }}
+
+    runs-on: "${{ matrix.platform }}"
+    steps:
+      - name: Setup LXD
+        uses: canonical/setup-lxd@main
+      - name: Start Container
+        run: |
+          sleep 6; lxc launch ${{ matrix.lxd-images }} u1
+      - name: Clone repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: push repo into LXD container
+        run: |
+          lxc file push -r . u1/root
+      - name: Install Make in LXD Container
+        run: |
+          lxc exec u1 -- bash -c "apt-get install -y make"
+      - name: Run make setup
+        run: |
+          lxc exec u1 -- bash -c "cd starflow; make setup"
+      - name: Run make lint
+        run: |
+          lxc exec u1 -- bash -c "cd starflow; sudo make lint"
+      - name: Run make format
+        run: |
+          lxc exec u1 -- bash -c "cd starflow; make format"
+      - name: Run make docs
+        run: |
+          lxc exec u1 -- bash -c "cd starflow; make docs"
