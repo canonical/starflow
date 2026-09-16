@@ -7,6 +7,13 @@ rules:
     ignore:
       # test-python.yaml needs actions:read, blocked on downstream coordination.
       # https://github.com/canonical/starflow/issues/174
-      - .github/workflows/test-python.yaml
+      - test-python.yaml
       # needs pull-requests:read, same reasoning as above
-      - .github/workflows/policy.yaml
+      - policy.yaml
+  template-injection:
+    ignore:
+      # test-command-prefix is template-expanded by design: it is a trusted,
+      # workflow-author-provided string, and callers rely on shell syntax
+      # (e.g. quotes in `sudo env "PATH=$PATH"`) that would be mangled if
+      # passed through an environment variable instead.
+      - test-python.yaml
