@@ -197,8 +197,8 @@ jobs:
         if: ${{ !cancelled() }}
         working-directory: source
         env:
-          OSV_EXCLUDE_PATHS: ${{ inputs.osv-exclude-paths }}
-          OSV_EXTRA_ARGS: ${{ inputs.osv-extra-args }}
+          OSV_EXCLUDE_PATHS: "${{ inputs.osv-exclude-paths }}"
+          OSV_EXTRA_ARGS: "${{ inputs.osv-extra-args }}"
         run: |
           exclude_args=""
           if [[ -n "${OSV_EXCLUDE_PATHS}" ]]; then

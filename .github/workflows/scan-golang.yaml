@@ -7,7 +7,7 @@ on:
         required: false
         type: string
         description: |
-          Deprecated: build tooling has been removed. This input is accepted but ignored.
+          Deprecated: build tooling removed. This input is accepted but ignored.
           It will be removed in a future version.
       osv-extra-args:
         required: false
@@ -26,16 +26,16 @@ on:
         required: false
         type: string
         description: |
-          Files to remove from the source checkout before the OSV source scan, relative to the
-          repository root. Useful for excluding root-level lockfiles that belong to a different
-          ecosystem or are already covered by another scan. Each filename on its own line.
+          Files to remove from source checkout before OSV scan. Relative to repo root.
+          Excludes root-level lockfiles from a different ecosystem or already scanned files.
+          Each filename on its own line.
       osv-exclude-paths:
         required: false
         type: string
         description: |
-          Paths to exclude from the OSV source scan, passed as repeated --experimental-exclude
-          flags. Useful for ignoring example projects or fixtures in docs/ or tests/ that contain
-          their own lockfiles. Each path on its own line.
+          Paths to exclude from OSV source scan. Pass repeated --experimental-exclude flags.
+          Use for example projects or fixtures in docs/ or tests/ that contain their own lockfiles.
+          Each path on its own line.
 
           See https://google.github.io/osv-scanner/usage/scan-source#excluding-paths for more
           information.
@@ -74,7 +74,7 @@ jobs:
       - name: Remove files from source scan
         if: ${{ !cancelled() }}
         env:
-          OSV_EXCLUDE_FILES: ${{ inputs.osv-exclude-files }}
+          OSV_EXCLUDE_FILES: "${{ inputs.osv-exclude-files }}"
         run: |
           IFS=$'\n'
           for file in ${OSV_EXCLUDE_FILES}; do
@@ -85,8 +85,8 @@ jobs:
         if: ${{ !cancelled() }}
         working-directory: source
         env:
-          OSV_EXCLUDE_PATHS: ${{ inputs.osv-exclude-paths }}
-          OSV_EXTRA_ARGS: ${{ inputs.osv-extra-args }}
+          OSV_EXCLUDE_PATHS: "${{ inputs.osv-exclude-paths }}"
+          OSV_EXTRA_ARGS: "${{ inputs.osv-extra-args }}"
         run: |
           exclude_args=""
           if [[ -n "${OSV_EXCLUDE_PATHS}" ]]; then
