@@ -49,7 +49,23 @@ jobs:
     steps:
       - name: Install tools
         run: |
-          sudo snap install osv-scanner
+          retry() {
+            local n=1
+            local max=5
+            local delay=2
+            while ! "$@"; do
+              if [[ $n -lt $max ]]; then
+                n=$((n+1))
+                echo "Command failed. Retrying in ${delay}s... (attempt ${n}/${max})"
+                sleep $delay
+                delay=$((delay*2))
+              else
+                echo "Command failed after ${max} attempts."
+                return 1
+              fi
+            done
+          }
+          retry sudo snap install osv-scanner
       - name: Checkout source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
