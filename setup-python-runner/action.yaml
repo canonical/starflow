@@ -10,9 +10,12 @@ inputs:
   lxd-channel:
     type: string
     default: 5.21/candidate
+    description: |
+      LXD channel to install (e.g., 5.21/candidate)
   python-version:
-    type: string
     default: ""
+    description: |
+      Python version for uv setup (empty = default)
 
 runs:
   using: composite
@@ -34,19 +37,20 @@ runs:
       with:
         fetch-depth: 0
         persist-credentials: false
-    # On mac, set up homebrew caching since we use homebrew to install dependencies.
     - name: Set up Homebrew
       if: runner.os == 'macOS'
       id: set-up-homebrew
       uses: Homebrew/actions/setup-homebrew@082c94ee19e776205cfa8e43802917d1425e2fe7
+      # Setup Homebrew on macOS for caching
     - name: Cache Homebrew Bundler RubyGems
       if: runner.os == 'macOS'
       id: cache
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ${{ steps.set-up-homebrew.outputs.gems-path }}
-        key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-        restore-keys: ${{ runner.os }}-rubygems-
+        key: ${{ runner.os }}-rubygems-
+          ${{ steps.set-up-homebrew.outputs.gems-hash }}
+        restore-keys: ${{ runner.os }}-rubygems- # Restore keys
     - name: Install Homebrew Bundler RubyGems
       if: steps.cache.outputs.cache-hit != 'true' && runner.os == 'macOS'
       shell: bash
@@ -55,10 +59,13 @@ runs:
       id: runner-info
       shell: bash
       run: |
-        echo "cache-hash=$(echo "${{ toJSON(matrix.platform) }}" | sha1sum | cut -f1 -d' ')" >> "${GITHUB_OUTPUT}"
+        cache-hash=$(printf '%s' "${{ toJSON(matrix['platform']) }}" |\
+          sha1sum | cut -f1 -d' ')
+        echo "cache-hash=${cache-hash}" >> "${GITHUB_OUTPUT}"
     - name: Set up uv with caching
       id: setup-uv
-      uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+      uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4
+      # v10.1.0
       with:
         enable-cache: true
         cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}
