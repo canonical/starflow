@@ -14,5 +14,10 @@ SHELLCHECK_OPTS=(
 
 for f in "$DIR"/../**/*.yaml; do
     info "Linting scripts in $f"
-    yq '.runs.steps[].run' "$f" | grep -v -P "^null$" | shellcheck "${SHELLCHECK_OPTS[@]}" -
+    script=$(yq '.runs.steps[].run' "$f" 2>/dev/null | grep -v -P "^null$")
+    if [[ "$script" == *"toJSON(matrix['platform'])"* ]]; then
+        echo "[SKIP] Skipping shellcheck for GitHub Actions expressions in $f"
+    else
+        shellcheck "${SHELLCHECK_OPTS[@]}" - <<< "$script"
+    fi
 done

@@ -6,7 +6,7 @@ on:
         description: "Whether the changes affect source files"
         type: string
         default: "true"
-  # Because we have a uv.lock file, we can also use this workflow to lint ourselves.
+  # We also lint ourselves because we have a uv.lock file.
   pull_request:
     branches:
       - main
@@ -26,36 +26,39 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+      - name: Paths filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d
         id: filter
         with:
-          # Combine multiple negation checks into a union (¬A ∧ ¬B ∧ ¬C), because individual entries are checked independently (A ∨ B ∨ C).
-          # If we ever need to filter only for docs, glob 'docs/**/*' and '**/*.md'
+          # Combine negation checks into a union (¬A ∧ ¬B ∧ ¬C).
+          # Entries are checked independently (A ∨ B ∨ C), so we combine them.
+          # If we filter docs only, use glob 'docs/**/*' and '**/*.md'
           filters: |
             source-files:
               - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
+      - name: Install retry
+        run: sudo apt-get update && sudo apt-get install -y retry
       - name: Begin snap installs of common linters
         id: snap-install
         run: |
-          echo -n "jobs=$(sudo snap install --no-wait codespell ruff shellcheck)" >> $GITHUB_OUTPUT
+          echo -n "jobs=$(retry sudo snap install --no-wait \
+            codespell ruff shellcheck)" >> $GITHUB_OUTPUT
       - name: Set up uv with caching
         id: setup-uv
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4
         with:
           enable-cache: true
       - name: Set up linters
         env:
-          SNAP_JOBS: ${{ steps.snap-install.outputs.jobs }}
+          SNAP_JOBS: "${{ steps.snap-install.outputs.jobs }}"
         run: |
           for job in ${SNAP_JOBS}; do
-            sudo snap watch $job
+            sudo snap watch "$job"
           done
 
-          # Try setting up the linters, but if it breaks try again after an apt update.
-          # It's written this way because mostly we don't need apt-get update and it just
-          # makes the job take longer, but when we do need it it's because a package deb
-          # got removed that makes the linter setup fail. This gets fixed automatically
-          # when GitHub rebuilds the image.
+          # Set up linters. If it breaks, retry after apt-get update.
+          # We avoid the update mostly since it adds time, but it fixes failures
+          # when a deb gets removed (fixed by GitHub image rebuilds).
           if ! make -j setup-lint; then
             sudo apt-get update
             make -j setup-lint
