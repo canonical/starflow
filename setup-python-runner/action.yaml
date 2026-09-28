@@ -58,9 +58,9 @@ runs:
       id: runner-info
       shell: bash
       run: |
-        cache-hash=$(printf '%s' "${{ toJSON(matrix['platform']) }}" |\
+        cache_hash=$(printf '%s' "${{ toJSON(matrix['platform']) }}" |\
           sha1sum | cut -f1 -d' ')
-        echo "cache-hash=${cache-hash}" >> "${GITHUB_OUTPUT}"
+        echo "cache-hash=${cache_hash}" >> "${GITHUB_OUTPUT}"
     - name: Set up uv with caching
       id: setup-uv
       uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4
