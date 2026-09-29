@@ -7,6 +7,7 @@ These pages explain the structure and reasoning behind the processes in the Star
 team.
 
 .. toctree::
-    :maxdepth: 1
+    :hidden:
 
+    continuous-deployment-documentation
     community-engagement-plan-for-documentation

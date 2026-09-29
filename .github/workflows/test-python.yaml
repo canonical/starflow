@@ -2,6 +2,10 @@ name: Test Python
 on:
   workflow_call:
     inputs:
+      source-files:
+        description: "Whether the changes affect source files"
+        type: string
+        default: "true"
       fast-test-platforms:
         type: string
         default: '["jammy", "noble"]'
@@ -36,7 +40,7 @@ on:
         type: boolean
         description: |
           Whether to set up LXD on Linux runners.
-        default: false
+        default: true
       pytest-markers:
         type: string
         description: |
@@ -50,10 +54,41 @@ on:
         description: |
           Anything to prefix the `make test-coverage` command with. Useful when running tests as another user.
         default: ""
+      extra-env-vars:
+        type: string
+        description: |
+          Additional environment variables to set on the runner, as a newline-separated list of KEY=VALUE pairs.
+        default: ""
+    secrets:
+      secret-1:
+        required: false
+      secret-2:
+        required: false
+      secret-3:
+        required: false
+      secret-4:
+        required: false
+      secret-5:
+        required: false
+      secret-6:
+        required: false
+      secret-7:
+        required: false
+      secret-8:
+        required: false
+      secret-9:
+        required: false
+      secret-10:
+        required: false
 
+# We use step-level conditionals for 'source-files' because GitHub doesn't count
+# a required-but-skipped job as complete if a matrix spawned it (transient skip).
+# However, we use job-level conditionals for platforms/versions to avoid
+# strategy evaluation errors when they are empty (configuration-based skip).
 jobs:
   fast:
     name: Fast tests
+    if: ${{ inputs.fast-test-platforms != '' && inputs.fast-test-python-versions != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -62,22 +97,62 @@ jobs:
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
+        if: ${{ inputs.source-files == 'true' }}
+        with:
+          use-lxd: ${{ inputs.use-lxd }}
       - name: Set up tests
-        shell: bash
-        run: |
-          for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
-            python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
-            make -j setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}" UV_PYTHON="${python_version}" ${{ inputs.setup-vars }}
-          done
-      - name: Run tests
+        if: ${{ inputs.source-files == 'true' }}
         shell: bash
         env:
-          MARKERS: ${{ inputs.pytest-markers }}
+          FAST_TEST_PYTHON_VERSIONS: ${{ inputs.fast-test-python-versions }}
+          SETUP_VARS: ${{ inputs.setup-vars }}
         run: |
+          for python_version in $(echo "${FAST_TEST_PYTHON_VERSIONS}" | jq -r .[] | tr '\n' ' '); do
+            python_dirname=$(echo "${RUNNER_TEMP}" | tr '\\' /)/venv_$(echo $python_version | tr . _)
+            make -j setup-tests UV_PROJECT_ENVIRONMENT="${python_dirname}" UV_PYTHON="${python_version}" ${SETUP_VARS}
+          done
+      - name: Run tests
+        if: ${{ inputs.source-files == 'true' }}
+        shell: bash
+        env:
+          FAST_TEST_PYTHON_VERSIONS: ${{ inputs.fast-test-python-versions }}
+          MARKERS: ${{ inputs.pytest-markers }}
+          EXTRA_VARS: ${{ inputs.extra-env-vars }}
+          SECRET_1: ${{ secrets.secret-1 }}
+          SECRET_2: ${{ secrets.secret-2 }}
+          SECRET_3: ${{ secrets.secret-3 }}
+          SECRET_4: ${{ secrets.secret-4 }}
+          SECRET_5: ${{ secrets.secret-5 }}
+          SECRET_6: ${{ secrets.secret-6 }}
+          SECRET_7: ${{ secrets.secret-7 }}
+          SECRET_8: ${{ secrets.secret-8 }}
+          SECRET_9: ${{ secrets.secret-9 }}
+          SECRET_10: ${{ secrets.secret-10 }}
+        run: |
+          while IFS= read -r line; do
+            [[ -z "$line" ]] && continue
+            # Replace literal $SECRET_1..$SECRET_10 placeholders (10..1 avoids $SECRET_10 matching $SECRET_1 prefix)
+            expanded_line=${line//\$SECRET_10/$SECRET_10}
+            expanded_line=${expanded_line//\$SECRET_9/$SECRET_9}
+            expanded_line=${expanded_line//\$SECRET_8/$SECRET_8}
+            expanded_line=${expanded_line//\$SECRET_7/$SECRET_7}
+            expanded_line=${expanded_line//\$SECRET_6/$SECRET_6}
+            expanded_line=${expanded_line//\$SECRET_5/$SECRET_5}
+            expanded_line=${expanded_line//\$SECRET_4/$SECRET_4}
+            expanded_line=${expanded_line//\$SECRET_3/$SECRET_3}
+            expanded_line=${expanded_line//\$SECRET_2/$SECRET_2}
+            expanded_line=${expanded_line//\$SECRET_1/$SECRET_1}
+            export "$expanded_line"
+          done <<< "$EXTRA_VARS"
+          # Unset raw secret slots so they don't leak into make or sudo -E
+          unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
           exit_code=0
-          for python_version in $(echo '${{ inputs.fast-test-python-versions }}' | jq -r .[] | tr '\n' ' '); do
+          for python_version in $(echo "${FAST_TEST_PYTHON_VERSIONS}" | jq -r .[] | tr '\n' ' '); do
             echo "::group::Python ${python_version}"
-            python_dirname=$(echo ${{ runner.temp }} | tr '\\' /)/venv_$(echo $python_version | tr . _)
+            python_dirname=$(echo "${RUNNER_TEMP}" | tr '\\' /)/venv_$(echo $python_version | tr . _)
+            # The test-command-prefix input is intentionally template-expanded rather
+            # than passed via an env var: callers use shell syntax (e.g. quotes) in
+            # the value, which would be mangled by word splitting.
             if ! ${{ inputs.test-command-prefix }} make test-coverage UV_PROJECT_ENVIRONMENT="${python_dirname}" PYTEST_ADDOPTS="-m 'not slow ${MARKERS:+and ($MARKERS)}'" UV_PYTHON="${python_version}"
             then
               exit_code=1
@@ -86,16 +161,28 @@ jobs:
             echo "::endgroup::"
           done
           exit $exit_code
+      - name: Resolve caller job name
+        id: ctx
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name=$(gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${{ job.check_run_id }}" --jq '.name')
+          caller="${name%% / *}"
+          echo "caller-job=${caller}" >> "$GITHUB_OUTPUT"
       - name: Upload test coverage
-        uses: actions/upload-artifact@v4
+        if: ${{ inputs.source-files == 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: coverage-fast-${{ join(matrix.platform, '-') }}
+          name: coverage-${{ steps.ctx.outputs.caller-job }}-fast-${{ join(matrix.platform, '-') }}
           overwrite: true
           path: |
             ./coverage.xml
             htmlcov/**
   slow:
     name: Slow tests
+    if: ${{ inputs.slow-test-platforms != '' && inputs.slow-test-python-versions != '' }}
     strategy:
       matrix:
         platform: ${{ fromJson(inputs.slow-test-platforms) }}
@@ -104,50 +191,148 @@ jobs:
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
+        if: ${{ inputs.source-files == 'true' }}
         with:
           python-version: ${{ matrix.python-version }}
+          use-lxd: ${{ inputs.use-lxd }}
       - name: Install tools
+        if: ${{ inputs.source-files == 'true' }}
+        env:
+          SETUP_VARS: ${{ inputs.setup-vars }}
         run: |
-          make -j setup-tests ${{ inputs.setup-vars }}
+          make -j setup-tests ${SETUP_VARS}
       - name: Run tests
+        if: ${{ inputs.source-files == 'true' }}
+        shell: bash
         env:
           MARKERS: ${{ inputs.pytest-markers }}
+          EXTRA_VARS: ${{ inputs.extra-env-vars }}
+          SECRET_1: ${{ secrets.secret-1 }}
+          SECRET_2: ${{ secrets.secret-2 }}
+          SECRET_3: ${{ secrets.secret-3 }}
+          SECRET_4: ${{ secrets.secret-4 }}
+          SECRET_5: ${{ secrets.secret-5 }}
+          SECRET_6: ${{ secrets.secret-6 }}
+          SECRET_7: ${{ secrets.secret-7 }}
+          SECRET_8: ${{ secrets.secret-8 }}
+          SECRET_9: ${{ secrets.secret-9 }}
+          SECRET_10: ${{ secrets.secret-10 }}
         run: |
+          while IFS= read -r line; do
+            [[ -z "$line" ]] && continue
+            # Replace literal $SECRET_1..$SECRET_10 placeholders (10..1 avoids $SECRET_10 matching $SECRET_1 prefix)
+            expanded_line=${line//\$SECRET_10/$SECRET_10}
+            expanded_line=${expanded_line//\$SECRET_9/$SECRET_9}
+            expanded_line=${expanded_line//\$SECRET_8/$SECRET_8}
+            expanded_line=${expanded_line//\$SECRET_7/$SECRET_7}
+            expanded_line=${expanded_line//\$SECRET_6/$SECRET_6}
+            expanded_line=${expanded_line//\$SECRET_5/$SECRET_5}
+            expanded_line=${expanded_line//\$SECRET_4/$SECRET_4}
+            expanded_line=${expanded_line//\$SECRET_3/$SECRET_3}
+            expanded_line=${expanded_line//\$SECRET_2/$SECRET_2}
+            expanded_line=${expanded_line//\$SECRET_1/$SECRET_1}
+            export "$expanded_line"
+          done <<< "$EXTRA_VARS"
+          # Unset raw secret slots so they don't leak into make or sudo -E
+          unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
+          # The test-command-prefix input is intentionally template-expanded rather
+          # than passed via an env var: callers use shell syntax (e.g. quotes) in
+          # the value, which would be mangled by word splitting.
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="--no-header -v -rN -m 'slow ${MARKERS:+and ($MARKERS)}'"
+      - name: Resolve caller job name
+        id: ctx
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name=$(gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${{ job.check_run_id }}" --jq '.name')
+          caller="${name%% / *}"
+          echo "caller-job=${caller}" >> "$GITHUB_OUTPUT"
       - name: Upload test coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ inputs.source-files == 'true' }}
         with:
-          name: coverage-slow-${{ join(matrix.platform, '-') }}-${{ matrix.python-version }}
+          name: coverage-${{ steps.ctx.outputs.caller-job }}-slow-${{ join(matrix.platform, '-') }}-${{ matrix.python-version }}
           overwrite: true
           path: |
             ./coverage.xml
             htmlcov/**
   lowest:
     name: Minimum dependencies (all tests)
-    if: ${{ inputs.lowest-python-version != '' }}
     # Allows either a string containing the platform or a JSON list of tags.
     # This is done for backwards compatibility with a string lowest-python version while
     # still allowing a list of tags if needed.
     runs-on: ${{ startsWith(inputs.lowest-python-platform, '[') && fromJson(inputs.lowest-python-platform) || inputs.lowest-python-platform }}
     env:
       UV_RESOLUTION: lowest
+    if: ${{ inputs.lowest-python-platform != '' && inputs.lowest-python-version != '' && inputs.source-files == 'true' }}
     steps:
       - name: Set up runner
         uses: canonical/starflow/setup-python-runner@main
+        if: ${{ inputs.source-files == 'true' }}
         with:
           python-version: ${{ inputs.lowest-python-version }}
+          use-lxd: ${{ inputs.use-lxd }}
       - name: Install tools
+        if: ${{ inputs.source-files == 'true' }}
+        env:
+          SETUP_VARS: ${{ inputs.setup-vars }}
         run: |
-          make -j setup-tests ${{ inputs.setup-vars }}
+          make -j setup-tests ${SETUP_VARS}
       - name: Run tests
+        if: ${{ inputs.source-files == 'true' }}
+        shell: bash
         env:
           MARKERS: ${{ inputs.pytest-markers }}
+          EXTRA_VARS: ${{ inputs.extra-env-vars }}
+          SECRET_1: ${{ secrets.secret-1 }}
+          SECRET_2: ${{ secrets.secret-2 }}
+          SECRET_3: ${{ secrets.secret-3 }}
+          SECRET_4: ${{ secrets.secret-4 }}
+          SECRET_5: ${{ secrets.secret-5 }}
+          SECRET_6: ${{ secrets.secret-6 }}
+          SECRET_7: ${{ secrets.secret-7 }}
+          SECRET_8: ${{ secrets.secret-8 }}
+          SECRET_9: ${{ secrets.secret-9 }}
+          SECRET_10: ${{ secrets.secret-10 }}
         run: |
+          while IFS= read -r line; do
+            [[ -z "$line" ]] && continue
+            # Replace literal $SECRET_1..$SECRET_10 placeholders (10..1 avoids $SECRET_10 matching $SECRET_1 prefix)
+            expanded_line=${line//\$SECRET_10/$SECRET_10}
+            expanded_line=${expanded_line//\$SECRET_9/$SECRET_9}
+            expanded_line=${expanded_line//\$SECRET_8/$SECRET_8}
+            expanded_line=${expanded_line//\$SECRET_7/$SECRET_7}
+            expanded_line=${expanded_line//\$SECRET_6/$SECRET_6}
+            expanded_line=${expanded_line//\$SECRET_5/$SECRET_5}
+            expanded_line=${expanded_line//\$SECRET_4/$SECRET_4}
+            expanded_line=${expanded_line//\$SECRET_3/$SECRET_3}
+            expanded_line=${expanded_line//\$SECRET_2/$SECRET_2}
+            expanded_line=${expanded_line//\$SECRET_1/$SECRET_1}
+            export "$expanded_line"
+          done <<< "$EXTRA_VARS"
+          # Unset raw secret slots so they don't leak into make or sudo -E
+          unset SECRET_1 SECRET_2 SECRET_3 SECRET_4 SECRET_5 SECRET_6 SECRET_7 SECRET_8 SECRET_9 SECRET_10
+          # The test-command-prefix input is intentionally template-expanded rather
+          # than passed via an env var: callers use shell syntax (e.g. quotes) in
+          # the value, which would be mangled by word splitting.
           ${{ inputs.test-command-prefix }} make test-coverage PYTEST_ADDOPTS="-m '${MARKERS}'"
+      - name: Resolve caller job name
+        id: ctx
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name=$(gh api "repos/${GITHUB_REPOSITORY}/actions/jobs/${{ job.check_run_id }}" --jq '.name')
+          caller="${name%% / *}"
+          echo "caller-job=${caller}" >> "$GITHUB_OUTPUT"
       - name: Upload test coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: ${{ inputs.source-files == 'true' }}
         with:
-          name: coverage-lowest-py${{ inputs.lowest-python-version }}
+          name: coverage-${{ steps.ctx.outputs.caller-job }}-lowest-py${{ inputs.lowest-python-version }}
           overwrite: true
           path: |
             ./coverage.xml

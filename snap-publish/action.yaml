@@ -37,24 +37,29 @@ runs:
   using: composite
   steps:
     - name: Checkout source
-      uses: actions/checkout@v5
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 0
+        persist-credentials: false
 
     - name: Setup Snapcraft
       id: snapcraft-setup
       shell: bash
+      env:
+        SNAPCRAFT_CHANNEL: ${{ inputs.snapcraft-channel }}
       run: |
-        sudo snap install snapcraft --channel "${{inputs.snapcraft-channel}}" --classic
+        sudo snap install snapcraft --channel "${SNAPCRAFT_CHANNEL}" --classic
 
     - name: Setup Launchpad credentials
       id: launchpad-credentials
       shell: bash
+      env:
+        LAUNCHPAD_TOKEN: ${{ inputs.launchpad-token }}
       run: |
         # For versions of snapcraft after 8.2.0, the path is different
         mkdir -p ~/.local/share/snapcraft/provider/launchpad ~/.local/share/snapcraft
-        echo "${{ inputs.launchpad-token }}" > ~/.local/share/snapcraft/provider/launchpad/credentials
-        echo "${{ inputs.launchpad-token }}" > ~/.local/share/snapcraft/launchpad-credentials
+        echo "${LAUNCHPAD_TOKEN}" > ~/.local/share/snapcraft/provider/launchpad/credentials
+        echo "${LAUNCHPAD_TOKEN}" > ~/.local/share/snapcraft/launchpad-credentials
 
     - name: Find and parse snapcraft.yaml
       id: snapcraft-yaml
@@ -120,7 +125,7 @@ runs:
 
     - name: Publish snap to ${{ inputs.channel }}
       id: snapcraft-publish
-      uses: canonical/action-publish@master
+      uses: canonical/action-publish@214b86e5ca036ead1668c79afb81e550e6c54d40 # v1.2.0
       with:
         snap: ${{ steps.snapcraft-remote-build.outputs.snap }}
         release: ${{ inputs.channel }}

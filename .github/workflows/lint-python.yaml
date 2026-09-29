@@ -1,6 +1,11 @@
 name: Lint Python
 on:
   workflow_call:
+    inputs:
+      source-files:
+        description: "Whether the changes affect source files"
+        type: string
+        default: "true"
   # Because we have a uv.lock file, we can also use this workflow to lint ourselves.
   pull_request:
     branches:
@@ -11,24 +16,38 @@ on:
 
 jobs:
   files:
+    permissions:
+      contents: read
+      pull-requests: read
     runs-on: ubuntu-latest
     steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          # Combine multiple negation checks into a union (¬A ∧ ¬B ∧ ¬C), because individual entries are checked independently (A ∨ B ∨ C).
+          # If we ever need to filter only for docs, glob 'docs/**/*' and '**/*.md'
+          filters: |
+            source-files:
+              - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
       - name: Begin snap installs of common linters
         id: snap-install
         run: |
           echo -n "jobs=$(sudo snap install --no-wait codespell ruff shellcheck)" >> $GITHUB_OUTPUT
-      - name: Check out code
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0 # Sphinx's linting uses the git history when getting timestamps.
       - name: Set up uv with caching
         id: setup-uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           enable-cache: true
       - name: Set up linters
+        env:
+          SNAP_JOBS: ${{ steps.snap-install.outputs.jobs }}
         run: |
-          for job in ${{ steps.snap-install.outputs.jobs }}; do
+          for job in ${SNAP_JOBS}; do
             sudo snap watch $job
           done
 
@@ -41,5 +60,9 @@ jobs:
             sudo apt-get update
             make -j setup-lint
           fi
-      - name: Run linters
+      - name: Run all linters
+        if: ${{ inputs.source-files == 'true' }}
         run: make -k lint
+      - name: Run documentation linters
+        if: ${{ inputs.source-files == 'false' }}
+        run: make -k docs-lint

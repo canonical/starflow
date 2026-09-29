@@ -19,6 +19,8 @@ concurrency:
 jobs:
   default:
     name: Default inputs
+    permissions:
+      contents: read
     strategy:
       matrix:
         platform:
@@ -37,9 +39,10 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Fetch source
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: ./setup-python-runner
       - name: Test that apt has finished
         if: runner.os == 'Linux'
@@ -55,13 +58,14 @@ jobs:
           [[ $(lxc --version) =~ 5.21* ]]
   lxd-6:
     name: LXD 6
+    permissions:
+      contents: read
     strategy:
       matrix:
         platform:
           - ubuntu-22.04
           - ubuntu-24.04
           - ubuntu-24.04-arm
-          - [focal, medium, amd64]
           - [jammy, medium, amd64]
           - [jammy, medium, arm64]
           - [noble, medium, amd64]
@@ -70,9 +74,10 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Fetch source
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: ./setup-python-runner
         with:
           lxd-channel: 6/candidate
@@ -82,6 +87,8 @@ jobs:
           [[ $(lxc --version) =~ 6.* ]]
   lxd-5_0:
     name: LXD 5.0
+    permissions:
+      contents: read
     strategy:
       matrix:
         platform:
@@ -90,9 +97,10 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Fetch source
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: ./setup-python-runner
         with:
           lxd-channel: 5.0/candidate
@@ -100,3 +108,23 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           [[ $(lxc --version) =~ 5.0* ]]
+  no-lxd:
+    name: use-lxd disabled
+    permissions:
+      contents: read
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Fetch source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./setup-python-runner
+        with:
+          use-lxd: false
+      - name: Check lxd is not installed
+        run: |
+          if [ -e /snap/bin/lxc ]; then
+            echo "::error::/snap/bin/lxc should not exist when use-lxd is false"
+            exit 1
+          fi

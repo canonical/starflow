@@ -22,6 +22,11 @@ three channels for the latest revisions:
 Once a craft app reaches version 2.0, there should be a track representing each
 supported major release.
 
+Publishing to these channels is managed through snap recipes on Launchpad. When
+setting up a new app, you only need to create the recipe for ``latest/edge``.
+The ``candidate`` and ``stable`` channels are handled later during the release
+process.
+
 Initialize the project on Launchpad
 -----------------------------------
 
@@ -34,7 +39,7 @@ maintainer and the driver.
 
 Next, set the project to import from the source on GitHub.
 
-If successful, https://code.launchpad.net/<yourcraft> should open the imported Git 
+If successful, https://code.launchpad.net/<yourcraft> should open the imported Git
 repository. If it isn't working, compare your project to the settings and
 results in https://code.launchpad.net/snapcraft.
 
@@ -62,3 +67,18 @@ Select **Automatically build when branch changes** and **Automatically upload to
 and enter the snap name. Leave the track empty and select the **Edge** risk.
 
 After saving, test that the builds work correctly by manually requesting a build.
+
+
+Candidate and stable channels
+-----------------------------
+
+When setting up a new project, you only need to configure the recipe for
+``latest/edge``. The remaining channels are managed during releases:
+
+- **Candidate**: Create a recipe for ``latest/candidate`` (such as
+  **<yourcraft>-candidate**) when preparing a release, pointing to the release or
+  hotfix branch. Contact the store team to ensure Canonical owns the snap before
+  publishing candidate builds.
+- **Stable**: Do not create a separate build recipe for ``latest/stable``. Instead,
+  after testing and validating a revision in ``latest/candidate``, promote that
+  revision to ``latest/stable`` directly in the Snap Store.

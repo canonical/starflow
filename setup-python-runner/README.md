@@ -22,6 +22,10 @@ jobs:
 
 ## Inputs
 
+### `use-lxd`
+
+Whether to set up LXD on Linux runners. Defaults to `true`.
+
 ### `lxd-channel`
 
 The snap channel from which to install LXD. Defaults to the current LTS channel.

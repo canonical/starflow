@@ -64,34 +64,23 @@ jobs:
 
 ## Python security scanner
 
-The Python security scanner workflow uses several tools (trivy, osv-scanner) to scan a
-Python project for security issues. It does the following:
+The Python security scanner workflow uses [OSV-scanner](https://google.github.io/osv-scanner/)
+to scan a Python project for security issues. It does the following:
 
-1. Creates a wheel of the project.
-2. Exports a `uv.lock` file (if present in the project) as two requirements files:
-   a. `requirements.txt` with no extras
-   b. `requirements-all.txt` with all available extras
+1. Runs `uv export` to extract a project's requirements from its `uv.lock` file. The workflow can
+   dictate the [export command's options](https://docs.astral.sh/uv/reference/cli/#uv-export) with
+   the `uv-export-extra-args` input. The workflow can also exclude a dependency group by listing it
+   in the `uv-export-no-groups` input.
+2. Scans the exported requirements file for known vulnerabilities.
+3. Recursively searches the project source tree for any other lockfiles.
+4. Scans any found lockfiles for known vulnerabilities.
 
-If there are any existing `requirements*.txt` files in your project, it will scan those
-below too. Exporting a `uv.lock` file can be disabled by setting `uv-export: false`.
-
-With [Trivy](https://github.com/aquasecurity/trivy), it:
-
-1. Scans the requirements files
-2. Scans the wheel file(s)
-3. Scans the project directory
-4. Installs each combination of (requirements, wheel) in a virtual environment and scans that environment.
-5. If a `uv.lock` file exists for the project, creates a virtual environment using `uv sync` and
-   scans that environment. `uv sync` can be configured with the `uv-sync-extra-args` input.
-
-With [OSV-scanner](https://google.github.io/osv-scanner/) it:
-
-1. Scans the requirements files
-2. Scans the project directory
+Exporting a `uv.lock` file can be disabled by setting `uv-export: false`.
 
 ### Usage
 
-An example workflow for your own Python project that will use this workflow:
+An example workflow for a Python project that excludes documentation dependencies from
+the scan and suppresses findings from the `docs/` directory:
 
 ```yaml
 name: Security scan
@@ -107,26 +96,27 @@ jobs:
     name: Scan Python project
     uses: canonical/starflow/.github/workflows/scan-python.yaml@main
     with:
-      # Additional packages to install on the Ubuntu runners for building
-      packages: python-apt-dev cargo
-      # Additional arguments to `find` when finding requirements files.
-      # This example ignores 'requirements-noble.txt'
-      requirements-find-args: "! -name requirements-noble.txt"
-      # Additional arguments to pass to osv-scanner.
-      # This example adds configuration from your project.
-      osv-extra-args: "--config=source/osv-scanner.toml"
-      # Use the standard extra args and ignore spread tests
-      trivy-extra-args: '--severity HIGH,CRITICAL --ignore-unfixed --skip-dirs "tests/spread/**"'
+      # Include all dependency groups in the export, then exclude the docs groups.
+      # The docs-sphinx-stack group must be defined in pyproject.toml.
+      uv-export-extra-args: "--all-extras --all-groups"
+      uv-export-no-groups: |
+        docs
+        docs-sphinx-stack
+      # Exclude docs/ from the recursive source scan (e.g. to ignore example lockfiles).
+      osv-exclude-paths: "docs/"
+      # Pass additional arguments to osv-scanner, e.g. a project config file.
+      osv-extra-args: "--config=osv-scanner.toml"
 ```
 
 ## Go security scanner
 
-The Go security scanner workflow uses several tools (trivy, osv-scanner) to scan a
-Go project for security issues.
+The Go security scanner workflow uses [OSV-scanner](https://google.github.io/osv-scanner/)
+to scan a Go project for security issues. It recursively scans the project source tree for
+known vulnerabilities in any lockfiles it finds.
 
 ### Usage
 
-An example workflow for your own Go project that will use this workflow:
+An example workflow for a Go project that excludes the `docs/` directory from the scan:
 
 ```yaml
 name: Security scan
@@ -142,13 +132,10 @@ jobs:
     name: Scan Go project
     uses: canonical/starflow/.github/workflows/scan-golang.yaml@main
     with:
-      # Additional packages to install on the Ubuntu runners for building
-      packages: protoc-gen-go-1-3
-      # Additional arguments to pass to osv-scanner.
-      # This example adds configuration from your project.
-      osv-extra-args: "--config=.osv-scanner.toml"
-      # Use the standard extra args and ignore spread tests
-      trivy-extra-args: '--skip-dirs "tests/spread/**"'
+      # Exclude docs/ from the recursive source scan (e.g. to ignore example lockfiles).
+      osv-exclude-paths: "docs/"
+      # Pass additional arguments to osv-scanner, e.g. a project config file.
+      osv-extra-args: "--config=osv-scanner.toml"
 ```
 
 ## Python test runner
@@ -168,11 +155,20 @@ In order to do so, it expects the following `make` targets:
 - `test-coverage`: Runs tests with test coverage. Fast and slow tests will use the
   `PYTEST_ADDOPTS` environment variable to run with or without the `slow` mark.
 
-Because we use the snaps of [codespell](https://snapcraft.io/codespell),
-[ruff](https://snapcraft.io/ruff) and [shellcheck](https://snapcraft.io/shellcheck)
-frequently, this workflow installs those as well as uv.
+Additional environment variables (such as secrets) can be passed to the test runner using the
+`extra-env-vars` input. This input takes a newline-separated list of `KEY=VALUE` pairs which will be
+exported before the tests are run.
 
-An example workflow:
+Due to GitHub Actions limitations, secrets cannot be passed directly into the `extra-env-vars`
+string. Instead, you can map your secrets to generic slots (`secret-1` through `secret-10`) in the
+`secrets` block of the call, and then reference them as `$SECRET_1` through `$SECRET_10` in
+`extra-env-vars`.
+
+Each of these test suites (fast, slow, or lowest) can be selectively disabled by passing an empty string
+(`''`) to any of their platform or version inputs. This is useful for projects that only need a subset
+of the testing suite.
+
+An example workflow demonstrating secret mapping and selective skipping:
 
 ```yaml
 name: Test Python
@@ -182,17 +178,14 @@ on:
 jobs:
   test:
     uses: canonical/starflow/.github/workflows/test-python.yaml@main
+    secrets:
+      secret-1: ${{ secrets.MY_SECRET_KEY }}
     with:
-      fast-test-platforms: '["ubuntu-22.04", "windows-latest", "macos-latest"]'
-      fast-test-python-versions: '["3.14"]'
-      slow-test-platforms: '["ubuntu-latest"]'
-      slow-test-python-versions: '["3.14"]'
-      lowest-python-version: "3.8"
-      lowest-python-platform: '["jammy", "arm64"]'
-      use-lxd: true # If we should install lxd on the runner.
-      pytest-markers: smoketest and not steamtest # Extra pytest marks to set, for example to break up large test sets
-      setup-vars: NO_INSTALL_PLUGIN_DEPS=1 # Extra variables to pass when running setup
-      test-command-prefix: sudo # Runs the tests with sudo so we can run as root.
+      # Disable slow tests by providing an empty platform list
+      slow-test-platforms: ""
+      extra-env-vars: | # Extra environment variables to pass to the tests
+        MY_SECRET_KEY=$SECRET_1
+        MY_VAR=value
 ```
 
 # Other
