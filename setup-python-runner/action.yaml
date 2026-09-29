@@ -63,8 +63,7 @@ runs:
         echo "cache-hash=${cache_hash}" >> "${GITHUB_OUTPUT}"
     - name: Set up uv with caching
       id: setup-uv
-      uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4
-      # v10.1.0
+      uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
       with:
         enable-cache: true
         cache-suffix: ${{ steps.runner-info.outputs.cache-hash }}

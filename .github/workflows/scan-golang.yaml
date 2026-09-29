@@ -51,7 +51,7 @@ jobs:
         run: |
           retry() {
             local n=1
-            local max=5
+            local max=6
             local delay=2
             while ! "$@"; do
               if [[ $n -lt $max ]]; then

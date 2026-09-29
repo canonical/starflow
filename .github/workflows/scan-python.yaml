@@ -80,7 +80,7 @@ jobs:
         run: |
           retry() {
             local n=1
-            local max=5
+            local max=6
             local delay=2
             while ! "$@"; do
               if [[ $n -lt $max ]]; then
@@ -139,7 +139,7 @@ jobs:
         run: |
           retry() {
             local n=1
-            local max=5
+            local max=6
             local delay=2
             while ! "$@"; do
               if [[ $n -lt $max ]]; then
@@ -154,7 +154,7 @@ jobs:
             done
           }
           retry sudo snap install osv-scanner
-          retry sudo snap install --no-wait --classic astral-uv
+          retry sudo snap install --classic astral-uv
       - name: Checkout source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
