@@ -1,0 +1,25 @@
+name: Secscan
+description: Run a snap through the canonical-secscan client and upload the results.
+
+inputs:
+  snap-file:
+    description: The snap file to scan.
+    required: true
+  snap-version:
+    description: The version of the snap being scanned. If omitted, it will be derived from the input snap file.
+  product-name:
+    description: The name of the product being scanned. If omitted, it will be derived from the input snap file.
+  cycle:
+    description: The current SSDLC cycle to submit artifacts for.
+    required: true
+  release-channel:
+    description: The release channel the target snap currently lives on.
+    required: true
+
+outputs:
+  secscan-results:
+    description: Path to the directory containing the secscan results.
+
+runs:
+  using: node24
+  main: dist/index.js
