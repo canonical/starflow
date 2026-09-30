@@ -12,12 +12,10 @@ the process in this guide. Our process doesn't apply to other apps or snaps
 maintained by other teams.
 
 We build our snaps on Launchpad with
-:external+launchpad:ref:`snap recipes <build-snaps-in-launchpad>`. Each snap must have
-three channels for the latest revisions:
-
-- ``latest/edge``
-- ``latest/candidate``
-- ``latest/stable``
+:external+launchpad:ref:`snap recipes <build-snaps-in-launchpad>`. Configure a recipe for
+``latest/edge``. For apps that already use ``latest/candidate`` and ``latest/stable``,
+candidate builds are also managed through recipes, while validated revisions are promoted to
+stable directly in the Snap Store.
 
 Once a craft app reaches version 2.0, there should be a track representing each
 supported major release.
@@ -72,8 +70,9 @@ After saving, test that the builds work correctly by manually requesting a build
 Candidate and stable channels
 -----------------------------
 
-When setting up a new project, you only need to configure the recipe for
-``latest/edge``. The remaining channels are managed during releases:
+These instructions apply only to apps that already have ``latest/candidate`` and
+``latest/stable`` channels. They aren't part of the initial debcraft setup. Create the
+candidate recipe when preparing a release:
 
 - **Candidate**: Create a recipe for ``latest/candidate`` (such as
   **<yourcraft>-candidate**) when preparing a release, pointing to the release or
