@@ -108,6 +108,8 @@ jobs:
       - name: Comment starflow PR
         if: env.SAME_REPO == 'true' && env.SYNCED == 'true' && steps.draft.outputs.created == 'true'
         env:
+          # github.token, not the PAT: comment must post as github-actions[bot].
+          GH_TOKEN: ${{ github.token }}
           DRAFT_URL: ${{ steps.draft.outputs.url }}
         run: |
           gh pr comment "$PR_NUMBER" --repo canonical/starflow --body "Smoke test: $DRAFT_URL"
