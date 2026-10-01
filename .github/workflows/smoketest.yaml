@@ -63,7 +63,17 @@ jobs:
     env:
       PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
+      - name: Check smoke branch exists
+        id: check
+        run: |
+          if gh api "repos/$STARBASE_REPO/branches/$SMOKE_BRANCH" --silent; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Clone smoke branch
+        if: steps.check.outputs.exists == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: canonical/starbase
@@ -72,6 +82,7 @@ jobs:
           persist-credentials: false
 
       - name: Push empty commit to re-run CI
+        if: steps.check.outputs.exists == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
