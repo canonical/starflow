@@ -15,7 +15,6 @@ concurrency:
   group: smoketest-${{ github.event.pull_request.number }}
 
 env:
-  GH_TOKEN: ${{ secrets.STARBASE_TOKEN }}
   STARBASE_REPO: canonical/starbase
   SMOKE_BRANCH: bot/smoketest/starflow-${{ github.event.pull_request.number }}
   # Fork PRs get no STARBASE_TOKEN, so steps only run for same-repo PRs.
@@ -34,8 +33,10 @@ jobs:
     steps:
       - name: Check STARBASE_TOKEN
         if: env.SAME_REPO == 'true'
+        env:
+          STARBASE_TOKEN: ${{ secrets.STARBASE_TOKEN }}
         run: |
-          if [ -z "$GH_TOKEN" ]; then
+          if [ -z "$STARBASE_TOKEN" ]; then
             echo "::error::STARBASE_TOKEN secret is not set. Add it under repo Settings > Secrets and variables > Actions."
             exit 1
           fi
@@ -46,11 +47,13 @@ jobs:
         with:
           repository: canonical/starbase
           ref: main
-          token: ${{ secrets.STARBASE_TOKEN }}
           persist-credentials: false
 
       - name: Rebuild smoke branch
         if: env.SAME_REPO == 'true' && env.SYNCED == 'true'
+        env:
+          # PAT only here and other starbase writes: push needs starbase access.
+          GH_TOKEN: ${{ secrets.STARBASE_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -91,6 +94,8 @@ jobs:
       - name: Open starbase draft PR
         id: draft
         if: env.SAME_REPO == 'true' && env.SYNCED == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.STARBASE_TOKEN }}
         run: |
           existing=$(gh pr list --repo "$STARBASE_REPO" --head "$SMOKE_BRANCH" --json url --jq '.[0].url')
           if [ -n "$existing" ] && [ "$existing" != "null" ]; then
@@ -116,6 +121,8 @@ jobs:
 
       - name: Close starbase smoke test PR
         if: env.SAME_REPO == 'true' && github.event.action == 'closed'
+        env:
+          GH_TOKEN: ${{ secrets.STARBASE_TOKEN }}
         run: |
           num=$(gh pr list --repo "$STARBASE_REPO" --head "$SMOKE_BRANCH" --state open --json number --jq '.[0].number')
           if [ -n "$num" ] && [ "$num" != "null" ]; then
