@@ -6,11 +6,11 @@ on:
       - main
     paths:
       - "setup-python-runner/*"
-      - ".github/workflows/self-test-setup"
+      - ".github/workflows/self-test-setup.yaml"
   pull_request:
     paths:
       - "setup-python-runner/*"
-      - ".github/workflows/self-test-setup"
+      - ".github/workflows/self-test-setup.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
@@ -27,7 +27,7 @@ jobs:
           - ubuntu-22.04
           - ubuntu-24.04
           - ubuntu-24.04-arm
-          - macos-14
+          - macos-26
           - macos-15
           - macos-15-large
           - [focal, medium, amd64]
