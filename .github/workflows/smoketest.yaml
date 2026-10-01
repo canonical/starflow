@@ -4,51 +4,65 @@ on:
   pull_request:
     types:
       - opened
+      - synchronize
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
+
+env:
+  GH_TOKEN: ${{ secrets.STARBASE_TOKEN }}
+  STARBASE_REPO: canonical/starbase
+  SMOKE_BRANCH: bot/smoketest/starflow-${{ github.event.pull_request.number }}
 
 jobs:
   smoke-test:
     runs-on: ubuntu-latest
+    if: github.event.action == 'opened'
     steps:
       - name: Clone starbase
         uses: actions/checkout@v4
         with:
           repository: canonical/starbase
           ref: main
-          fetch-depth: 0
+          token: ${{ secrets.STARBASE_TOKEN }}
 
-      - name: Update starflow references to PR branch
+      - name: Point starflow refs at PR branch
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          find . -type f -exec sed -i.bak "s|canonical/starflow@main|canonical/starflow@${{ github.event.pull_request.head.ref }}|g" {} +
-          git checkout main
-          git restore --staged .
-          git add .
-          git commit -m "Update starflow references for smoke test PR #${{ github.event.number }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          grep -rl 'canonical/starflow@' . --exclude-dir=.git | xargs sed -i "s|canonical/starflow@main|canonical/starflow@${{ github.event.pull_request.head.ref }}|g"
+          git checkout -b "$SMOKE_BRANCH"
+          git add -A
+          git commit -m "Point starflow refs at ${{ github.event.pull_request.head.ref }}"
+          git push -u origin "$SMOKE_BRANCH"
 
-      - name: Create smoke test branch
+      - name: Open starbase draft PR
+        id: draft
         run: |
-          git checkout -b bot/smoketest/starflow-${{ github.event.number }}
+          url=$(gh pr create --repo "$STARBASE_REPO" --base main --head "$SMOKE_BRANCH" --draft \
+            --title "Smoke test for starflow#${{ github.event.pull_request.number }}" \
+            --body "Smoke test for https://github.com/canonical/starflow/pull/${{ github.event.pull_request.number }}")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
 
-      - name: Push smoke test branch
+      - name: Comment starflow PR
         run: |
-          gh auth login --with-token ${{ secrets.GITHUB_TOKEN }}
-          git push origin bot/smoketest/starflow-${{ github.event.number }}
+          gh pr comment "${{ github.event.pull_request.number }}" --repo canonical/starflow --body "Smoke test: ${{ steps.draft.outputs.url }}"
 
-      - name: Create draft PR on starbase
-        run: |
-          gh pr create \
-            --repo canonical/starbase \
-            --base main \
-            --head bot/smoketest/starflow-${{ github.event.number }} \
-            --title "Smoke test for PR #${{ github.event.number }}" \
-            --body "This PR was automatically created to smoke test changes in starflow PR #${{ github.event.number }}" \
-            --draft
+  rerun:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'synchronize'
+    steps:
+      - name: Clone smoke branch
+        uses: actions/checkout@v4
+        with:
+          repository: canonical/starbase
+          ref: bot/smoketest/starflow-${{ github.event.pull_request.number }}
+          token: ${{ secrets.STARBASE_TOKEN }}
 
-      - name: Comment on starflow PR
+      - name: Push empty commit to re-run CI
         run: |
-          gh pr comment ${{ github.event.pull_request.number }} --body "Smoke test created: https://github.com/canonical/starbase/pulls/${{ github.event.number }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "Re-run CI for https://github.com/canonical/starflow/pull/${{ github.event.pull_request.number }}"
+          git push origin HEAD
