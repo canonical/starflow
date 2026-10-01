@@ -1,0 +1,54 @@
+name: Smoke Test
+
+on:
+  pull_request:
+    types:
+      - opened
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone starbase
+        uses: actions/checkout@v4
+        with:
+          repository: canonical/starbase
+          ref: main
+          fetch-depth: 0
+
+      - name: Update starflow references to PR branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          find . -type f -exec sed -i.bak "s|canonical/starflow@main|canonical/starflow@${{ github.event.pull_request.head.ref }}|g" {} +
+          git checkout main
+          git restore --staged .
+          git add .
+          git commit -m "Update starflow references for smoke test PR #${{ github.event.number }}"
+
+      - name: Create smoke test branch
+        run: |
+          git checkout -b bot/smoketest/starflow-${{ github.event.number }}
+
+      - name: Push smoke test branch
+        run: |
+          gh auth login --with-token ${{ secrets.GITHUB_TOKEN }}
+          git push origin bot/smoketest/starflow-${{ github.event.number }}
+
+      - name: Create draft PR on starbase
+        run: |
+          gh pr create \
+            --repo canonical/starbase \
+            --base main \
+            --head bot/smoketest/starflow-${{ github.event.number }} \
+            --title "Smoke test for PR #${{ github.event.number }}" \
+            --body "This PR was automatically created to smoke test changes in starflow PR #${{ github.event.number }}" \
+            --draft
+
+      - name: Comment on starflow PR
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "Smoke test created: https://github.com/canonical/starbase/pulls/${{ github.event.number }}"
