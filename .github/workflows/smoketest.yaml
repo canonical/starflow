@@ -31,6 +31,14 @@ jobs:
       PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
+      - name: Check STARBASE_TOKEN
+        if: env.SAME_REPO == 'true'
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::STARBASE_TOKEN secret is not set. Add it under repo Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
       - name: Clone starbase
         if: env.SAME_REPO == 'true' && github.event.action == 'opened'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
