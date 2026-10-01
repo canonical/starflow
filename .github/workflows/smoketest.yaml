@@ -20,6 +20,7 @@ env:
   SMOKE_BRANCH: bot/smoketest/starflow-${{ github.event.pull_request.number }}
   # Fork PRs get no STARBASE_TOKEN, so steps only run for same-repo PRs.
   SAME_REPO: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+  SYNCED: ${{ github.event.action == 'opened' || github.event.action == 'synchronize' }}
 
 # Single job so the check never shows as skipped, whatever the PR action.
 jobs:
@@ -40,7 +41,7 @@ jobs:
           fi
 
       - name: Clone starbase
-        if: env.SAME_REPO == 'true' && github.event.action == 'opened'
+        if: env.SAME_REPO == 'true' && env.SYNCED == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: canonical/starbase
@@ -48,11 +49,12 @@ jobs:
           token: ${{ secrets.STARBASE_TOKEN }}
           persist-credentials: false
 
-      - name: Point starflow refs at PR branch
-        if: env.SAME_REPO == 'true' && github.event.action == 'opened'
+      - name: Rebuild smoke branch
+        if: env.SAME_REPO == 'true' && env.SYNCED == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin "$SMOKE_BRANCH" || true # missing on first run
           # Literal replace via python: the branch name is untrusted, so it must
           # never pass through sed or shell expansion.
           python3 - <<'EOF'
@@ -81,58 +83,34 @@ jobs:
           git checkout -B "$SMOKE_BRANCH"
           git add -A
           printf 'Point starflow refs at %s\n' "$PR_HEAD_REF" > /tmp/smoke-msg
-          git commit -F /tmp/smoke-msg || true # retry-safe when nothing changed
+          # Always commit, even empty, so starbase CI re-runs on every sync.
+          git commit --allow-empty -F /tmp/smoke-msg
           git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$STARBASE_REPO.git"
           git push --force -u origin "$SMOKE_BRANCH" # bot-owned disposable branch
 
       - name: Open starbase draft PR
         id: draft
-        if: env.SAME_REPO == 'true' && github.event.action == 'opened'
+        if: env.SAME_REPO == 'true' && env.SYNCED == 'true'
         run: |
           existing=$(gh pr list --repo "$STARBASE_REPO" --head "$SMOKE_BRANCH" --json url --jq '.[0].url')
           if [ -n "$existing" ] && [ "$existing" != "null" ]; then
             url=$existing
+            created=false
           else
             url=$(gh pr create --repo "$STARBASE_REPO" --base main --head "$SMOKE_BRANCH" --draft \
               --title "Smoke test for starflow#$PR_NUMBER" \
               --body "Smoke test for https://github.com/canonical/starflow/pull/$PR_NUMBER")
+            created=true
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "created=$created" >> "$GITHUB_OUTPUT"
 
       - name: Comment starflow PR
-        if: env.SAME_REPO == 'true' && github.event.action == 'opened'
+        if: env.SAME_REPO == 'true' && env.SYNCED == 'true' && steps.draft.outputs.created == 'true'
         env:
           DRAFT_URL: ${{ steps.draft.outputs.url }}
         run: |
           gh pr comment "$PR_NUMBER" --repo canonical/starflow --body "Smoke test: $DRAFT_URL"
-
-      - name: Check smoke branch exists
-        id: check
-        if: env.SAME_REPO == 'true' && github.event.action == 'synchronize'
-        run: |
-          if gh api "repos/$STARBASE_REPO/branches/$SMOKE_BRANCH" --silent; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Clone smoke branch
-        if: env.SAME_REPO == 'true' && github.event.action == 'synchronize' && steps.check.outputs.exists == 'true'
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: canonical/starbase
-          ref: bot/smoketest/starflow-${{ github.event.pull_request.number }}
-          token: ${{ secrets.STARBASE_TOKEN }}
-          persist-credentials: false
-
-      - name: Push empty commit to re-run CI
-        if: env.SAME_REPO == 'true' && github.event.action == 'synchronize' && steps.check.outputs.exists == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit --allow-empty -m "Re-run CI for https://github.com/canonical/starflow/pull/$PR_NUMBER"
-          git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$STARBASE_REPO.git"
-          git push origin HEAD
 
       - name: Close starbase smoke test PR
         if: env.SAME_REPO == 'true' && github.event.action == 'closed'
