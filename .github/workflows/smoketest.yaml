@@ -24,7 +24,7 @@ env:
 # Single job so the check never shows as skipped, whatever the PR action.
 jobs:
   smoke:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       pull-requests: write
     env:
