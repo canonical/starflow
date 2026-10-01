@@ -5,10 +5,10 @@ on:
     types:
       - opened
       - synchronize
+      - closed
 
 permissions:
   contents: read
-  pull-requests: write
 
 env:
   GH_TOKEN: ${{ secrets.STARBASE_TOKEN }}
@@ -19,22 +19,28 @@ jobs:
   smoke-test:
     runs-on: ubuntu-latest
     if: github.event.action == 'opened'
+    permissions:
+      pull-requests: write
+    env:
+      PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
     steps:
       - name: Clone starbase
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: canonical/starbase
           ref: main
           token: ${{ secrets.STARBASE_TOKEN }}
+          persist-credentials: false
 
       - name: Point starflow refs at PR branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          grep -rl 'canonical/starflow@' . --exclude-dir=.git | xargs sed -i "s|canonical/starflow@main|canonical/starflow@${{ github.event.pull_request.head.ref }}|g"
+          grep -rl 'canonical/starflow@' . --exclude-dir=.git | xargs sed -i "s|canonical/starflow@main|canonical/starflow@$PR_HEAD_REF|g"
           git checkout -b "$SMOKE_BRANCH"
           git add -A
-          git commit -m "Point starflow refs at ${{ github.event.pull_request.head.ref }}"
+          git commit -m "Point starflow refs at $PR_HEAD_REF"
+          git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$STARBASE_REPO.git"
           git push -u origin "$SMOKE_BRANCH"
 
       - name: Open starbase draft PR
@@ -46,23 +52,40 @@ jobs:
           echo "url=$url" >> "$GITHUB_OUTPUT"
 
       - name: Comment starflow PR
+        env:
+          DRAFT_URL: ${{ steps.draft.outputs.url }}
         run: |
-          gh pr comment "${{ github.event.pull_request.number }}" --repo canonical/starflow --body "Smoke test: ${{ steps.draft.outputs.url }}"
+          gh pr comment "${{ github.event.pull_request.number }}" --repo canonical/starflow --body "Smoke test: $DRAFT_URL"
 
   rerun:
     runs-on: ubuntu-latest
     if: github.event.action == 'synchronize'
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
       - name: Clone smoke branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: canonical/starbase
           ref: bot/smoketest/starflow-${{ github.event.pull_request.number }}
           token: ${{ secrets.STARBASE_TOKEN }}
+          persist-credentials: false
 
       - name: Push empty commit to re-run CI
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit --allow-empty -m "Re-run CI for https://github.com/canonical/starflow/pull/${{ github.event.pull_request.number }}"
+          git commit --allow-empty -m "Re-run CI for https://github.com/canonical/starflow/pull/$PR_NUMBER"
+          git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$STARBASE_REPO.git"
           git push origin HEAD
+
+  close:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+    steps:
+      - name: Close starbase smoke test PR
+        run: |
+          num=$(gh pr list --repo "$STARBASE_REPO" --head "$SMOKE_BRANCH" --state open --json number --jq '.[0].number')
+          if [ -n "$num" ]; then
+            gh pr close "$num" --repo "$STARBASE_REPO" --comment "Closing: starflow PR was closed."
+          fi
