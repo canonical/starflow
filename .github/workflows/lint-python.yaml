@@ -38,8 +38,8 @@ jobs:
         id: snap-install
         run: |
           job1=$(sudo snap install --no-wait codespell ruff shellcheck)
-          job2=$(sudo snap install --no-wait -classic tombi)
-          job3=$(sudo snap install --no-wait beta astral-ty)
+          job2=$(sudo snap install --no-wait --classic tombi)
+          job3=$(sudo snap install --no-wait --beta astral-ty)
           echo -n "jobs=$job1 $job2 $job3" >> $GITHUB_OUTPUT
       - name: Set up uv with caching
         id: setup-uv
