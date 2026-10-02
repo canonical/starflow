@@ -37,7 +37,10 @@ jobs:
       - name: Begin snap installs of common linters
         id: snap-install
         run: |
-          echo -n "jobs=$(sudo snap install --no-wait codespell ruff shellcheck tombi) $(sudo snap install --beta --no-wait astral-ty)" >> $GITHUB_OUTPUT
+          job1=$(sudo snap install --no-wait codespell ruff shellcheck)
+          job2=$(sudo snap install --no-wait -classic tombi)
+          job3=$(sudo snap install --no-wait beta astral-ty)
+          echo -n "jobs=$job1 $job2 $job3" >> $GITHUB_OUTPUT
       - name: Set up uv with caching
         id: setup-uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
