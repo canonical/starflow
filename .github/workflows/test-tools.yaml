@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           # minimum supported version for the contributors script
-          python-version: 3.11
+          python-version: 3.14
       - name: Run contributor script
         run: |
           ./tools/contributors.py --project rockcraft --old-ref 1.16.0 --new-ref bd7109b --verbose
