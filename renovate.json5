@@ -21,7 +21,6 @@
       groupName: "internal package minor releases",
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       prPriority: 10,
-      automerge: true,
       minimumReleaseAge: "0 seconds",
       schedule: ["at any time"],
       matchBaseBranches: ["main"],
@@ -60,7 +59,6 @@
       groupName: "GitHub Actions",
       matchManagers: ["github-actions"],
       prPriority: 1,
-      automerge: true,
     },
     {
       groupName: "development dependencies (minor and patch)",
@@ -99,9 +97,15 @@
       matchBaseBranches: ["main"],
     },
     {
+      matchDepTypes: ["devDependencies"],
+      matchUpdateTypes: ["minor", "patch", "pin", "digest"],
+      automerge: true,
+    },
+    {
       matchUpdateTypes: ["major"],
       prPriority: -2,
       matchBaseBranches: ["main"],
+      automerge: false,
     },
     {
       groupName: "development dependencies (major versions)",
@@ -110,11 +114,13 @@
       matchUpdateTypes: ["major"],
       prPriority: -3,
       matchBaseBranches: ["main"],
+      automerge: false,
     },
     {
       matchPackageNames: ["pyright", "types/pyright"],
       prPriority: -4,
       matchBaseBranches: ["main"],
+      automerge: false,
     },
     {
       matchJsonata: ["managerData.depGroup = 'docs-sphinx-stack'"],
@@ -149,7 +155,7 @@
   prNotPendingHours: 4,
   prHourlyLimit: 1,
   minimumReleaseAge: "2 days",
-  automerge: true,
+  automerge: false,
   automergeType: "pr",
   ignoreTests: false,
   automergeStrategy: "squash",
