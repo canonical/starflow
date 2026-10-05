@@ -19,16 +19,7 @@
     },
     {
       groupName: "internal package minor releases",
-      matchUpdateTypes: ["minor"],
-      prPriority: 10,
-      minimumReleaseAge: "0 seconds",
-      schedule: ["at any time"],
-      matchBaseBranches: ["main"],
-      matchPackageNames: ["/^craft-.*/"],
-    },
-    {
-      groupName: "internal package patch releases",
-      matchUpdateTypes: ["patch", "pin", "digest"],
+      matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       prPriority: 10,
       automerge: true,
       minimumReleaseAge: "0 seconds",
