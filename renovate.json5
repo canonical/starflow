@@ -116,7 +116,7 @@
       matchBaseBranches: ["main"],
     },
     {
-      matchDepTypes: ["devDependencies"],
+      matchDepTypes: ["devDependencies", "dependency-groups"],
       matchUpdateTypes: ["minor", "patch", "pin", "digest"],
       automerge: true,
     },
@@ -129,7 +129,7 @@
     {
       groupName: "development dependencies (major versions)",
       groupSlug: "dev-dependencies",
-      matchDepTypes: ["devDependencies"],
+      matchDepTypes: ["devDependencies", "dependency-groups"],
       matchUpdateTypes: ["major"],
       prPriority: -3,
       matchBaseBranches: ["main"],
