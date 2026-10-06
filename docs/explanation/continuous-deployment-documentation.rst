@@ -57,11 +57,12 @@ Let's take the minor version 1.3 in a product as an example. To release 1.3:
 #. The CI system runs all tests against the release notes.
 #. A technical author reviews and approves the release notes.
 #. The main engineer merges the release notes.
-#. The main engineer tags the commit of the release notes, signifying in the source code
-   that the version is released.
-#. The main engineer `builds the release on the farm
-   <https://discourse.canonical.com/t/release-process/626#p-722-import-the-code-on-launchpad-5>`__.
-#. The main engineer creates the ``hotfix/1.3`` branch.
+#. The main engineer tags the commit of the release notes, which kicks off a
+   `build on the farm
+   <https://discourse.canonical.com/t/release-process/626#p-722-import-the-code-on-launchpad-5>`__ and signals that the release has entered the candidate stage.
+#. The main engineer announces the candidate release on public communication channels.
+#. Once the release is considered ready, the main engineer promotes the candidate to
+   stable and creates the ``hotfix/1.3`` branch.
 #. On Read the Docs, the TA creates documentation version 1.3, sourced from the
    ``hotfix/1.3`` branch.
 #. The TA redirects the prior minor documentation versions to documentation version 1.3.
