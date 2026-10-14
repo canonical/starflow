@@ -99,7 +99,7 @@ Release to candidate
 
 1. Ensure that all previous hotfix branches for the current major release have been merged
    to ``main``.
-2. Update all dependencies using ``uv lock --update``
+2. Update all dependencies using ``uv lock --upgrade``
 3. Create the release notes page for the minor version. List what changed, how to
    upgrade, and what breaks. Put the date on which you expect to promote the release to
    ``stable`` at the top of the page.
