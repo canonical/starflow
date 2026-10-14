@@ -1,4 +1,4 @@
-name: Lint
+name: Lint Python
 on:
   workflow_call:
     inputs:
@@ -15,11 +15,17 @@ on:
       - main
 
 jobs:
-  files:
+  # Paths are filtered in their own job so the linting jobs can be skipped before a
+  # runner is requested. Job conditions only see event data and needs.*.outputs, so
+  # the paths filter cannot run inside the job that consumes its result.
+  filter:
     permissions:
       contents: read
       pull-requests: read
     runs-on: ubuntu-latest
+    outputs:
+      source-files: ${{ steps.filter.outputs.source-files }}
+      docs-files: ${{ steps.filter.outputs.docs-files }}
     steps:
       - name: Check out code
         timeout-minutes: 1
@@ -36,7 +42,21 @@ jobs:
             source-files:
               - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
             docs-files:
-              - '{docs/**,**/*.md,**/*.rst}'
+              - '{docs/**,**/*.md,**/*.rst,.readthedocs.yaml}'
+
+  files:
+    needs: filter
+    if: ${{ needs.filter.outputs.source-files == 'true' && inputs.source-files != 'false' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        timeout-minutes: 1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - name: Begin snap installs of common linters
         timeout-minutes: 1
         id: snap-install
@@ -66,13 +86,13 @@ jobs:
             make -j setup-lint
           fi
       - name: Run all linters
-        if: ${{ steps.filter.outputs.source-files == 'true' && inputs.source-files != 'false' }}
         run: make -k lint-code
 
   docs:
+    needs: filter
+    if: ${{ needs.filter.outputs.docs-files == 'true' }}
     permissions:
       contents: read
-      pull-requests: read
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -81,13 +101,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
-        timeout-minutes: 1
-        id: filter
-        with:
-          filters: |
-            docs-files:
-              - '{docs/**,**/*.md,**/*.rst}'
       - name: Set up uv with caching
         timeout-minutes: 3
         id: setup-uv
@@ -95,13 +108,13 @@ jobs:
         with:
           enable-cache: true
       - name: Run documentation linters
-        if: ${{ steps.filter.outputs.docs-files == 'true' }}
         run: make -k docs-lint
 
   linkcheck:
+    needs: filter
+    if: ${{ needs.filter.outputs.docs-files == 'true' }}
     permissions:
       contents: read
-      pull-requests: read
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -110,13 +123,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
-        timeout-minutes: 1
-        id: filter
-        with:
-          filters: |
-            docs-files:
-              - '{docs/**,**/*.md,**/*.rst}'
       - name: Set up uv with caching
         timeout-minutes: 3
         id: setup-uv
@@ -124,5 +130,4 @@ jobs:
         with:
           enable-cache: true
       - name: Check documentation links
-        if: ${{ steps.filter.outputs.docs-files == 'true' }}
         run: make -k docs-linkcheck
