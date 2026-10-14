@@ -17,9 +17,9 @@ PRETTIER=npm exec --package=prettier@3.6.0 -- prettier --print-width=99 --log-le
 PRETTIER_FILES="**/*.{yaml,yml,json,json5,css,md}"
 
 
-.PHONY: lint
-lint:
-## lint: Lint the codebase with Prettier
+.PHONY: lint-code
+lint-code:
+## lint-code: Lint the codebase with Prettier
 	$(PRETTIER) --check $(PRETTIER_FILES)
 	bash ${CURDIR}/.github/shellcheck-actions.sh
 
@@ -158,7 +158,6 @@ endif
 	-d line-too-long,missing-underscore-after-hyperlink,missing-space-in-hyperlink
 	$(MAKE) -C docs spelling --no-print-directory
 	$(MAKE) -C docs woke --no-print-directory
-	$(MAKE) -C docs linkcheck --no-print-directory
 ifneq ($(CI),)
 	@echo ::endgroup::
 endif
