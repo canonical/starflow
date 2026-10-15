@@ -143,12 +143,16 @@ def discover_downstream_repos() -> List[str]:
     return sorted(repos)
 
 
-def update_workflows_in_dir(workflow_dir: Path, target_owner: str, target_ref: str) -> List[str]:
+def update_workflows_in_dir(
+    workflow_dir: Path, target_owner: str, target_ref: str
+) -> Tuple[List[str], List[str]]:
     """
     Update workflow files in workflow_dir to point to target_owner/starflow at target_ref.
-    Returns list of modified file names.
+    Disables/removes any workflow files that do not use starflow to save CI CPU cycles.
+    Returns (modified_files, disabled_files).
     """
     modified_files = []
+    disabled_files = []
     # Pattern to match: uses: <any_owner>/starflow(/path)?@<old_ref>
     # Captures: 1=quote if any, 2=subpath if any, 3=old_ref
     pattern = re.compile(
@@ -168,11 +172,16 @@ def update_workflows_in_dir(workflow_dir: Path, target_owner: str, target_ref: s
             return f"{prefix}{target_owner}/starflow{subpath}@{target_ref}{suffix}"
 
         new_content, count = pattern.subn(repl, content)
-        if count > 0 and new_content != content:
-            yaml_path.write_text(new_content, encoding="utf-8")
+        if count > 0:
+            if new_content != content:
+                yaml_path.write_text(new_content, encoding="utf-8")
             modified_files.append(yaml_path.name)
+        else:
+            # File does not use starflow: remove it to prevent triggering unnecessary CI runs
+            yaml_path.unlink()
+            disabled_files.append(yaml_path.name)
 
-    return modified_files
+    return modified_files, disabled_files
 
 
 def get_gh_user() -> Optional[str]:
@@ -191,6 +200,7 @@ class RepoResult:
     repo: str
     status: str
     modified_files: List[str]
+    disabled_files: List[str] = None
     pr_url: Optional[str] = None
     pr_number: Optional[int] = None
     branch: Optional[str] = None
@@ -209,12 +219,6 @@ def process_repo(
     """Clone downstream repo, update workflows, push branch and create/update Draft PR."""
     repo_name = repo.split("/")[-1]
     title = f"[DO NOT MERGE] Test starflow PR {pr_number}"
-    body = (
-        f"This is an automated draft PR to test changes from starflow PR #{pr_number}.\n\n"
-        f"- **Starflow PR**: https://github.com/canonical/starflow/pull/{pr_number}\n"
-        f"- **Target Ref**: `{target_owner}/starflow@{target_ref}`\n\n"
-        f"⚠️ **DO NOT MERGE**: This PR is intended solely to verify downstream CI workflows."
-    )
 
     with tempfile.TemporaryDirectory(prefix=f"starflow-test-{repo_name}-") as tmpdir:
         tmp_path = Path(tmpdir)
@@ -241,31 +245,42 @@ def process_repo(
                     error="No .github/workflows directory found",
                 )
 
-            modified = update_workflows_in_dir(workflow_dir, target_owner, target_ref)
+            modified, disabled = update_workflows_in_dir(workflow_dir, target_owner, target_ref)
             if not modified:
                 return RepoResult(
                     repo=repo,
                     status="skipped",
                     modified_files=[],
+                    disabled_files=disabled,
                     error="No starflow workflow references found to update",
                 )
+
+            body = (
+                f"This is an automated draft PR to test changes from starflow PR #{pr_number}.\n\n"
+                f"- **Starflow PR**: https://github.com/canonical/starflow/pull/{pr_number}\n"
+                f"- **Target Ref**: `{target_owner}/starflow@{target_ref}`\n"
+                f"- **Starflow Workflows Tested**: {', '.join(modified)}\n"
+                f"- **Disabled Non-Starflow Workflows**: {', '.join(disabled) if disabled else 'none'}\n\n"
+                f"⚠️ **DO NOT MERGE**: This PR is intended solely to verify downstream CI workflows."
+            )
 
             if dry_run:
                 return RepoResult(
                     repo=repo,
                     status="dry-run",
                     modified_files=modified,
+                    disabled_files=disabled,
                     branch=branch_name,
                 )
 
             # Create branch, commit, push
             run_cmd(["git", "checkout", "-b", branch_name], cwd=tmp_path)
-            for m in modified:
-                run_cmd(["git", "add", f".github/workflows/{m}"], cwd=tmp_path)
+            run_cmd(["git", "add", "-A", ".github/workflows"], cwd=tmp_path)
 
             commit_msg = (
                 f"ci: test against starflow PR #{pr_number} ({target_ref})\n\n"
-                f"[DO NOT MERGE] Point starflow workflows to {target_owner}/starflow@{target_ref}"
+                f"[DO NOT MERGE] Point starflow workflows to {target_owner}/starflow@{target_ref}\n"
+                f"Disabled non-starflow workflows: {', '.join(disabled) if disabled else 'none'}"
             )
             run_cmd(["git", "commit", "-m", commit_msg], cwd=tmp_path)
 
@@ -296,18 +311,44 @@ def process_repo(
                         error=f"Failed to push branch: {push_proc.stderr.strip()}",
                     )
 
-            # Check if PR already exists for this branch
+            # Check if an open PR already exists for testing this starflow PR
             existing_pr = None
             pr_view = run_cmd(
-                ["gh", "pr", "view", head_spec, "--repo", repo, "--json", "url,number"],
+                ["gh", "pr", "view", head_spec, "--repo", repo, "--json", "url,number,state"],
                 check=False,
             )
             if pr_view.returncode == 0 and pr_view.stdout.strip():
                 try:
                     pr_data = json.loads(pr_view.stdout)
-                    existing_pr = (pr_data.get("url"), pr_data.get("number"))
+                    if pr_data.get("state") == "OPEN":
+                        existing_pr = (pr_data.get("url"), pr_data.get("number"))
                 except Exception:
                     pass
+
+            if not existing_pr:
+                pr_list_proc = run_cmd(
+                    [
+                        "gh",
+                        "pr",
+                        "list",
+                        "--repo",
+                        repo,
+                        "--state",
+                        "open",
+                        "--head",
+                        branch_name,
+                        "--json",
+                        "url,number",
+                    ],
+                    check=False,
+                )
+                if pr_list_proc.returncode == 0 and pr_list_proc.stdout.strip():
+                    try:
+                        pr_list_data = json.loads(pr_list_proc.stdout)
+                        if pr_list_data:
+                            existing_pr = (pr_list_data[0].get("url"), pr_list_data[0].get("number"))
+                    except Exception:
+                        pass
 
             # Get default branch
             default_branch = "main"
@@ -322,6 +363,23 @@ def process_repo(
             pr_num = None
             if existing_pr:
                 pr_url, pr_num = existing_pr
+                # Update title and body of existing PR
+                run_cmd(
+                    [
+                        "gh",
+                        "pr",
+                        "edit",
+                        str(pr_num),
+                        "--repo",
+                        repo,
+                        "--title",
+                        title,
+                        "--body",
+                        body,
+                    ],
+                    cwd=tmp_path,
+                    check=False,
+                )
             else:
                 # Create draft PR (retry once if ref indexing has a slight delay)
                 for attempt in range(3):
@@ -358,6 +416,7 @@ def process_repo(
                         repo=repo,
                         status="failed",
                         modified_files=modified,
+                        disabled_files=disabled,
                         error=f"Failed to create draft PR: {create_pr.stderr.strip()}",
                     )
 

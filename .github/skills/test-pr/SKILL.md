@@ -14,7 +14,8 @@ It automates:
 3. For each downstream repository:
    - Creating a dedicated test branch `work/bot/starflow-test-pr-<PR_NUMBER>`.
    - Updating all `.github/workflows/*.yaml` references to point to the starflow PR branch.
-   - Pushing the branch and opening a Draft PR titled `[DO NOT MERGE] Test starflow PR <PR_NUMBER>`.
+   - Disabling/removing any workflows that do not consume starflow to prevent unnecessary CI resource and CPU cycle usage.
+   - Pushing the branch and opening (or updating an existing) Draft PR titled `[DO NOT MERGE] Test starflow PR <PR_NUMBER>`.
 4. Listing the resulting Draft PRs along with direct links to the triggered GitHub Actions workflow runs.
 5. Providing cleanup capabilities once downstream testing is complete.
 
