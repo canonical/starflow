@@ -12,7 +12,7 @@ It automates:
 1. Detecting the current starflow PR number, target branch/ref, and repository owner.
 2. Finding all team repositories in `canonical` that use starflow workflows or actions.
 3. For each downstream repository:
-   - Creating a dedicated test branch `test/starflow-pr-<PR_NUMBER>`.
+   - Creating a dedicated test branch `work/bot/starflow-test-pr-<PR_NUMBER>`.
    - Updating all `.github/workflows/*.yaml` references to point to the starflow PR branch.
    - Pushing the branch and opening a Draft PR titled `[DO NOT MERGE] Test starflow PR <PR_NUMBER>`.
 4. Listing the resulting Draft PRs along with direct links to the triggered GitHub Actions workflow runs.

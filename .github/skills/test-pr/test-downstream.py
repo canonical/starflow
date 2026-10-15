@@ -99,34 +99,37 @@ def get_current_starflow_pr_or_branch() -> Tuple[Optional[str], str, str]:
 
 
 def discover_downstream_repos() -> List[str]:
-    """Find repositories in canonical org that use canonical/starflow in workflows."""
-    repos = set(DEFAULT_TEAM_REPOS)
+    """Find team repositories in canonical org that use starflow in workflows."""
+    repos = set()
+    # 1. Query starcraft team repos
     try:
         proc = run_cmd(
-            [
-                "gh",
-                "api",
-                "--paginate",
-                "search/code?q=canonical/starflow+org:canonical+path:.github/workflows",
-            ],
+            ["gh", "api", "orgs/canonical/teams/starcraft/repos", "--paginate"],
             check=False,
         )
         if proc.returncode == 0 and proc.stdout.strip():
-            # gh api with --paginate may output multiple JSON documents or one
             for line in proc.stdout.splitlines():
-                line = line.strip()
-                if not line:
+                if not line.strip():
                     continue
                 try:
                     data = json.loads(line)
-                    for item in data.get("items", []):
-                        repo_full = item.get("repository", {}).get("full_name")
-                        if repo_full and repo_full != "canonical/starflow":
-                            repos.add(repo_full)
-                except json.JSONDecodeError:
+                    items = data if isinstance(data, list) else [data]
+                    for item in items:
+                        if isinstance(item, dict):
+                            full_name = item.get("full_name")
+                            archived = item.get("archived", False)
+                            private = item.get("private", False)
+                            # Exclude starflow itself, private repos, or archived repos
+                            if full_name and full_name != "canonical/starflow" and not archived and not private:
+                                repos.add(full_name)
+                except Exception:
                     continue
     except Exception:
         pass
+
+    # 2. Add defaults if team query was empty
+    if not repos:
+        repos.update(DEFAULT_TEAM_REPOS)
 
     return sorted(repos)
 
@@ -454,7 +457,7 @@ def main() -> int:
 
     target_ref = args.branch or detected_branch
     target_owner = args.owner or detected_owner
-    branch_name = f"test/starflow-pr-{pr_num}"
+    branch_name = f"work/bot/starflow-test-pr-{pr_num}"
 
     # Determine target repos
     if args.repos:
