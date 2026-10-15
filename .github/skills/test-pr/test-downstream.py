@@ -105,37 +105,55 @@ def get_current_starflow_pr_or_branch() -> Tuple[Optional[str], str, str]:
     return None, "main", "canonical"
 
 
+def get_starflow_pr_info(
+    pr_number: str, owner: str = "canonical"
+) -> Tuple[Optional[str], Optional[str]]:
+    """Fetch headRefName and headRepositoryOwner login for a given Starflow PR number."""
+    try:
+        proc = run_cmd(
+            [
+                "gh",
+                "pr",
+                "view",
+                str(pr_number),
+                "--repo",
+                f"{owner}/starflow",
+                "--json",
+                "headRefName,headRepositoryOwner",
+            ],
+            check=False,
+        )
+        if proc.returncode == 0 and proc.stdout.strip():
+            data = json.loads(proc.stdout)
+            branch = data.get("headRefName")
+            repo_owner = data.get("headRepositoryOwner", {}).get("login")
+            return branch, repo_owner
+    except Exception:
+        pass
+    return None, None
+
+
 def discover_downstream_repos() -> List[str]:
     """Find team repositories in canonical org that use starflow in workflows."""
     repos = set()
-    # 1. Query starcraft team repos
+    # 1. Query starcraft team repos via jq for robust line-by-line parsing
     try:
         proc = run_cmd(
-            ["gh", "api", "orgs/canonical/teams/starcraft/repos", "--paginate"],
+            [
+                "gh",
+                "api",
+                "orgs/canonical/teams/starcraft/repos",
+                "--paginate",
+                "--jq",
+                ".[] | select(.archived == false and .private == false) | .full_name",
+            ],
             check=False,
         )
         if proc.returncode == 0 and proc.stdout.strip():
             for line in proc.stdout.splitlines():
-                if not line.strip():
-                    continue
-                try:
-                    data = json.loads(line)
-                    items = data if isinstance(data, list) else [data]
-                    for item in items:
-                        if isinstance(item, dict):
-                            full_name = item.get("full_name")
-                            archived = item.get("archived", False)
-                            private = item.get("private", False)
-                            # Exclude starflow itself, private repos, archived repos, and excluded repos
-                            if (
-                                full_name
-                                and full_name not in EXCLUDED_REPOS
-                                and not archived
-                                and not private
-                            ):
-                                repos.add(full_name)
-                except Exception:
-                    continue
+                full_name = line.strip()
+                if full_name and full_name not in EXCLUDED_REPOS:
+                    repos.add(full_name)
     except Exception:
         pass
 
@@ -643,8 +661,8 @@ def main() -> int:
     parser.add_argument(
         "--owner",
         "-o",
-        default="canonical",
-        help="Repository owner/fork hosting the starflow branch (default: canonical).",
+        default=None,
+        help="Repository owner/fork hosting the starflow branch (default: auto-detected or canonical).",
     )
     parser.add_argument(
         "--repos",
@@ -682,6 +700,12 @@ def main() -> int:
 
     args = parser.parse_args()
 
+    def log(msg: str = "") -> None:
+        if args.json:
+            print(msg, file=sys.stderr)
+        else:
+            print(msg)
+
     # Determine PR number, branch, owner
     detected_pr, detected_branch, detected_owner = get_current_starflow_pr_or_branch()
 
@@ -694,8 +718,15 @@ def main() -> int:
         print("Error: Could not determine starflow PR number. Please pass --pr <number>.", file=sys.stderr)
         return 1
 
-    target_ref = args.branch or detected_branch
-    target_owner = args.owner or detected_owner
+    pr_head_branch = None
+    pr_head_owner = None
+    if pr_num:
+        pr_head_branch, pr_head_owner = get_starflow_pr_info(
+            pr_num, owner=args.owner or detected_owner or "canonical"
+        )
+
+    target_ref = args.branch or pr_head_branch or detected_branch or "main"
+    target_owner = args.owner or pr_head_owner or detected_owner or "canonical"
     branch_name = f"work/bot/starflow-test-pr-{pr_num}"
 
     # Determine target repos
@@ -709,24 +740,24 @@ def main() -> int:
                         item = f"canonical/{item}"
                     repos.append(item)
     else:
-        print("Discovering downstream repositories using starflow...")
+        log("Discovering downstream repositories using starflow...")
         repos = discover_downstream_repos()
 
     if args.cleanup:
         cleanup_test_prs(repos, pr_num, branch_name, workers=args.workers)
         return 0
 
-    print(f"==================================================")
-    print(f"Starflow PR Downstream Testing")
-    print(f"  PR Number   : #{pr_num}")
-    print(f"  Target Ref  : {target_owner}/starflow@{target_ref}")
-    print(f"  Test Branch : {branch_name}")
-    print(f"  PR Title    : [DO NOT MERGE] Test starflow PR {pr_num}")
-    print(f"  Repositories: {len(repos)} candidate repo(s)")
-    print(f"  Concurrency : {args.workers} workers")
+    log("==================================================")
+    log("Starflow PR Downstream Testing")
+    log(f"  PR Number   : #{pr_num}")
+    log(f"  Target Ref  : {target_owner}/starflow@{target_ref}")
+    log(f"  Test Branch : {branch_name}")
+    log(f"  PR Title    : [DO NOT MERGE] Test starflow PR {pr_num}")
+    log(f"  Repositories: {len(repos)} candidate repo(s)")
+    log(f"  Concurrency : {args.workers} workers")
     if args.dry_run:
-        print(f"  Mode        : DRY RUN (no git push or PR creation)")
-    print(f"==================================================\n")
+        log("  Mode        : DRY RUN (no git push or PR creation)")
+    log("==================================================\n")
 
     results: List[RepoResult] = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
@@ -748,15 +779,15 @@ def main() -> int:
                 res = future.result()
                 results.append(res)
                 if res.status == "success":
-                    print(f"  ✓ [{res.repo}] Draft PR ready: {res.pr_url} (tested: {', '.join(res.modified_files)})")
+                    log(f"  ✓ [{res.repo}] Draft PR ready: {res.pr_url} (tested: {', '.join(res.modified_files)})")
                 elif res.status == "dry-run":
-                    print(f"  ✓ [{res.repo}] [Dry Run] Would modify: {', '.join(res.modified_files)}")
+                    log(f"  ✓ [{res.repo}] [Dry Run] Would modify: {', '.join(res.modified_files)}")
                 elif res.status == "skipped":
-                    print(f"  - [{res.repo}] Skipped: {res.error}")
+                    log(f"  - [{res.repo}] Skipped: {res.error}")
                 else:
-                    print(f"  ✗ [{res.repo}] Failed: {res.error}")
+                    log(f"  ✗ [{res.repo}] Failed: {res.error}")
             except Exception as e:
-                print(f"  ✗ [{repo}] Unexpected error: {e}")
+                log(f"  ✗ [{repo}] Unexpected error: {e}")
                 results.append(RepoResult(repo=repo, status="failed", modified_files=[], error=str(e)))
 
     if args.json:
@@ -765,6 +796,7 @@ def main() -> int:
                 "repo": r.repo,
                 "status": r.status,
                 "modified_files": r.modified_files,
+                "disabled_files": r.disabled_files or [],
                 "pr_url": r.pr_url,
                 "pr_number": r.pr_number,
                 "branch": r.branch,
