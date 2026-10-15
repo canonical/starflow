@@ -23,6 +23,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
+import yaml
+
 EXCLUDED_REPOS = {
     "canonical/starflow",
     "canonical/ulwazi",
@@ -144,45 +146,107 @@ def discover_downstream_repos() -> List[str]:
     return sorted(repos)
 
 
+def update_single_workflow_text(
+    content: str, target_owner: str, target_ref: str
+) -> Tuple[str, bool, List[str]]:
+    """
+    Update a single workflow YAML content.
+    - Updates starflow references to target_owner/starflow@target_ref.
+    - Adds `if: false` to non-starflow jobs to prevent unnecessary CI execution.
+    Returns (new_content, uses_starflow, disabled_job_ids).
+    """
+    try:
+        data = yaml.safe_load(content)
+    except Exception:
+        data = None
+
+    if not isinstance(data, dict) or "jobs" not in data or not isinstance(data.get("jobs"), dict):
+        return content, False, []
+
+    jobs = data.get("jobs", {})
+    starflow_jobs = set()
+    non_starflow_jobs = set()
+
+    for job_id, job_info in jobs.items():
+        if not isinstance(job_info, dict):
+            continue
+        uses_sf = False
+        if "uses" in job_info and "starflow" in str(job_info["uses"]):
+            uses_sf = True
+        for step in job_info.get("steps") or []:
+            if isinstance(step, dict) and "uses" in step and "starflow" in str(step.get("uses")):
+                uses_sf = True
+                break
+        if uses_sf:
+            starflow_jobs.add(str(job_id))
+        else:
+            non_starflow_jobs.add(str(job_id))
+
+    # 1. Update starflow references in text
+    pattern = re.compile(
+        r'(uses:\s*[\'"]?)[a-zA-Z0-9_.-]+/starflow(/[^@\s\r\n\'"]*)?@([^\s\r\n\'"]+)([\'"]?)'
+    )
+    new_content = pattern.sub(rf"\g<1>{target_owner}/starflow\g<2>@{target_ref}\g<4>", content)
+
+    # 2. Add `if: false` to non-starflow jobs
+    lines = new_content.splitlines()
+    in_jobs = False
+    current_job = None
+    output_lines = []
+
+    for line in lines:
+        if re.match(r"^jobs:\s*(?:#.*)?$", line):
+            in_jobs = True
+            output_lines.append(line)
+            continue
+        if in_jobs:
+            job_match = re.match(r"^  ([a-zA-Z0-9_.-]+):\s*(?:#.*)?$", line)
+            if job_match:
+                current_job = job_match.group(1)
+                output_lines.append(line)
+                if current_job in non_starflow_jobs:
+                    output_lines.append("    if: false")
+                continue
+            elif re.match(r"^\S", line):
+                in_jobs = False
+                current_job = None
+            elif current_job in non_starflow_jobs and re.match(r"^\s+if:\s*", line):
+                continue
+        output_lines.append(line)
+
+    final_content = "\n".join(output_lines) + ("\n" if content.endswith("\n") else "")
+    return final_content, len(starflow_jobs) > 0, sorted(non_starflow_jobs)
+
+
 def update_workflows_in_dir(
     workflow_dir: Path, target_owner: str, target_ref: str
 ) -> Tuple[List[str], List[str]]:
     """
     Update workflow files in workflow_dir to point to target_owner/starflow at target_ref.
-    Disables/removes any workflow files that do not use starflow to save CI CPU cycles.
-    Returns (modified_files, disabled_files).
+    Disables non-starflow jobs using `if: false` to save CI CPU cycles.
+    Returns (starflow_workflow_files, disabled_jobs_summary).
     """
-    modified_files = []
-    disabled_files = []
-    # Pattern to match: uses: <any_owner>/starflow(/path)?@<old_ref>
-    # Captures: 1=quote if any, 2=subpath if any, 3=old_ref
-    pattern = re.compile(
-        r'(uses:\s*[\'"]?)[a-zA-Z0-9_.-]+/starflow(/[^@\s\r\n\'"]*)?@([^\s\r\n\'"]+)([\'"]?)'
-    )
+    starflow_files = []
+    disabled_jobs_summary = []
 
-    for yaml_path in list(workflow_dir.glob("*.yaml")) + list(workflow_dir.glob("*.yml")):
+    for yaml_path in sorted(list(workflow_dir.glob("*.yaml")) + list(workflow_dir.glob("*.yml"))):
         try:
             content = yaml_path.read_text(encoding="utf-8")
         except Exception:
             continue
 
-        def repl(match: re.Match) -> str:
-            prefix = match.group(1)
-            subpath = match.group(2) or ""
-            suffix = match.group(4) or ""
-            return f"{prefix}{target_owner}/starflow{subpath}@{target_ref}{suffix}"
+        new_content, uses_sf, disabled_jobs = update_single_workflow_text(
+            content, target_owner, target_ref
+        )
+        if uses_sf:
+            starflow_files.append(yaml_path.name)
+        if disabled_jobs:
+            disabled_jobs_summary.append(f"{yaml_path.name} ({', '.join(disabled_jobs)})")
 
-        new_content, count = pattern.subn(repl, content)
-        if count > 0:
-            if new_content != content:
-                yaml_path.write_text(new_content, encoding="utf-8")
-            modified_files.append(yaml_path.name)
-        else:
-            # File does not use starflow: remove it to prevent triggering unnecessary CI runs
-            yaml_path.unlink()
-            disabled_files.append(yaml_path.name)
+        if new_content != content:
+            yaml_path.write_text(new_content, encoding="utf-8")
 
-    return modified_files, disabled_files
+    return starflow_files, disabled_jobs_summary
 
 
 def get_gh_user() -> Optional[str]:
@@ -261,7 +325,7 @@ def process_repo(
                 f"- **Starflow PR**: https://github.com/canonical/starflow/pull/{pr_number}\n"
                 f"- **Target Ref**: `{target_owner}/starflow@{target_ref}`\n"
                 f"- **Starflow Workflows Tested**: {', '.join(modified)}\n"
-                f"- **Disabled Non-Starflow Workflows**: {', '.join(disabled) if disabled else 'none'}\n\n"
+                f"- **Disabled Non-Starflow Jobs (`if: false`)**: {', '.join(disabled) if disabled else 'none'}\n\n"
                 f"⚠️ **DO NOT MERGE**: This PR is intended solely to verify downstream CI workflows."
             )
 
@@ -281,7 +345,7 @@ def process_repo(
             commit_msg = (
                 f"ci: test against starflow PR #{pr_number} ({target_ref})\n\n"
                 f"[DO NOT MERGE] Point starflow workflows to {target_owner}/starflow@{target_ref}\n"
-                f"Disabled non-starflow workflows: {', '.join(disabled) if disabled else 'none'}"
+                f"Disabled non-starflow jobs (if: false): {', '.join(disabled) if disabled else 'none'}"
             )
             run_cmd(["git", "commit", "-m", commit_msg], cwd=tmp_path)
 
@@ -476,6 +540,55 @@ def fetch_workflow_runs(repo: str, branch: str, retries: int = 3, delay: float =
     return runs
 
 
+def format_markdown_table(successful: List[RepoResult], branch_name: str) -> str:
+    """Format successful downstream test PR results into a markdown table."""
+    lines = [
+        "| Repository | Draft PR | Test Workflow Runs |",
+        "| :--- | :--- | :--- |",
+    ]
+    for r in sorted(successful, key=lambda x: x.repo):
+        runs_links = []
+        if r.workflow_runs:
+            for run in r.workflow_runs:
+                name = run.get("name", "Workflow")
+                url = run.get("url", "")
+                runs_links.append(f"[{name}]({url})")
+        if not runs_links:
+            actions_url = f"https://github.com/{r.repo}/actions?query=branch%3A{branch_name}"
+            runs_links.append(f"[All Action Runs]({actions_url})")
+
+        runs_str = ", ".join(runs_links)
+        lines.append(f"| **{r.repo}** | [#{r.pr_number}]({r.pr_url}) | {runs_str} |")
+    return "\n".join(lines)
+
+
+def update_starflow_pr_description(pr_number: str, table_md: str, owner: str = "canonical") -> bool:
+    """Update or append the downstream test results table in the starflow PR description."""
+    try:
+        proc = run_cmd(
+            ["gh", "pr", "view", str(pr_number), "--repo", f"{owner}/starflow", "--json", "body", "--jq", ".body"],
+            check=False,
+        )
+        if proc.returncode != 0:
+            return False
+        current_body = proc.stdout.strip()
+
+        section_header = "### Downstream Test PRs"
+        if section_header in current_body:
+            pattern = re.compile(r"### Downstream Test PRs.*?(?=\n### |\Z)", re.DOTALL)
+            new_body = pattern.sub(f"{section_header}\n\n{table_md}", current_body).strip()
+        else:
+            new_body = f"{current_body}\n\n{section_header}\n\n{table_md}".strip()
+
+        edit_proc = run_cmd(
+            ["gh", "pr", "edit", str(pr_number), "--repo", f"{owner}/starflow", "--body", new_body],
+            check=False,
+        )
+        return edit_proc.returncode == 0
+    except Exception:
+        return False
+
+
 def cleanup_test_prs(repos: List[str], pr_number: str, branch_name: str, workers: int = 8) -> None:
     """Close test draft PRs and delete branches across repos in parallel."""
     print(f"Cleaning up test PRs and branches for starflow PR #{pr_number} ({len(repos)} repositories, workers={workers})...\n")
@@ -550,6 +663,11 @@ def main() -> int:
         "--dry-run",
         action="store_true",
         help="Simulate workflow changes without pushing branches or creating PRs.",
+    )
+    parser.add_argument(
+        "--update-pr-body",
+        action="store_true",
+        help="Automatically update/append the downstream test table into the Starflow PR description.",
     )
     parser.add_argument(
         "--cleanup",
@@ -668,25 +786,25 @@ def main() -> int:
     print("=" * 50 + "\n")
 
     if successful:
-        print("| Repository | Draft PR | Workflow Runs / Actions |")
-        print("| :--- | :--- | :--- |")
-        for r in successful:
-            runs_links = []
-            if r.workflow_runs:
-                for run in r.workflow_runs:
-                    name = run.get("name", "Workflow")
-                    url = run.get("url", "")
-                    status = run.get("status", "")
-                    runs_links.append(f"[{name}]({url}) ({status})")
-            if not runs_links:
-                actions_url = f"https://github.com/{r.repo}/actions?query=branch%3A{branch_name}"
-                runs_links.append(f"[All Action Runs]({actions_url})")
+        table_md = format_markdown_table(successful, branch_name)
+        print("### Rendered Table:\n")
+        print(table_md)
 
-            runs_str = "<br>".join(runs_links)
-            print(f"| **{r.repo}** | [{r.repo}#{r.pr_number}]({r.pr_url}) | {runs_str} |")
+        print("\n### Raw Markdown (Copy & Paste):\n")
+        print("```markdown")
+        print("### Downstream Test PRs\n")
+        print(table_md)
+        print("```")
+
+        if args.update_pr_body:
+            print("\nUpdating Starflow PR description...")
+            if update_starflow_pr_description(pr_num, table_md, target_owner):
+                print(f"✓ Updated Starflow PR #{pr_num} description with downstream test table.")
+            else:
+                print(f"✗ Failed to update Starflow PR #{pr_num} description.")
 
         print("\n### Direct Links:")
-        for r in successful:
+        for r in sorted(successful, key=lambda x: x.repo):
             print(f"\n#### {r.repo}")
             print(f"- **Draft PR**: {r.pr_url}")
             if r.workflow_runs:

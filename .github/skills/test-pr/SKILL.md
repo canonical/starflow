@@ -14,7 +14,7 @@ It automates:
 3. For each downstream repository:
    - Creating a dedicated test branch `work/bot/starflow-test-pr-<PR_NUMBER>`.
    - Updating all `.github/workflows/*.yaml` references to point to the starflow PR branch.
-   - Disabling/removing any workflows that do not consume starflow to prevent unnecessary CI resource and CPU cycle usage.
+   - Disabling non-starflow jobs using `if: false` to prevent unnecessary CI resource and CPU cycle usage without deleting files.
    - Pushing the branch and opening (or updating an existing) Draft PR titled `[DO NOT MERGE] Test starflow PR <PR_NUMBER>`.
 4. Listing the resulting Draft PRs along with direct links to the triggered GitHub Actions workflow runs.
 5. Providing cleanup capabilities once downstream testing is complete.
@@ -49,8 +49,11 @@ Identify the starflow PR number and branch to test:
 Run the helper script from the repository root:
 
 ```bash
-# Test across all downstream repositories
-python3 .github/skills/test-pr/test-downstream.py --pr <PR_NUMBER>
+# Test across all downstream repositories in parallel
+python3 .github/skills/test-pr/test-downstream.py --pr <PR_NUMBER> --workers 16
+
+# Test and automatically update the starflow PR description with the results table
+python3 .github/skills/test-pr/test-downstream.py --pr <PR_NUMBER> --update-pr-body
 
 # Test with an explicit branch/ref or fork owner
 python3 .github/skills/test-pr/test-downstream.py --pr <PR_NUMBER> --branch <BRANCH_NAME> --owner <OWNER>
@@ -62,25 +65,24 @@ python3 .github/skills/test-pr/test-downstream.py --pr <PR_NUMBER> --repos canon
 python3 .github/skills/test-pr/test-downstream.py --pr <PR_NUMBER> --dry-run
 ```
 
-### 3. Present Results to the User
+### 3. Present Results & Offer PR Body Update
 
-Present the results clearly in a table and list, including:
+Present the results to the user:
 
-- Repository name
-- Draft PR link (titled `[DO NOT MERGE] Test starflow PR ###`)
-- Direct links to triggered GitHub Actions workflow runs
-- Actions overview URL for each repository
+1. Display the rendered summary table with direct links to draft PRs and test workflow runs.
+2. Provide a copy-pasteable raw markdown block containing the table.
+3. Offer the user the choice to either copy the raw markdown or have the agent update the Starflow PR description automatically (or pass `--update-pr-body`).
 
 Example output format:
 
 ```markdown
 ### Downstream Test PRs for Starflow PR #42
 
-| Repository               | Draft PR                                                 | Test Workflow Runs                                                                                                                                             |
-| :----------------------- | :------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **canonical/snapcraft**  | [#123](https://github.com/canonical/snapcraft/pull/123)  | [QA](https://github.com/canonical/snapcraft/actions/runs/1001) (in_progress)<br>[TICS](https://github.com/canonical/snapcraft/actions/runs/1002) (in_progress) |
-| **canonical/charmcraft** | [#456](https://github.com/canonical/charmcraft/pull/456) | [QA](https://github.com/canonical/charmcraft/actions/runs/1003) (in_progress)                                                                                  |
-| **canonical/rockcraft**  | [#789](https://github.com/canonical/rockcraft/pull/789)  | [QA](https://github.com/canonical/rockcraft/actions/runs/1004) (in_progress)                                                                                   |
+| Repository               | Draft PR                                                 | Test Workflow Runs                                                                                                                         |
+| :----------------------- | :------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
+| **canonical/snapcraft**  | [#123](https://github.com/canonical/snapcraft/pull/123)  | [QA](https://github.com/canonical/snapcraft/actions/runs/1001), [Check policy](https://github.com/canonical/snapcraft/actions/runs/1002)   |
+| **canonical/charmcraft** | [#456](https://github.com/canonical/charmcraft/pull/456) | [QA](https://github.com/canonical/charmcraft/actions/runs/1003), [Check policy](https://github.com/canonical/charmcraft/actions/runs/1004) |
+| **canonical/rockcraft**  | [#789](https://github.com/canonical/rockcraft/pull/789)  | [QA](https://github.com/canonical/rockcraft/actions/runs/1005), [Check policy](https://github.com/canonical/rockcraft/actions/runs/1006)   |
 ```
 
 ### 4. Cleanup
