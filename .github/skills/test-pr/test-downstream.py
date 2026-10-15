@@ -22,6 +22,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
+EXCLUDED_REPOS = {
+    "canonical/starflow",
+    "canonical/ulwazi",
+    "canonical/craft-artifacts",
+}
+
 DEFAULT_TEAM_REPOS = [
     "canonical/snapcraft",
     "canonical/charmcraft",
@@ -32,12 +38,10 @@ DEFAULT_TEAM_REPOS = [
     "canonical/craft-providers",
     "canonical/craft-store",
     "canonical/craft-grammar",
-    "canonical/craft-artifacts",
     "canonical/starbase",
     "canonical/debcraft",
     "canonical/sdkcraft",
     "canonical/imagecraft",
-    "canonical/ulwazi",
     "canonical/sourcecraft",
     "canonical/bld",
 ]
@@ -119,8 +123,13 @@ def discover_downstream_repos() -> List[str]:
                             full_name = item.get("full_name")
                             archived = item.get("archived", False)
                             private = item.get("private", False)
-                            # Exclude starflow itself, private repos, or archived repos
-                            if full_name and full_name != "canonical/starflow" and not archived and not private:
+                            # Exclude starflow itself, private repos, archived repos, and excluded repos
+                            if (
+                                full_name
+                                and full_name not in EXCLUDED_REPOS
+                                and not archived
+                                and not private
+                            ):
                                 repos.add(full_name)
                 except Exception:
                     continue
@@ -166,6 +175,17 @@ def update_workflows_in_dir(workflow_dir: Path, target_owner: str, target_ref: s
     return modified_files
 
 
+def get_gh_user() -> Optional[str]:
+    """Get authenticated GitHub username."""
+    try:
+        proc = run_cmd(["gh", "api", "user", "--jq", ".login"], check=False)
+        if proc.returncode == 0 and proc.stdout.strip():
+            return proc.stdout.strip()
+    except Exception:
+        pass
+    return None
+
+
 @dataclass
 class RepoResult:
     repo: str
@@ -199,9 +219,9 @@ def process_repo(
     with tempfile.TemporaryDirectory(prefix=f"starflow-test-{repo_name}-") as tmpdir:
         tmp_path = Path(tmpdir)
         try:
-            # Shallow clone default branch
+            # Clone default branch
             clone_proc = run_cmd(
-                ["gh", "repo", "clone", repo, str(tmp_path), "--", "--depth=1"],
+                ["gh", "repo", "clone", repo, str(tmp_path)],
                 check=False,
             )
             if clone_proc.returncode != 0:
@@ -249,20 +269,37 @@ def process_repo(
             )
             run_cmd(["git", "commit", "-m", commit_msg], cwd=tmp_path)
 
-            # Push branch
+            # Push branch (try origin first, fall back to personal fork if write access restricted)
             push_proc = run_cmd(["git", "push", "-u", "origin", branch_name, "--force"], cwd=tmp_path, check=False)
+            head_spec = branch_name
             if push_proc.returncode != 0:
-                return RepoResult(
-                    repo=repo,
-                    status="failed",
-                    modified_files=modified,
-                    error=f"Failed to push branch: {push_proc.stderr.strip()}",
-                )
+                user_login = get_gh_user()
+                if user_login:
+                    run_cmd(["gh", "repo", "fork", repo, "--default-branch-only", "--clone=false"], check=False)
+                    fork_remote = f"git@github.com:{user_login}/{repo_name}.git"
+                    run_cmd(["git", "remote", "add", "user-fork", fork_remote], cwd=tmp_path, check=False)
+                    push_fork = run_cmd(["git", "push", "-u", "user-fork", branch_name, "--force"], cwd=tmp_path, check=False)
+                    if push_fork.returncode == 0:
+                        head_spec = f"{user_login}:{branch_name}"
+                    else:
+                        return RepoResult(
+                            repo=repo,
+                            status="failed",
+                            modified_files=modified,
+                            error=f"Push failed to origin and fork: {push_fork.stderr.strip()}",
+                        )
+                else:
+                    return RepoResult(
+                        repo=repo,
+                        status="failed",
+                        modified_files=modified,
+                        error=f"Failed to push branch: {push_proc.stderr.strip()}",
+                    )
 
             # Check if PR already exists for this branch
             existing_pr = None
             pr_view = run_cmd(
-                ["gh", "pr", "view", branch_name, "--repo", repo, "--json", "url,number"],
+                ["gh", "pr", "view", head_spec, "--repo", repo, "--json", "url,number"],
                 check=False,
             )
             if pr_view.returncode == 0 and pr_view.stdout.strip():
@@ -272,37 +309,51 @@ def process_repo(
                 except Exception:
                     pass
 
+            # Get default branch
+            default_branch = "main"
+            def_proc = run_cmd(
+                ["gh", "repo", "view", repo, "--json", "defaultBranchRef", "--jq", ".defaultBranchRef.name"],
+                check=False,
+            )
+            if def_proc.returncode == 0 and def_proc.stdout.strip():
+                default_branch = def_proc.stdout.strip()
+
             pr_url = None
             pr_num = None
             if existing_pr:
                 pr_url, pr_num = existing_pr
             else:
-                # Create draft PR
-                create_pr = run_cmd(
-                    [
-                        "gh",
-                        "pr",
-                        "create",
-                        "--repo",
-                        repo,
-                        "--draft",
-                        "--title",
-                        title,
-                        "--body",
-                        body,
-                        "--head",
-                        branch_name,
-                    ],
-                    cwd=tmp_path,
-                    check=False,
-                )
-                if create_pr.returncode == 0 and create_pr.stdout.strip():
-                    pr_url = create_pr.stdout.strip().splitlines()[-1]
-                    # Parse PR number from URL
-                    match = re.search(r"/pull/(\d+)", pr_url)
-                    if match:
-                        pr_num = int(match.group(1))
-                else:
+                # Create draft PR (retry once if ref indexing has a slight delay)
+                for attempt in range(3):
+                    if attempt > 0:
+                        time.sleep(2.0)
+                    create_pr = run_cmd(
+                        [
+                            "gh",
+                            "pr",
+                            "create",
+                            "--repo",
+                            repo,
+                            "--draft",
+                            "--title",
+                            title,
+                            "--body",
+                            body,
+                            "--base",
+                            default_branch,
+                            "--head",
+                            head_spec,
+                        ],
+                        cwd=tmp_path,
+                        check=False,
+                    )
+                    if create_pr.returncode == 0 and create_pr.stdout.strip():
+                        pr_url = create_pr.stdout.strip().splitlines()[-1]
+                        match = re.search(r"/pull/(\d+)", pr_url)
+                        if match:
+                            pr_num = int(match.group(1))
+                        break
+                if not pr_url:
                     return RepoResult(
                         repo=repo,
                         status="failed",
