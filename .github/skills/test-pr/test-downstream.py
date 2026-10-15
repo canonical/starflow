@@ -10,6 +10,7 @@ the resulting test workflow runs.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import os
 import re
@@ -475,11 +476,11 @@ def fetch_workflow_runs(repo: str, branch: str, retries: int = 3, delay: float =
     return runs
 
 
-def cleanup_test_prs(repos: List[str], pr_number: str, branch_name: str) -> None:
-    """Close test draft PRs and delete branches across repos."""
-    print(f"Cleaning up test PRs and branches for starflow PR #{pr_number}...")
-    for repo in repos:
-        print(f"\n[{repo}]")
+def cleanup_test_prs(repos: List[str], pr_number: str, branch_name: str, workers: int = 8) -> None:
+    """Close test draft PRs and delete branches across repos in parallel."""
+    print(f"Cleaning up test PRs and branches for starflow PR #{pr_number} ({len(repos)} repositories, workers={workers})...\n")
+
+    def _cleanup_one(repo: str) -> None:
         # Check for open PR on branch
         proc = run_cmd(
             ["gh", "pr", "view", branch_name, "--repo", repo, "--json", "number,url,state"],
@@ -491,10 +492,10 @@ def cleanup_test_prs(repos: List[str], pr_number: str, branch_name: str) -> None
                 pr_num = data.get("number")
                 state = data.get("state")
                 if pr_num and state == "OPEN":
-                    print(f"  Closing draft PR #{pr_num}...")
+                    print(f"[{repo}] Closing draft PR #{pr_num}...")
                     run_cmd(["gh", "pr", "close", str(pr_num), "--repo", repo, "--delete-branch"], check=False)
-                    print(f"  Closed #{pr_num} and requested branch deletion.")
-                    continue
+                    print(f"[{repo}] Closed #{pr_num} and deleted branch.")
+                    return
             except Exception:
                 pass
 
@@ -504,14 +505,17 @@ def cleanup_test_prs(repos: List[str], pr_number: str, branch_name: str) -> None
             check=False,
         )
         if del_proc.returncode == 0:
-            print(f"  Deleted branch {branch_name}.")
+            print(f"[{repo}] Deleted branch {branch_name}.")
         else:
-            print("  No branch or PR found to clean up.")
+            print(f"[{repo}] No branch or PR found to clean up.")
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
+        list(executor.map(_cleanup_one, repos))
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Test starflow PRs across downstream repositories by creating draft PRs."
+        description="Test starflow PRs across downstream repositories by creating draft PRs in parallel."
     )
     parser.add_argument(
         "--pr",
@@ -534,6 +538,13 @@ def main() -> int:
         "-r",
         nargs="+",
         help="Specific downstream repos to test (e.g. canonical/snapcraft). Defaults to all team repos using starflow.",
+    )
+    parser.add_argument(
+        "--workers",
+        "-w",
+        type=int,
+        default=8,
+        help="Number of concurrent workers for parallel cloning and PR creation (default: 8).",
     )
     parser.add_argument(
         "--dry-run",
@@ -584,7 +595,7 @@ def main() -> int:
         repos = discover_downstream_repos()
 
     if args.cleanup:
-        cleanup_test_prs(repos, pr_num, branch_name)
+        cleanup_test_prs(repos, pr_num, branch_name, workers=args.workers)
         return 0
 
     print(f"==================================================")
@@ -594,32 +605,41 @@ def main() -> int:
     print(f"  Test Branch : {branch_name}")
     print(f"  PR Title    : [DO NOT MERGE] Test starflow PR {pr_num}")
     print(f"  Repositories: {len(repos)} candidate repo(s)")
+    print(f"  Concurrency : {args.workers} workers")
     if args.dry_run:
         print(f"  Mode        : DRY RUN (no git push or PR creation)")
     print(f"==================================================\n")
 
     results: List[RepoResult] = []
-
-    for idx, repo in enumerate(repos, 1):
-        print(f"[{idx}/{len(repos)}] Processing {repo}...")
-        res = process_repo(
-            repo=repo,
-            pr_number=pr_num,
-            target_owner=target_owner,
-            target_ref=target_ref,
-            branch_name=branch_name,
-            dry_run=args.dry_run,
-        )
-        results.append(res)
-        if res.status == "success":
-            print(f"  ✓ Draft PR created: {res.pr_url}")
-            print(f"    Modified workflows: {', '.join(res.modified_files)}")
-        elif res.status == "dry-run":
-            print(f"  ✓ [Dry Run] Would modify: {', '.join(res.modified_files)}")
-        elif res.status == "skipped":
-            print(f"  - Skipped: {res.error}")
-        else:
-            print(f"  ✗ Failed: {res.error}")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
+        future_to_repo = {
+            executor.submit(
+                process_repo,
+                repo=repo,
+                pr_number=pr_num,
+                target_owner=target_owner,
+                target_ref=target_ref,
+                branch_name=branch_name,
+                dry_run=args.dry_run,
+            ): repo
+            for repo in repos
+        }
+        for future in concurrent.futures.as_completed(future_to_repo):
+            repo = future_to_repo[future]
+            try:
+                res = future.result()
+                results.append(res)
+                if res.status == "success":
+                    print(f"  ✓ [{res.repo}] Draft PR ready: {res.pr_url} (tested: {', '.join(res.modified_files)})")
+                elif res.status == "dry-run":
+                    print(f"  ✓ [{res.repo}] [Dry Run] Would modify: {', '.join(res.modified_files)}")
+                elif res.status == "skipped":
+                    print(f"  - [{res.repo}] Skipped: {res.error}")
+                else:
+                    print(f"  ✗ [{res.repo}] Failed: {res.error}")
+            except Exception as e:
+                print(f"  ✗ [{repo}] Unexpected error: {e}")
+                results.append(RepoResult(repo=repo, status="failed", modified_files=[], error=str(e)))
 
     if args.json:
         out_data = [
