@@ -1,4 +1,4 @@
-name: Lint Python
+name: Lint
 on:
   workflow_call:
     inputs:
@@ -15,11 +15,17 @@ on:
       - main
 
 jobs:
-  files:
+  # Paths are filtered in their own job so the linting jobs can be skipped before a
+  # runner is requested. Job conditions only see event data and needs.*.outputs, so
+  # the paths filter cannot run inside the job that consumes its result.
+  filter:
     permissions:
       contents: read
       pull-requests: read
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
+    outputs:
+      source-files: ${{ steps.filter.outputs.source-files }}
+      docs-files: ${{ steps.filter.outputs.docs-files }}
     steps:
       - name: Check out code
         timeout-minutes: 1
@@ -32,10 +38,25 @@ jobs:
         id: filter
         with:
           # Combine multiple negation checks into a union (¬A ∧ ¬B ∧ ¬C), because individual entries are checked independently (A ∨ B ∨ C).
-          # If we ever need to filter only for docs, glob 'docs/**/*' and '**/*.md'
           filters: |
             source-files:
               - '!({docs/**,*.md,**/*.md,.readthedocs.yaml})'
+            docs-files:
+              - '{docs/**,**/*.md,**/*.rst,.readthedocs.yaml}'
+
+  files:
+    needs: filter
+    if: ${{ needs.filter.outputs.source-files == 'true' && inputs.source-files != 'false' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        timeout-minutes: 1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - name: Begin snap installs of common linters
         timeout-minutes: 1
         id: snap-install
@@ -44,12 +65,6 @@ jobs:
           job2=$(sudo snap install --no-wait --classic tombi)
           job3=$(sudo snap install --no-wait --beta astral-ty)
           echo -n "jobs=$job1 $job2 $job3" >> $GITHUB_OUTPUT
-      - name: Set up uv with caching
-        timeout-minutes: 3
-        id: setup-uv
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
-        with:
-          enable-cache: true
       - name: Set up linters
         timeout-minutes: 3
         env:
@@ -71,8 +86,48 @@ jobs:
             make -j setup-lint
           fi
       - name: Run all linters
-        if: ${{ inputs.source-files == 'true' }}
-        run: make -k lint
+        run: make -k lint-code
+
+  docs:
+    needs: filter
+    if: ${{ needs.filter.outputs.docs-files == 'true' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        timeout-minutes: 1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up uv with caching
+        timeout-minutes: 3
+        id: setup-uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
       - name: Run documentation linters
-        if: ${{ inputs.source-files == 'false' }}
         run: make -k docs-lint
+
+  linkcheck:
+    needs: filter
+    if: ${{ needs.filter.outputs.docs-files == 'true' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        timeout-minutes: 1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up uv with caching
+        timeout-minutes: 3
+        id: setup-uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+      - name: Check documentation links
+        run: make -k docs-linkcheck
