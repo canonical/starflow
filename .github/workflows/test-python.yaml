@@ -199,7 +199,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           use-lxd: ${{ inputs.use-lxd }}
       - name: Install tools
-        timeout-minutes: 3
+        timeout-minutes: 5
         if: ${{ inputs.source-files == 'true' }}
         env:
           SETUP_VARS: ${{ inputs.setup-vars }}
