@@ -188,6 +188,45 @@ jobs:
         MY_VAR=value
 ```
 
+## Documentation release
+
+The documentation release workflow publishes a project's documentation to Read the Docs.
+When triggered by a semantic versioning tag, it:
+
+- Creates a `hotfix/<major>.<minor>` branch for minor versions.
+- Syncs the Read the Docs versions and activates the new release, activating the
+  version associated with the hotfix branch and setting it as the default.
+- Creates redirects so that the major version points at the latest release.
+
+It expects the version tag to follow the `<major>.<minor>.<patch>` format and requires a
+Read the Docs API token, passed as a secret, and the Read the Docs project name, passed
+as an input:
+
+### Usage
+
+An example workflow that uses this reusable workflow:
+
+```yaml
+name: Documentation release
+on:
+  push:
+    tags:
+      # These tags should be protected, remember to enable the rule:
+      # https://github.com/canonical/starbase/settings/tag_protection
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  docs-release:
+    permissions:
+      contents: write
+    uses: canonical/starflow/.github/workflows/release-docs.yaml@main
+    with:
+      # TODO: set to your Read the Docs project slug.
+      rtd-project: starbase
+    secrets:
+      RTD_TOKEN: ${{ secrets.RTD_TOKEN }}
+```
+
 # Other
 
 ## Renovate config
