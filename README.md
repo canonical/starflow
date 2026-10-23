@@ -10,11 +10,23 @@ Examples are provided below.
 
 ## Lint
 
-The lint workflow installs and runs the relevant linters for the repository. It expects the following
+The lint workflow installs and runs the relevant linters for the repository. It runs three jobs:
+
+- `files`: Runs the code linters
+- `docs`: Runs the documentation linters
+- `linkcheck`: Checks the links in the documentation
+
+The `docs` and `linkcheck` jobs only run when a change touches the documentation. It expects the following
 `make` targets:
 
 - `setup-lint`: Installs relevant linters (only needs to work on Ubuntu)
-- `lint`: Runs relevant linters
+- `lint-code`: Runs relevant linters
+- `setup-docs`: Sets up the documentation environment
+- `docs-lint`: Runs the documentation linters
+- `docs-linkcheck`: Checks the links in the documentation
+
+The `source-files` input takes `"true"` or `"false"` and defaults to `"true"`. Pass `"false"` when the
+change is documentation only, which skips the code linters.
 
 ### Usage
 
