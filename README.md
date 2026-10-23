@@ -21,6 +21,7 @@ The `docs` and `linkcheck` jobs only run when a change touches the documentation
 
 - `setup-lint`: Installs relevant linters (only needs to work on Ubuntu)
 - `lint-code`: Runs relevant linters
+- `setup-docs`: Sets up the documentation environment
 - `docs-lint`: Runs the documentation linters
 - `docs-linkcheck`: Checks the links in the documentation
 
