@@ -96,13 +96,13 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Set up runner
-        timeout-minutes: 3
+        timeout-minutes: 15
         uses: canonical/starflow/setup-python-runner@main
         if: ${{ inputs.source-files == 'true' }}
         with:
           use-lxd: ${{ inputs.use-lxd }}
       - name: Set up tests
-        timeout-minutes: 5
+        timeout-minutes: 15
         if: ${{ inputs.source-files == 'true' }}
         shell: bash
         env:
@@ -192,14 +192,14 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Set up runner
-        timeout-minutes: 3
+        timeout-minutes: 15
         uses: canonical/starflow/setup-python-runner@main
         if: ${{ inputs.source-files == 'true' }}
         with:
           python-version: ${{ matrix.python-version }}
           use-lxd: ${{ inputs.use-lxd }}
       - name: Install tools
-        timeout-minutes: 5
+        timeout-minutes: 15
         if: ${{ inputs.source-files == 'true' }}
         env:
           SETUP_VARS: ${{ inputs.setup-vars }}
@@ -273,14 +273,14 @@ jobs:
     if: ${{ inputs.lowest-python-platform != '' && inputs.lowest-python-version != '' && inputs.source-files == 'true' }}
     steps:
       - name: Set up runner
-        timeout-minutes: 3
+        timeout-minutes: 15
         uses: canonical/starflow/setup-python-runner@main
         if: ${{ inputs.source-files == 'true' }}
         with:
           python-version: ${{ inputs.lowest-python-version }}
           use-lxd: ${{ inputs.use-lxd }}
       - name: Install tools
-        timeout-minutes: 5
+        timeout-minutes: 15
         if: ${{ inputs.source-files == 'true' }}
         env:
           SETUP_VARS: ${{ inputs.setup-vars }}
