@@ -28,13 +28,13 @@ jobs:
       docs-files: ${{ steps.filter.outputs.docs-files }}
     steps:
       - name: Check out code
-        timeout-minutes: 1
+        timeout-minutes: 15
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
       - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
-        timeout-minutes: 1
+        timeout-minutes: 15
         id: filter
         with:
           # Combine multiple negation checks into a union (¬A ∧ ¬B ∧ ¬C), because individual entries are checked independently (A ∨ B ∨ C).
@@ -52,13 +52,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        timeout-minutes: 1
+        timeout-minutes: 15
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
       - name: Begin snap installs of common linters
-        timeout-minutes: 1
+        timeout-minutes: 15
         id: snap-install
         run: |
           job1=$(sudo snap install --no-wait codespell ruff shellcheck)
@@ -66,7 +66,7 @@ jobs:
           job3=$(sudo snap install --no-wait --beta astral-ty)
           echo -n "jobs=$job1 $job2 $job3" >> $GITHUB_OUTPUT
       - name: Set up linters
-        timeout-minutes: 3
+        timeout-minutes: 15
         env:
           SNAP_JOBS: ${{ steps.snap-install.outputs.jobs }}
         run: |
@@ -96,19 +96,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        timeout-minutes: 1
+        timeout-minutes: 15
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
       - name: Set up uv with caching
-        timeout-minutes: 3
+        timeout-minutes: 15
         id: setup-uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           enable-cache: true
       - name: Set up documentation environment
-        timeout-minutes: 3
+        timeout-minutes: 15
         run: make setup-docs
       - name: Run documentation linters
         run: make -k docs-lint
@@ -121,19 +121,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        timeout-minutes: 1
+        timeout-minutes: 15
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
       - name: Set up uv with caching
-        timeout-minutes: 3
+        timeout-minutes: 15
         id: setup-uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           enable-cache: true
       - name: Set up documentation environment
-        timeout-minutes: 3
+        timeout-minutes: 15
         run: make setup-docs
       - name: Check documentation links
         run: make -k docs-linkcheck
