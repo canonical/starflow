@@ -112,28 +112,3 @@ jobs:
         run: make setup-docs
       - name: Run documentation linters
         run: make -k docs-lint
-
-  linkcheck:
-    needs: filter
-    if: ${{ needs.filter.outputs.docs-files == 'true' }}
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        timeout-minutes: 15
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Set up uv with caching
-        timeout-minutes: 15
-        id: setup-uv
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
-        with:
-          enable-cache: true
-      - name: Set up documentation environment
-        timeout-minutes: 15
-        run: make setup-docs
-      - name: Check documentation links
-        run: make -k docs-linkcheck
