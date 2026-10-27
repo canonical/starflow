@@ -160,6 +160,10 @@ several forms. It:
   set to `lowest`.
 - Runs slow tests across their own set of platforms and Python versions.
 - Uploads test coverage for tests as artefacts.
+- Optionally caches apt and snap downloads on Linux runners using
+  [pkgproxy](https://gitlab.com/zygoon/pkgproxy) when `use-caching: true` is passed (via
+  [`setup-python-runner`](setup-python-runner/README.md) and
+  [`teardown-caching`](teardown-caching/README.md)).
 
 In order to do so, it expects the following `make` targets:
 

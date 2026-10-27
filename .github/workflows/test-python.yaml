@@ -41,6 +41,11 @@ on:
         description: |
           Whether to set up LXD on Linux runners.
         default: true
+      use-caching:
+        type: boolean
+        description: |
+          Whether to set up pkgproxy caching on Linux runners.
+        default: false
       pytest-markers:
         type: string
         description: |
@@ -96,11 +101,13 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Set up runner
-        timeout-minutes: 3
+        id: setup-runner
+        timeout-minutes: 5
         uses: canonical/starflow/setup-python-runner@main
         if: ${{ inputs.source-files == 'true' }}
         with:
           use-lxd: ${{ inputs.use-lxd }}
+          use-caching: ${{ inputs.use-caching }}
       - name: Set up tests
         timeout-minutes: 5
         if: ${{ inputs.source-files == 'true' }}
@@ -182,6 +189,15 @@ jobs:
           path: |
             ./coverage.xml
             htmlcov/**
+      - name: Teardown caching
+        timeout-minutes: 5
+        if: ${{ always() && inputs.source-files == 'true' && inputs.use-caching }}
+        uses: canonical/starflow/teardown-caching@main
+        with:
+          pkgproxy-cache-dir: ${{ steps.setup-runner.outputs.pkgproxy-cache-dir }}
+          pkgproxy-cache-key-success: ${{ steps.setup-runner.outputs.pkgproxy-cache-key-success }}
+          pkgproxy-cache-key-partial: ${{ steps.setup-runner.outputs.pkgproxy-cache-key-partial }}
+          pkgproxy-cache-hit: ${{ steps.setup-runner.outputs.pkgproxy-cache-hit }}
   slow:
     name: Slow tests
     if: ${{ inputs.slow-test-platforms != '' && inputs.slow-test-python-versions != '' }}
@@ -192,7 +208,8 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Set up runner
-        timeout-minutes: 3
+        id: setup-runner
+        timeout-minutes: 5
         uses: canonical/starflow/setup-python-runner@main
         if: ${{ inputs.source-files == 'true' }}
         with:
@@ -262,6 +279,15 @@ jobs:
           path: |
             ./coverage.xml
             htmlcov/**
+      - name: Teardown caching
+        timeout-minutes: 5
+        if: ${{ always() && inputs.source-files == 'true' && inputs.use-caching }}
+        uses: canonical/starflow/teardown-caching@main
+        with:
+          pkgproxy-cache-dir: ${{ steps.setup-runner.outputs.pkgproxy-cache-dir }}
+          pkgproxy-cache-key-success: ${{ steps.setup-runner.outputs.pkgproxy-cache-key-success }}
+          pkgproxy-cache-key-partial: ${{ steps.setup-runner.outputs.pkgproxy-cache-key-partial }}
+          pkgproxy-cache-hit: ${{ steps.setup-runner.outputs.pkgproxy-cache-hit }}
   lowest:
     name: Minimum dependencies (all tests)
     # Allows either a string containing the platform or a JSON list of tags.
@@ -273,7 +299,8 @@ jobs:
     if: ${{ inputs.lowest-python-platform != '' && inputs.lowest-python-version != '' && inputs.source-files == 'true' }}
     steps:
       - name: Set up runner
-        timeout-minutes: 3
+        id: setup-runner
+        timeout-minutes: 5
         uses: canonical/starflow/setup-python-runner@main
         if: ${{ inputs.source-files == 'true' }}
         with:
@@ -343,3 +370,12 @@ jobs:
           path: |
             ./coverage.xml
             htmlcov/**
+      - name: Teardown caching
+        timeout-minutes: 5
+        if: ${{ always() && inputs.source-files == 'true' && inputs.use-caching }}
+        uses: canonical/starflow/teardown-caching@main
+        with:
+          pkgproxy-cache-dir: ${{ steps.setup-runner.outputs.pkgproxy-cache-dir }}
+          pkgproxy-cache-key-success: ${{ steps.setup-runner.outputs.pkgproxy-cache-key-success }}
+          pkgproxy-cache-key-partial: ${{ steps.setup-runner.outputs.pkgproxy-cache-key-partial }}
+          pkgproxy-cache-hit: ${{ steps.setup-runner.outputs.pkgproxy-cache-hit }}

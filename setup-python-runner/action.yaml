@@ -13,10 +13,51 @@ inputs:
   python-version:
     type: string
     default: ""
+  use-caching:
+    type: boolean
+    description: |
+      Whether to set up pkgproxy caching on Linux runners.
+    default: false
+
+outputs:
+  pkgproxy-cache-dir:
+    description: The pkgproxy payload cache directory.
+    value: ${{ steps.pkgproxy.outputs.cache-dir }}
+  pkgproxy-cache-key-success:
+    description: The stable per-arch package-cache key for successful runs.
+    value: ${{ steps.pkgproxy.outputs.package-cache-key-success }}
+  pkgproxy-cache-key-partial:
+    description: The stable per-arch package-cache key for failed runs.
+    value: ${{ steps.pkgproxy.outputs.package-cache-key-partial }}
+  pkgproxy-cache-hit:
+    description: Whether the stable success key restored an exact cache hit.
+    value: ${{ steps.pkgproxy.outputs.package-cache-hit }}
 
 runs:
   using: composite
   steps:
+    - name: Fetch source
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - name: Compute package cache key prefix
+      if: ${{ runner.os == 'Linux' && fromJSON(inputs.use-caching) }}
+      id: cache-key
+      shell: bash
+      env:
+        MAKEFILE_HASH: ${{ hashFiles('Makefile', 'common.mk') }}
+      run: |
+        # shellcheck disable=SC1091
+        source /etc/os-release
+        distro="${ID:-linux}-${VERSION_CODENAME:-${VERSION_ID:-unknown}}"
+        echo "prefix=pkgproxy-cache-v3-${distro}-${MAKEFILE_HASH:-none}" >> "${GITHUB_OUTPUT}"
+    - name: Set up pkgproxy caching proxy
+      if: ${{ runner.os == 'Linux' && fromJSON(inputs.use-caching) }}
+      id: pkgproxy
+      uses: zyga/setup-pkgproxy@6de3285fb4873df00a2e9d42bec2a06bd67ff65c # v1.1.0
+      with:
+        package-cache-key: ${{ steps.cache-key.outputs.prefix }}
     - name: Start apt update
       if: runner.os == 'Linux'
       id: apt
@@ -29,11 +70,6 @@ runs:
       uses: canonical/setup-lxd@8c6a87bfb56aa48f3fb9b830baa18562d8bfd4ee # v1
       with:
         channel: ${{ inputs.lxd-channel }}
-    - name: Fetch source
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        fetch-depth: 0
-        persist-credentials: false
     # On mac, set up homebrew caching since we use homebrew to install dependencies.
     - name: Set up Homebrew
       if: runner.os == 'macOS'

@@ -1,0 +1,46 @@
+name: Teardown caching
+description: Save pkgproxy cache if present
+
+inputs:
+  pkgproxy-cache-dir:
+    description: The pkgproxy payload cache directory.
+    required: true
+  pkgproxy-cache-key-success:
+    description: The stable per-arch package-cache key for successful runs.
+    required: true
+  pkgproxy-cache-key-partial:
+    description: The stable per-arch package-cache key for failed runs.
+    required: true
+  pkgproxy-cache-hit:
+    description: Whether the stable success key restored an exact cache hit.
+    required: true
+  job-status:
+    description: The current job status (defaults to job.status).
+    required: false
+    default: ${{ job.status }}
+
+runs:
+  using: composite
+  steps:
+    - name: Stop pkgproxy and fix permissions
+      if: ${{ always() && runner.os == 'Linux' && inputs.pkgproxy-cache-dir != '' }}
+      shell: bash
+      env:
+        CACHE_DIR: ${{ inputs.pkgproxy-cache-dir }}
+      run: |
+        sudo systemctl stop pkgproxy.service || true
+        sudo chown -R "$USER:$USER" "${CACHE_DIR}" || true
+
+    - name: Save cache (success)
+      if: ${{ runner.os == 'Linux' && inputs.pkgproxy-cache-dir != '' && inputs.pkgproxy-cache-hit != 'true' && inputs.job-status == 'success' }}
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ inputs.pkgproxy-cache-dir }}
+        key: ${{ inputs.pkgproxy-cache-key-success }}
+
+    - name: Save cache (failure)
+      if: ${{ always() && runner.os == 'Linux' && inputs.pkgproxy-cache-dir != '' && inputs.job-status == 'failure' }}
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ inputs.pkgproxy-cache-dir }}
+        key: ${{ inputs.pkgproxy-cache-key-partial }}
