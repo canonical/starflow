@@ -177,7 +177,6 @@ extensions = [
 exclude_patterns = [
     "README.md",  # Docs README
     "reuse",
-    "reference"
 ]
 
 # Adds custom CSS files, located under 'html_static_path'
