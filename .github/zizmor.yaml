@@ -17,3 +17,9 @@ rules:
       # (e.g. quotes in `sudo env "PATH=$PATH"`) that would be mangled if
       # passed through an environment variable instead.
       - test-python.yaml
+  dangerous-triggers:
+    ignore:
+      # workflow_run here only reads completion status and posts a comment;
+      # it never checks out or executes PR code. Accepted risk: a fork PR
+      # can spend the bot's Copilot seat and get a bot-authored comment.
+      - self-test-ci-summary.yaml
