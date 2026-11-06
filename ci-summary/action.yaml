@@ -1,0 +1,36 @@
+name: CI Test Summary and Failure Triage
+description: AI-driven failure triage and sticky comment summary for GitHub Actions CI
+
+inputs:
+  pr-number:
+    description: Pull request number to analyze
+    required: true
+  github-token:
+    description: Token for a bot account with a Copilot seat (GITHUB_TOKEN has no seat and won't work)
+    required: true
+  model:
+    description: AI model name for triage reasoning
+    default: claude-haiku-5.5
+    required: false
+  dry-run:
+    description: When true, prints markdown output without posting a comment
+    default: "false"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Set up uv
+      uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+      with:
+        enable-cache: true
+
+    - name: Run CI Summary Bot
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        AI_MODEL: ${{ inputs.model }}
+        DRY_RUN: ${{ inputs.dry-run }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+      run: |
+        uv run --python 3.12 "${{ github.action_path }}/triage.py" --pr "$PR_NUMBER"
