@@ -12,7 +12,7 @@ on:
 
 jobs:
   rtd:
-    runs-on: [self-hosted, amd64, medium, linux]
+    runs-on: ubuntu-slim
     permissions:
       contents: write
     env:
@@ -42,12 +42,14 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           BRANCH="hotfix/$MAJOR.$MINOR"
-          API="https://api.github.com/repos/$REPOSITORY"
 
-          if ! curl -sf -H "Authorization: Token $GH_TOKEN" "$API/git/refs/heads/$BRANCH" >/dev/null; then
-            curl -fX POST -H "Authorization: Token $GH_TOKEN" -H "Content-Type: application/json" \
-              -d "{\"ref\":\"refs/heads/$BRANCH\",\"sha\":\"$SHA\"}" \
-              "$API/git/refs"
+          STATUS=$(gh api "repos/$REPOSITORY/git/refs" \
+            -f ref="refs/heads/$BRANCH" -f sha="$SHA" --silent \
+            --include 2>/dev/null | awk '/^HTTP/{print $2}')
+
+          if [ "$STATUS" != "201" ] && [ "$STATUS" != "422" ]; then
+            echo "Failed with HTTP $STATUS" >&2
+            exit 1
           fi
 
       - name: Sync RTD versions
