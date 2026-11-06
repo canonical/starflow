@@ -637,7 +637,8 @@ def test_debug_output_blocks_are_skipped():
 
 def test_late_task_warning_output_is_not_parsed_as_control_lines():
     # A 'running late' warning dumps recent task output in a "-----"-wrapped
-    # block; control-looking lines inside must not become phantom results.
+    # block; control-looking lines inside must not become phantom results,
+    # but are kept as info on the owning task.
     log = "\n".join(
         [
             f"{TS}0:00 Executing openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
@@ -655,7 +656,50 @@ def test_late_task_warning_output_is_not_parsed_as_control_lines():
     suite = _suite(root)
     assert suite.get("tests") == "1"
     assert suite.get("failures") == "0"
-    _case(root, "tests/spread/core24/foo", "openstack:ubuntu-24.04-64")
+    case = _case(root, "tests/spread/core24/foo", "openstack:ubuntu-24.04-64")
+    system_out = case.find("system-out")
+    assert system_out is not None and system_out.text is not None
+    assert "running late" in system_out.text
+    assert "core24/phantom" in system_out.text
+
+
+def test_late_warning_without_output_block_still_marks_the_task():
+    # The 'Output unchanged.' variant carries no block but still marks the
+    # task as slow.
+    log = "\n".join(
+        [
+            f"{TS}0:00 Executing openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
+            f"{TS}5:00 WARNING: openstack:ubuntu-24.04-64:tests/spread/core24/foo running late. Output unchanged.",
+            f"{TS}6:00 Restoring openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
+            f"{TS}6:10 Successful tasks: 1",
+            f"{TS}6:10 Aborted tasks: 0",
+        ]
+    )
+    root = convert(log)
+    assert _suite(root).get("tests") == "1"
+    case = _case(root, "tests/spread/core24/foo", "openstack:ubuntu-24.04-64")
+    system_out = case.find("system-out")
+    assert system_out is not None
+    assert system_out.text == "spread reported this task as running late"
+
+
+def test_late_warning_is_attached_to_every_repetition():
+    # Repeats share one context and the warning carries no worker label, so
+    # every occurrence of the task carries the slowness info.
+    log = "\n".join(
+        [
+            f"{TS}0:00 Executing openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
+            f"{TS}0:10 Executing openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
+            f"{TS}5:00 WARNING: openstack:ubuntu-24.04-64:tests/spread/core24/foo running late. Output unchanged.",
+            f"{TS}6:10 Successful tasks: 2",
+            f"{TS}6:10 Aborted tasks: 0",
+        ]
+    )
+    root = convert(log)
+    assert _suite(root).get("tests") == "2"
+    for name in ("tests/spread/core24/foo", "tests/spread/core24/foo#2"):
+        case = _case(root, name, "openstack:ubuntu-24.04-64")
+        assert case.find("system-out") is not None
 
 
 def test_error_block_after_late_warning_is_still_parsed():

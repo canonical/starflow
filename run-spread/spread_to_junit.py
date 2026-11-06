@@ -61,9 +61,11 @@ _DEBUG_RE = re.compile(
 
 # Matches late-task warnings that dump recent task output, such as:
 # 2026-10-28 20:07:10 WARNING: openstack:ubuntu-24.04-64:tests/spread/core24/foo running late. Current output:
+# 2026-10-28 20:07:10 WARNING: openstack:ubuntu-24.04-64:tests/spread/core24/foo running late. Output unchanged.
 # The wrapped output that follows holds arbitrary task text.
 _LATE_WARNING_RE = re.compile(
-    rf"^{_TIMESTAMP}WARNING: .+ running late\. Current output:$"
+    rf"^{_TIMESTAMP}WARNING: (?P<ctx>.+?) running late\. "
+    r"(?P<kind>Current output:|Output unchanged\.|Output still empty\.)$"
 )
 
 # Matches final summary lines, such as:
@@ -156,6 +158,19 @@ class ErrorEvent:
     line: int
 
 
+@dataclass(frozen=True, slots=True)
+class WarningEvent:
+    """A "WARNING: <job> running late..." control line, such as:
+
+    '2026-10-28 20:07:10 WARNING: openstack:ubuntu-24.04-64:tests/spread/core24/foo running late. Current output:'
+    """
+
+    ctx: str
+    ts: datetime | None
+    text: str | None
+    line: int
+
+
 @dataclass(slots=True)
 class Summary:
     """The counts (and, where available, names) from the final summary.
@@ -183,6 +198,7 @@ class Log:
 
     starts: list[StartEvent] = field(default_factory=list)
     errors: list[ErrorEvent] = field(default_factory=list)
+    warnings: list[WarningEvent] = field(default_factory=list)
     summary: Summary = field(default_factory=Summary)
     has_summary: bool = False
 
@@ -200,6 +216,7 @@ class TestCase:
     duration: float = 0.0
     message: str | None = None
     detail: str | None = None
+    system_out: str | None = None
 
 
 def _parse_ts(raw: str | None) -> datetime | None:
@@ -239,19 +256,21 @@ def _extract_error_block(lines: list[str], index: int) -> tuple[str | None, int]
     return _cap_detail(block), cursor
 
 
-def _skip_warning_block(lines: list[str], index: int) -> int:
-    """Skip the "-----"-wrapped output block after a 'running late' warning.
+def _extract_warning_block(lines: list[str], index: int) -> tuple[str | None, int]:
+    """Collect the "-----"-wrapped output block after a 'running late' warning.
 
     Unlike error blocks, warning blocks end at the first closing "-----" line
-    and carry no "." terminator. Returns the index of the first line past the
-    block.
+    and carry no "." terminator. Returns the capped block text (or None) and
+    the index of the first line past the block.
     """
     if index + 1 >= len(lines) or lines[index + 1].strip() != _DELIM:
-        return index + 1
+        return None, index + 1
+    block: list[str] = []
     cursor = index + 2
     while cursor < len(lines) and lines[cursor].strip() != _DELIM:
+        block.append(lines[cursor])
         cursor += 1
-    return min(cursor + 1, len(lines))
+    return _cap_detail(block), min(cursor + 1, len(lines))
 
 
 def _summary_item_names(lines: list[str], index: int) -> list[str]:
@@ -313,9 +332,23 @@ def parse_log(text: str) -> Log:
             # Skip the debug script block.
             _block, index = _extract_error_block(lines, index)
             continue
-        if _LATE_WARNING_RE.match(stripped):
-            # Skip the wrapped task output, which can mimic control lines.
-            index = _skip_warning_block(lines, index)
+        if match := _LATE_WARNING_RE.match(stripped):
+            # Extract the wrapped task output as info for the owning task; it
+            # can mimic control lines, so it must not be parsed.
+            warning_line = index
+            if match.group("kind") == "Current output:":
+                block_text, index = _extract_warning_block(lines, index)
+            else:
+                block_text = None
+                index += 1
+            result.warnings.append(
+                WarningEvent(
+                    ctx=match.group("ctx"),
+                    ts=_parse_ts(match.group("ts")),
+                    text=block_text,
+                    line=warning_line,
+                )
+            )
             continue
         if match := _SUMMARY_RE.match(stripped):
             category = match.group("cat")
@@ -739,6 +772,22 @@ class _CaseBuilder:
             if count > 1:
                 self.cases[number] = replace(case, name=f"{case.name}#{count}")
 
+    def attach_warnings(self, log: Log) -> None:
+        """Attach late-task warnings to their task cases as system output."""
+        # A 'running late' warning marks a task as slow; surfacing it (and the
+        # wrapped output dump) on the task's case makes slow tests visible.
+        for warning in log.warnings:
+            classname, name, _variant = _split_ctx(warning.ctx)
+            target = _strip_sample(f"{classname}:{name}" if classname else name)
+            info = "spread reported this task as running late"
+            if warning.text:
+                info = f"{info}:\n{warning.text}"
+            for number, case in enumerate(self.cases):
+                if _strip_sample(f"{case.classname}:{case.name}") != target:
+                    continue
+                merged = f"{case.system_out}\n{info}" if case.system_out else info
+                self.cases[number] = replace(case, system_out=merged)
+
 
 def build_testcases(
     log: Log, exit_code: int, expected_jobs: frozenset[str] | None = None
@@ -761,6 +810,7 @@ def build_testcases(
         builder.add_unparsed_output(exit_code, log)
     builder.add_unmatched_errors(log)
     builder.dedupe_repeats()
+    builder.attach_warnings(log)
     return builder.cases
 
 
@@ -812,6 +862,8 @@ def convert(
                 "skipped",
                 {"message": _xml_safe(case.message or "skipped")},
             )
+        if case.system_out:
+            ET.SubElement(element, "system-out").text = _xml_safe(case.system_out)
     return suites
 
 

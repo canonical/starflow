@@ -43,6 +43,7 @@ used directly. Set to `false` to handle the upload yourself.
   `preparing:<context>`. This includes system-level failures like
   `preparing:openstack:ubuntu-24.04-64`.
 - Tasks that spread reports as aborted become skipped test cases named `aborted-task-N`.
+- Tasks spread flagged as `running late` carry the warning as `<system-out>`.
 - For a restore failure, the task itself still gets its real (passing) outcome.
 - A log with no recognizable content and a nonzero spread exit code produces
   a single `unparsed-spread-output` test case. With a zero-exit code, it produces
