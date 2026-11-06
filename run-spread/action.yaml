@@ -1,0 +1,65 @@
+name: Run spread
+description: Run spread tests and publish results as JUnit XML.
+
+inputs:
+  args:
+    description: Arguments to pass to spread.
+    required: true
+  junit-name:
+    description: |
+      Name of the JUnit test file. This should be set when there is more than one spread job in a workflow to ensure names are unique. Defaults to 'spread'.
+    default: spread
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Run spread and publish test results as JUnit XML.
+      shell: bash
+      env:
+        SPREAD_ARGS: ${{ inputs.args }}
+        JUNIT_NAME: ${{ inputs.junit-name }}
+      run: |
+        set -o pipefail
+        mkdir -p results
+
+        # Sanitize the junit name for use in a file path.
+        # shellcheck disable=SC2153  # JUNIT_NAME comes from the action's env block.
+        junit_name=$(printf '%s' "$JUNIT_NAME" | tr -c 'A-Za-z0-9._-' '-')
+        log_file="spread-$junit_name.log"
+        junit_file="results/junit-$junit_name.xml"
+
+        # Capture the list of expected jobs from 'spread -list'.
+        # Keep stderr aside so it can be printed on failure.
+        list_stderr=$(mktemp)
+        set +e
+        # shellcheck disable=SC2086
+        spread_list_output=$(spread -list $SPREAD_ARGS 2>"$list_stderr")
+        list_code=$?
+        set -e
+        expected_jobs=()
+        if [ "$list_code" -eq 0 ]; then
+            while IFS= read -r job; do
+                [ -n "$job" ] && expected_jobs+=("$job")
+            done <<< "$spread_list_output"
+        else
+            echo "::warning::'spread -list' failed (rc=$list_code)"
+            cat "$list_stderr"
+        fi
+        rm -f "$list_stderr"
+
+        # Allow spread to fail, as we need to capture the test results.
+        set +e
+        # shellcheck disable=SC2086
+        spread $SPREAD_ARGS 2>&1 | tee "$log_file"
+        spread_code=$?
+        set -e
+
+        python3 "${{ github.action_path }}/spread_to_junit.py" \
+            --log-file "$log_file" \
+            --junit-file "$junit_file" \
+            --suite-name "$junit_name" \
+            --exit-code "$spread_code" \
+            --expected-jobs "${expected_jobs[@]}"
+
+        exit $spread_code

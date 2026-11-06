@@ -1,0 +1,72 @@
+name: Self-test for run-spread
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "run-spread/**"
+      - ".github/workflows/self-test-run-spread.yaml"
+  pull_request:
+    paths:
+      - "run-spread/**"
+      - ".github/workflows/self-test-run-spread.yaml"
+
+jobs:
+  pytest:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+      - name: Run unit tests
+        run: uv run --with pytest pytest run-spread/tests
+
+  fake-spread:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install a fake spread
+        run: |
+          mkdir -p "$HOME/bin"
+          cat > "$HOME/bin/spread" <<'EOF'
+          #!/usr/bin/env bash
+          if [ "$1" = "-list" ]; then
+            cat run-spread/tests/fixtures/spread-fail-list.log
+            exit 0
+          fi
+          cat run-spread/tests/fixtures/spread-fail.log
+          exit 1
+          EOF
+          chmod +x "$HOME/bin/spread"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+
+      - name: Run spread
+        id: spread
+        uses: ./run-spread
+        # The fake spread tests are meant to fail, but this self-test workflow
+        # is considered a success if it fails as-expected.
+        continue-on-error: true
+        with:
+          args: openstack:ubuntu-26.04-64:tests/spread/core26
+      - name: Check the results
+        env:
+          OUTCOME: ${{ steps.spread.outcome }}
+        run: |
+          if [ "$OUTCOME" != failure ]; then
+            echo "::error::run-spread should have failed"
+            exit 1
+          fi
+          diff -u run-spread/tests/fixtures/spread-fail-junit.xml results/junit-spread.xml
