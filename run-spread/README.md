@@ -9,14 +9,7 @@ Runs spread and writes the test results to a JUnit XML file.
   uses: canonical/starflow/run-spread@main
   with:
     args: ${{ matrix.spread-jobs }}
-
-- name: Upload test results
-  if: always()
-  uses: actions/upload-artifact@v7
-  with:
-    name: test-results-${{ matrix.spread-jobs }}
-    path: results/junit*.xml
-    overwrite: true
+    junit-name: ${{ matrix.spread-jobs }}
 ```
 
 The spread binary itself must be available on the runner in `PATH`.
@@ -30,8 +23,14 @@ Arguments passed to spread, typically one or more job selections.
 ### `junit-name`
 
 Disambiguates the JUnit file when a job runs spread more than once. Each
-invocation writes `results/junit-<junit-name>.xml`. The whole
-`results/junit*.xml` glob is uploaded as one artifact.
+invocation writes `results/junit-<junit-name>.xml`.
+
+### `upload-artifacts`
+
+Defaults to `true`: the JUnit XML file is uploaded as an artifact named
+`test-results-<junit-name>`, even when spread fails. The name is sanitized
+to be filesystem-safe (`:` and `/` become `-`), so job selections can be
+used directly. Set to `false` to handle the upload yourself.
 
 ## JUnit mapping
 

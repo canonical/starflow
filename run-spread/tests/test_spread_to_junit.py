@@ -337,6 +337,52 @@ def test_started_tasks_without_a_verdict_become_skipped_not_passed():
     assert _message(incomplete, "skipped").startswith("spread ended without a verdict")
 
 
+def test_named_summary_failure_replaces_the_pending_pass():
+    # The summary names a failure whose Error line was lost; the task's
+    # pending pass must become the failure, not sit beside a synthetic case.
+    log = "\n".join(
+        [
+            f"{TS}0:00 Executing openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
+            f"{TS}0:30 Restoring openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
+            f"{TS}1:00 Successful tasks: 0",
+            f"{TS}1:00 Aborted tasks: 0",
+            f"{TS}1:00 Failed tasks: 1",
+            "    - openstack:ubuntu-24.04-64:tests/spread/core24/foo",
+        ]
+    )
+    root = convert(log)
+    suite = _suite(root)
+    assert suite.get("tests") == "1"
+    assert suite.get("failures") == "1"
+    assert suite.get("skipped") == "0"
+    failed = _case(root, "tests/spread/core24/foo", "openstack:ubuntu-24.04-64")
+    assert "no error detail" in _message(failed, "failure")
+
+
+def test_summary_demotion_prefers_completion_evidence_over_start_order():
+    # Worker-1's long task started first and never restored; worker-2's task
+    # started later but completed. The summary's single success must keep the
+    # completed task, not the most recently started one.
+    log = "\n".join(
+        [
+            f"{TS}0:00 Executing openstack:ubuntu-24.04-64:tests/spread/core24/long (worker-1)...",
+            f"{TS}0:10 Executing openstack:ubuntu-24.04-64:tests/spread/core24/short (worker-2)...",
+            f"{TS}0:30 Restoring openstack:ubuntu-24.04-64:tests/spread/core24/short (worker-2)...",
+            f"{TS}1:00 Successful tasks: 1",
+            f"{TS}1:00 Aborted tasks: 0",
+        ]
+    )
+    root = convert(log)
+    suite = _suite(root)
+    assert suite.get("tests") == "2"
+    assert suite.get("failures") == "0"
+    assert suite.get("skipped") == "1"
+    passed = _case(root, "tests/spread/core24/short", "openstack:ubuntu-24.04-64")
+    assert passed.find("skipped") is None
+    incomplete = _case(root, "tests/spread/core24/long", "openstack:ubuntu-24.04-64")
+    assert _message(incomplete, "skipped").startswith("spread ended without a verdict")
+
+
 # endregion
 
 # region unparseable output
@@ -589,6 +635,52 @@ def test_debug_output_blocks_are_skipped():
     assert _case(root, "tests/spread/core24/foo").find("failure") is not None
 
 
+def test_late_task_warning_output_is_not_parsed_as_control_lines():
+    # A 'running late' warning dumps recent task output in a "-----"-wrapped
+    # block; control-looking lines inside must not become phantom results.
+    log = "\n".join(
+        [
+            f"{TS}0:00 Executing openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
+            f"{TS}5:00 WARNING: openstack:ubuntu-24.04-64:tests/spread/core24/foo running late. Current output:",
+            "-----",
+            "Executing openstack:ubuntu-24.04-64:tests/spread/core24/phantom (worker-9)...",
+            "Error executing openstack:ubuntu-24.04-64:tests/spread/core24/phantom (worker-9) : fake",
+            "-----",
+            f"{TS}6:00 Restoring openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
+            f"{TS}6:10 Successful tasks: 1",
+            f"{TS}6:10 Aborted tasks: 0",
+        ]
+    )
+    root = convert(log)
+    suite = _suite(root)
+    assert suite.get("tests") == "1"
+    assert suite.get("failures") == "0"
+    _case(root, "tests/spread/core24/foo", "openstack:ubuntu-24.04-64")
+
+
+def test_error_block_after_late_warning_is_still_parsed():
+    # The warning block ends at its first closing delimiter; a real error
+    # block that follows must still be parsed normally.
+    log = "\n".join(
+        [
+            f"{TS}0:00 Executing openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
+            f"{TS}5:00 WARNING: openstack:ubuntu-24.04-64:tests/spread/core24/foo running late. Current output:",
+            "-----",
+            "task output line",
+            "-----",
+            f"{TS}6:00 Error executing openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1) : boom",
+            "-----",
+            "error detail",
+            "-----",
+            ".",
+        ]
+    )
+    root = convert(log, exit_code=1)
+    failure = _failure(_case(root, "tests/spread/core24/foo"))
+    assert failure.get("message") == "boom"
+    assert failure.text == "error detail"
+
+
 # endregion
 
 # region size caps
@@ -720,6 +812,25 @@ def test_expected_jobs_started_tasks_are_not_reported_as_never_started():
     assert suite.get("skipped") == "0"
 
 
+def test_sampled_job_in_log_and_list_is_not_reported_never_started():
+    # Sampled jobs carry a '#N' suffix in the log; the '-list' name without
+    # the suffix must still count as started.
+    log = "\n".join(
+        [
+            f"{TS}0:00 Executing openstack:ubuntu-24.04-64:tests/spread/core24/foo#1 (worker-1)...",
+            f"{TS}0:10 Restoring openstack:ubuntu-24.04-64:tests/spread/core24/foo#1 (worker-1)...",
+            f"{TS}0:20 Successful tasks: 1",
+            f"{TS}0:20 Aborted tasks: 0",
+        ]
+    )
+    expected = frozenset({"openstack:ubuntu-24.04-64:tests/spread/core24/foo"})
+    root = convert(log, expected_jobs=expected)
+    suite = _suite(root)
+    assert suite.get("tests") == "1"
+    assert suite.get("skipped") == "0"
+    _case(root, "tests/spread/core24/foo#1", "openstack:ubuntu-24.04-64")
+
+
 def test_cli_passes_expected_jobs(tmp_path):
     logfile = tmp_path / "spread.log"
     logfile.write_text(
@@ -844,6 +955,34 @@ def test_error_is_matched_to_the_start_with_its_own_label():
     failed = _case(root, "tests/spread/core24/foo", "openstack:ubuntu-24.04-64")
     assert _message(failed, "failure") == "boom"
     assert failed.get("time") == "5.000"
+    passed = _case(root, "tests/spread/core24/foo#2", "openstack:ubuntu-24.04-64")
+    assert passed.find("failure") is None and passed.find("skipped") is None
+
+
+def test_pass_then_fail_repetition_is_attributed_to_the_failed_start():
+    # The first repetition completed (restoring line) before the second one
+    # failed; the failure must land on the second start, with its duration.
+    log = "\n".join(
+        [
+            f"{TS}0:00 Executing openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
+            f"{TS}0:30 Restoring openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
+            f"{TS}1:00 Executing openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1)...",
+            f"{TS}1:20 Error executing openstack:ubuntu-24.04-64:tests/spread/core24/foo (worker-1) : boom",
+            f"{TS}1:30 Successful tasks: 1",
+            f"{TS}1:30 Aborted tasks: 0",
+            f"{TS}1:30 Failed tasks: 1",
+            "    - openstack:ubuntu-24.04-64:tests/spread/core24/foo",
+        ]
+    )
+    root = convert(log)
+    suite = _suite(root)
+    assert suite.get("tests") == "2"
+    assert suite.get("failures") == "1"
+    assert suite.get("skipped") == "0"
+    failed = _case(root, "tests/spread/core24/foo", "openstack:ubuntu-24.04-64")
+    assert _message(failed, "failure") == "boom"
+    # Duration from the second start (1:00), not the first (0:00).
+    assert failed.get("time") == "20.000"
     passed = _case(root, "tests/spread/core24/foo#2", "openstack:ubuntu-24.04-64")
     assert passed.find("failure") is None and passed.find("skipped") is None
 

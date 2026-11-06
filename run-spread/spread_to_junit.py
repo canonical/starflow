@@ -59,6 +59,13 @@ _DEBUG_RE = re.compile(
     r"\((?P<label>[^()]*)\) : ?(?P<msg>.*)$"
 )
 
+# Matches late-task warnings that dump recent task output, such as:
+# 2026-10-28 20:07:10 WARNING: openstack:ubuntu-24.04-64:tests/spread/core24/foo running late. Current output:
+# The wrapped output that follows holds arbitrary task text.
+_LATE_WARNING_RE = re.compile(
+    rf"^{_TIMESTAMP}WARNING: .+ running late\. Current output:$"
+)
+
 # Matches final summary lines, such as:
 #   2026-10-28 20:07:10 Successful tasks: 41
 #   2026-10-28 20:07:10 Aborted tasks: 2
@@ -130,6 +137,7 @@ class StartEvent:
     label: str
     ts: datetime | None
     seq: str | None
+    line: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -145,6 +153,7 @@ class ErrorEvent:
     ts: datetime | None
     message: str | None
     detail: str | None
+    line: int
 
 
 @dataclass(slots=True)
@@ -230,6 +239,21 @@ def _extract_error_block(lines: list[str], index: int) -> tuple[str | None, int]
     return _cap_detail(block), cursor
 
 
+def _skip_warning_block(lines: list[str], index: int) -> int:
+    """Skip the "-----"-wrapped output block after a 'running late' warning.
+
+    Unlike error blocks, warning blocks end at the first closing "-----" line
+    and carry no "." terminator. Returns the index of the first line past the
+    block.
+    """
+    if index + 1 >= len(lines) or lines[index + 1].strip() != _DELIM:
+        return index + 1
+    cursor = index + 2
+    while cursor < len(lines) and lines[cursor].strip() != _DELIM:
+        cursor += 1
+    return min(cursor + 1, len(lines))
+
+
 def _summary_item_names(lines: list[str], index: int) -> list[str]:
     """Collect the '    - name' list items following a summary line."""
     names: list[str] = []
@@ -258,6 +282,7 @@ def parse_log(text: str) -> Log:
                     label=match.group("label"),
                     ts=_parse_ts(match.group("ts")),
                     seq=match.group("seq"),
+                    line=index,
                 )
             )
             index += 1
@@ -265,6 +290,7 @@ def parse_log(text: str) -> Log:
         if match := _ERROR_RE.match(stripped):
             # Skip over the block contents, which hold arbitrary task output
             # that must not be parsed as control lines.
+            error_line = index
             block, index = _extract_error_block(lines, index)
             inline_message = _cap_message(match.group("msg").strip() or None)
             message = inline_message
@@ -279,12 +305,17 @@ def parse_log(text: str) -> Log:
                     ts=_parse_ts(match.group("ts")),
                     message=message,
                     detail=detail,
+                    line=error_line,
                 )
             )
             continue
         if _DEBUG_RE.match(stripped):
             # Skip the debug script block.
             _block, index = _extract_error_block(lines, index)
+            continue
+        if _LATE_WARNING_RE.match(stripped):
+            # Skip the wrapped task output, which can mimic control lines.
+            index = _skip_warning_block(lines, index)
             continue
         if match := _SUMMARY_RE.match(stripped):
             category = match.group("cat")
@@ -328,18 +359,40 @@ def _strip_sample(name: str) -> str:
     return re.sub(r"#\d+(?:\.\.\d+)?$", "", name)
 
 
-def _executing_error_queues(log: Log) -> dict[tuple[str, str], list[int]]:
-    """Index executing errors by (context, label), in log order.
+def _match_errors_to_starts(log: Log) -> dict[int, int]:
+    """Match executing errors to the start line of the execution they ended.
 
-    Values are indices into log.errors, so matches can be tracked as consumed.
-    Repeated jobs emit the same context more than once; the label (worker
-    instance) plus occurrence order pairs each error with its own start line.
+    An error belongs to the most recent still-unmatched start with the same
+    (context, label) that precedes it in the log, so a repetition that passed
+    keeps its pass when a later repetition fails.
+
+    Returns a mapping of start indices to error indices into the log's lists.
     """
-    queues: dict[tuple[str, str], list[int]] = {}
+    starts_by_key: dict[tuple[str, str], list[int]] = {}
+    for index, start in enumerate(log.starts):
+        if start.verb == "executing":
+            starts_by_key.setdefault((start.ctx, start.label), []).append(index)
+    matches: dict[int, int] = {}
+    pointers: dict[tuple[str, str], int] = {}
     for number, error in enumerate(log.errors):
-        if error.verb == "executing":
-            queues.setdefault((error.ctx, error.label), []).append(number)
-    return queues
+        if error.verb != "executing":
+            continue
+        key = (error.ctx, error.label)
+        candidates = starts_by_key.get(key)
+        if not candidates:
+            continue
+        position = pointers.get(key, 0)
+        while (
+            position + 1 < len(candidates)
+            and log.starts[candidates[position + 1]].line < error.line
+        ):
+            position += 1
+        pointers[key] = position
+        start_index = candidates[position]
+        if log.starts[start_index].line < error.line:
+            matches[start_index] = number
+            pointers[key] = position + 1
+    return matches
 
 
 def _collect_control_timestamps(log: Log) -> list[datetime | None]:
@@ -379,14 +432,14 @@ class _CaseBuilder:
     def record_starts(
         self,
         log: Log,
-        error_queues: dict[tuple[str, str], list[int]],
+        error_matches: dict[int, int],
         control_ts: list[datetime | None],
     ) -> None:
         """Record executed tasks.
 
         Passing tasks become PassedTasks and errors become TestCases. Each
-        error is matched to the start line occurrence with the same (context,
-        label), so one failing repetition does not fail its siblings.
+        error is matched to the start line of the execution it ended, so one
+        failing repetition does not fail its siblings.
         """
 
         # Use the timestamps from spread to estimate test duration. Task output is not
@@ -400,6 +453,7 @@ class _CaseBuilder:
                     return max((later - event_ts).total_seconds(), 0.0)
             return 0.0
 
+        self.consumed_errors = set(error_matches.values())
         occurrences: dict[tuple[str, str], int] = {}
         for index, start in enumerate(log.starts):
             key = (start.ctx, start.label)
@@ -414,12 +468,8 @@ class _CaseBuilder:
             occurrences[key] = occurrence + 1
             self.started_ctxs.add(start.ctx)
             classname, name, _variant = _split_ctx(start.ctx)
-            queue = error_queues.get(key)
-            error = None
-            if queue:
-                number = queue.pop(0)
-                self.consumed_errors.add(number)
-                error = log.errors[number]
+            error_number = error_matches.get(index)
+            error = log.errors[error_number] if error_number is not None else None
             if error is not None:
                 duration = (
                     max((error.ts - start.ts).total_seconds(), 0.0)
@@ -453,7 +503,10 @@ class _CaseBuilder:
         if expected_jobs is None:
             return
         expected_jobs = frozenset(_strip_sample(name) for name in expected_jobs)
-        self.never_started = sorted(expected_jobs - self.started_ctxs)
+        # Sampled jobs carry a '#N' suffix in the log too; compare both sides
+        # without it, or a sampled task that ran would look never-started.
+        started = {_strip_sample(ctx) for ctx in self.started_ctxs}
+        self.never_started = sorted(expected_jobs - started)
         for name in self.never_started:
             classname, task, _variant = _split_ctx(name)
             self.cases.append(
@@ -486,6 +539,8 @@ class _CaseBuilder:
             if number < len(uncovered):
                 name = uncovered[number]
                 classname, task, _variant = _split_ctx(name)
+                if self._fail_existing_case(name, classname, task):
+                    continue
                 self.cases.append(
                     TestCase(
                         classname=classname or name,
@@ -508,6 +563,34 @@ class _CaseBuilder:
                         ),
                     )
                 )
+
+    def _fail_existing_case(self, name: str, classname: str | None, task: str) -> bool:
+        """Turn an existing pass or never-started skip for the named execution into a failed case.
+
+        Without this, the same execution would be reported twice, and the
+        success-count reconciliation would demote a different task.
+        """
+        message = (
+            "spread reported this failure but no error detail was parsed from the log"
+        )
+        for index, pending in enumerate(self.passed):
+            if _strip_sample(pending.key[0]) == _strip_sample(name):
+                self.passed.pop(index)
+                self.cases.append(
+                    TestCase(
+                        classname=pending.classname,
+                        name=pending.name,
+                        outcome="failed",
+                        message=message,
+                    )
+                )
+                return True
+        target = (classname or name, task)
+        for index, case in enumerate(self.cases):
+            if case.outcome == "skipped" and (case.classname, case.name) == target:
+                self.cases[index] = replace(case, outcome="failed", message=message)
+                return True
+        return False
 
     def _add_aborted_tasks(
         self, log: Log, expected_jobs: frozenset[str] | None
@@ -540,7 +623,27 @@ class _CaseBuilder:
             return
         # If a task never errored and never completed, mark it as skipped.
         surplus = len(self.passed) - expected_passes
-        for task in self.passed[len(self.passed) - surplus :]:
+        # Completion evidence (a restoring line) identifies unfinished tasks
+        # more reliably than start order, which misleads when workers run in
+        # parallel. Demote unrestored passes first; only if the summary
+        # demands more, fall back to the most recently started tasks.
+        unrestored = [
+            index
+            for index, task in enumerate(self.passed)
+            if self.restored.get(task.key, 0) <= task.occurrence
+        ]
+        if surplus <= len(unrestored):
+            demote = set(unrestored[len(unrestored) - surplus :])
+        else:
+            restored = [
+                index
+                for index in range(len(self.passed))
+                if index not in set(unrestored)
+            ]
+            extra = surplus - len(unrestored)
+            demote = set(unrestored) | set(restored[len(restored) - extra :])
+        for index in sorted(demote):
+            task = self.passed[index]
             self.cases.append(
                 TestCase(
                     classname=task.classname,
@@ -549,7 +652,9 @@ class _CaseBuilder:
                     message="spread ended without a verdict for this task",
                 )
             )
-        self.passed = self.passed[: len(self.passed) - surplus]
+        self.passed = [
+            task for index, task in enumerate(self.passed) if index not in demote
+        ]
 
     def demote_unrestored_passes(self) -> None:
         """Demote collected passes that never reached a restoring line to skipped cases.
@@ -644,8 +749,8 @@ def build_testcases(
     but never started are reported as skipped test cases under their real names.
     """
     builder = _CaseBuilder()
-    error_queues = _executing_error_queues(log)
-    builder.record_starts(log, error_queues, _collect_control_timestamps(log))
+    error_matches = _match_errors_to_starts(log)
+    builder.record_starts(log, error_matches, _collect_control_timestamps(log))
     builder.add_never_started_cases(expected_jobs)
     if log.has_summary:
         builder.reconcile_summary(log, expected_jobs)
