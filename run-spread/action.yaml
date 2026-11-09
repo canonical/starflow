@@ -19,7 +19,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Run spread and write JUnit XML results.
+    - name: Run spread
       id: run-spread
       shell: bash
       env:
@@ -34,9 +34,9 @@ runs:
         junit_name=$(printf '%s' "$JUNIT_NAME" | tr -c 'A-Za-z0-9._-' '-')
         echo "junit-name=$junit_name" >> "$GITHUB_OUTPUT"
         log_file="spread-$junit_name.log"
-        junit_file="results/junit-$junit_name.xml"
 
         # Capture the list of expected jobs from 'spread -list'.
+        expected_jobs_file="results/expected-jobs.txt"
         # Keep stderr aside so it can be printed on failure.
         list_stderr=$(mktemp)
         set +e
@@ -44,10 +44,12 @@ runs:
         spread_list_output=$(spread -list $SPREAD_ARGS 2>"$list_stderr")
         list_code=$?
         set -e
-        expected_jobs=()
+
+        # Reset the file for this run. Jobs are appended below only if 'spread -list' succeeded.
+        truncate -s 0 "$expected_jobs_file"
         if [ "$list_code" -eq 0 ]; then
             while IFS= read -r job; do
-                [ -n "$job" ] && expected_jobs+=("$job")
+                [ -n "$job" ] && printf '%s\n' "$job" >> "$expected_jobs_file"
             done <<< "$spread_list_output"
         else
             echo "::warning::'spread -list' failed (rc=$list_code)"
@@ -59,17 +61,41 @@ runs:
         set +e
         # shellcheck disable=SC2086
         spread $SPREAD_ARGS 2>&1 | tee "$log_file"
-        spread_code=$?
+        spread_code="${PIPESTATUS[0]}"
         set -e
+        echo "spread-code=$spread_code" >> "$GITHUB_OUTPUT"
 
-        python3 "${{ github.action_path }}/spread_to_junit.py" \
-            --log-file "$log_file" \
-            --junit-file "$junit_file" \
-            --suite-name "$junit_name" \
-            --exit-code "$spread_code" \
-            --expected-jobs "${expected_jobs[@]}"
+        exit "$spread_code"
 
-        exit $spread_code
+    - name: Write JUnit XML results
+      if: ${{ !cancelled() }}
+      shell: bash
+      env:
+        JUNIT_NAME: ${{ steps.run-spread.outputs.junit-name }}
+        SPREAD_CODE: ${{ steps.run-spread.outputs.spread-code }}
+      run: |
+        # The shellcheck linter concatenates run blocks, so this body looks
+        # unreachable after the previous step's `exit`.
+        # shellcheck disable=SC2317
+        {
+            # Default to failure if the run step did not record an exit code.
+            spread_code="${SPREAD_CODE:-1}"
+            junit_file="results/junit-$JUNIT_NAME.xml"
+
+            expected_jobs=()
+            if [ -f results/expected-jobs.txt ]; then
+                while IFS= read -r job; do
+                    [ -n "$job" ] && expected_jobs+=("$job")
+                done < results/expected-jobs.txt
+            fi
+
+            python3 "${{ github.action_path }}/spread_to_junit.py" \
+                --log-file "spread-$JUNIT_NAME.log" \
+                --junit-file "$junit_file" \
+                --suite-name "$JUNIT_NAME" \
+                --exit-code "$spread_code" \
+                --expected-jobs "${expected_jobs[@]}"
+        }
 
     - name: Upload test results
       if: ${{ inputs.upload-artifacts != 'false' && !cancelled() }}
