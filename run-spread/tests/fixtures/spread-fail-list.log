@@ -1,0 +1,3 @@
+openstack:ubuntu-26.04-64:tests/spread/core26/aborted:default
+openstack:ubuntu-26.04-64:tests/spread/core26/basic:default
+openstack:ubuntu-26.04-64:tests/spread/core26/platforms:build

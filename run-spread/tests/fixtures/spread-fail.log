@@ -1,0 +1,24 @@
+2026-10-23 16:48:27 Preparing openstack:ubuntu-26.04-64 (oct231647-192691)...
+2026-10-23 16:48:27 Preparing openstack:ubuntu-26.04-64 (oct231647-192664)...
+2026-10-23 16:49:58 Preparing openstack:ubuntu-26.04-64:tests/spread/core26/platforms:build (oct231647-192691)...
+2026-10-23 16:49:58 Executing openstack:ubuntu-26.04-64:tests/spread/core26/platforms:build (oct231647-192691) (1/3)...
+2026-10-23 16:50:13 Restoring openstack:ubuntu-26.04-64:tests/spread/core26/platforms:build (oct231647-192691)...
+2026-10-23 16:50:30 Preparing openstack:ubuntu-26.04-64:tests/spread/core26/basic:default (oct231647-192691)...
+2026-10-23 16:50:30 Executing openstack:ubuntu-26.04-64:tests/spread/core26/basic:default (oct231647-192691) (2/3)...
+2026-10-23 16:51:00 Error executing openstack:ubuntu-26.04-64:tests/spread/core26/basic:default (oct231647-192691) :
+-----
++ snapcraft pack
+2026-10-23 16:50:59.123 craft_providers.errors.ProviderError: Failed to run snapcraft in instance
+-----
+.
+2026-10-23 16:59:21 Error preparing openstack:ubuntu-26.04-64 (oct231647-192664) :
+-----
++ . /snapcraft/tests/spread/tools/prepare.sh
+-----
+.
+2026-10-23 17:23:07 Successful tasks: 1
+2026-10-23 17:23:07 Aborted tasks: 1
+2026-10-23 17:23:07 Failed tasks: 1
+    - openstack:ubuntu-26.04-64:tests/spread/core26/basic:default
+2026-10-23 17:23:07 Failed project prepare: 1
+    - openstack:ubuntu-26.04-64:project

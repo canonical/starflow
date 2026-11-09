@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='utf-8'?>
+<testsuites name="spread" tests="4" failures="2" errors="0" skipped="1" time="45.000">
+  <testsuite name="spread" tests="4" failures="2" errors="0" skipped="1" time="45.000">
+    <testcase classname="openstack:ubuntu-26.04-64" name="tests/spread/core26/basic:default" time="30.000">
+      <failure message="+ snapcraft pack">+ snapcraft pack
+2026-10-23 16:50:59.123 craft_providers.errors.ProviderError: Failed to run snapcraft in instance</failure>
+    </testcase>
+    <testcase classname="openstack:ubuntu-26.04-64" name="tests/spread/core26/aborted:default">
+      <skipped message="expected by 'spread -list' but never started" />
+    </testcase>
+    <testcase classname="openstack:ubuntu-26.04-64" name="tests/spread/core26/platforms:build" time="15.000" />
+    <testcase classname="openstack:ubuntu-26.04-64" name="preparing:openstack:ubuntu-26.04-64">
+      <failure message="+ . /snapcraft/tests/spread/tools/prepare.sh">+ . /snapcraft/tests/spread/tools/prepare.sh</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

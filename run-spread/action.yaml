@@ -1,0 +1,107 @@
+name: Run spread
+description: Run spread tests and publish results as JUnit XML.
+
+inputs:
+  args:
+    description: Arguments to pass to spread.
+    required: true
+  junit-name:
+    description: |
+      Name of the JUnit test file. This should be set when there is more than one spread job in a workflow to ensure names are unique. Defaults to 'spread'.
+    default: spread
+    required: false
+  upload-artifacts:
+    description: |
+      Upload the JUnit XML file as an artifact named 'test-results-<junit-name>'. The name is sanitized to be filesystem-safe.
+    default: "true"
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Run spread
+      id: run-spread
+      shell: bash
+      env:
+        SPREAD_ARGS: ${{ inputs.args }}
+        JUNIT_NAME: ${{ inputs.junit-name }}
+      run: |
+        set -o pipefail
+        mkdir -p results
+
+        # Sanitize the junit name for use in a file path.
+        # shellcheck disable=SC2153  # JUNIT_NAME comes from the action's env block.
+        junit_name=$(printf '%s' "$JUNIT_NAME" | tr -c 'A-Za-z0-9._-' '-')
+        echo "junit-name=$junit_name" >> "$GITHUB_OUTPUT"
+        log_file="spread-$junit_name.log"
+
+        # Capture the list of expected jobs from 'spread -list'.
+        expected_jobs_file="results/expected-jobs.txt"
+        # Keep stderr aside so it can be printed on failure.
+        list_stderr=$(mktemp)
+        set +e
+        # shellcheck disable=SC2086
+        spread_list_output=$(spread -list $SPREAD_ARGS 2>"$list_stderr")
+        list_code=$?
+        set -e
+
+        # Reset the file for this run. Jobs are appended below only if 'spread -list' succeeded.
+        truncate -s 0 "$expected_jobs_file"
+        if [ "$list_code" -eq 0 ]; then
+            while IFS= read -r job; do
+                [ -n "$job" ] && printf '%s\n' "$job" >> "$expected_jobs_file"
+            done <<< "$spread_list_output"
+        else
+            echo "::warning::'spread -list' failed (rc=$list_code)"
+            cat "$list_stderr"
+        fi
+        rm -f "$list_stderr"
+
+        # Allow spread to fail, as we need to capture the test results.
+        set +e
+        # shellcheck disable=SC2086
+        spread $SPREAD_ARGS 2>&1 | tee "$log_file"
+        spread_code="${PIPESTATUS[0]}"
+        set -e
+        echo "spread-code=$spread_code" >> "$GITHUB_OUTPUT"
+
+        exit "$spread_code"
+
+    - name: Write JUnit XML results
+      if: ${{ !cancelled() }}
+      shell: bash
+      env:
+        JUNIT_NAME: ${{ steps.run-spread.outputs.junit-name }}
+        SPREAD_CODE: ${{ steps.run-spread.outputs.spread-code }}
+      run: |
+        # The shellcheck linter concatenates run blocks, so this body looks
+        # unreachable after the previous step's `exit`.
+        # shellcheck disable=SC2317
+        {
+            # Default to failure if the run step did not record an exit code.
+            spread_code="${SPREAD_CODE:-1}"
+            junit_file="results/junit-$JUNIT_NAME.xml"
+
+            expected_jobs=()
+            if [ -f results/expected-jobs.txt ]; then
+                while IFS= read -r job; do
+                    [ -n "$job" ] && expected_jobs+=("$job")
+                done < results/expected-jobs.txt
+            fi
+
+            python3 "${{ github.action_path }}/spread_to_junit.py" \
+                --log-file "spread-$JUNIT_NAME.log" \
+                --junit-file "$junit_file" \
+                --suite-name "$JUNIT_NAME" \
+                --exit-code "$spread_code" \
+                --expected-jobs "${expected_jobs[@]}"
+        }
+
+    - name: Upload test results
+      if: ${{ inputs.upload-artifacts != 'false' && !cancelled() }}
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: test-results-${{ steps.run-spread.outputs.junit-name }}
+        path: results/junit*.xml
+        overwrite: true
+        if-no-files-found: ignore
