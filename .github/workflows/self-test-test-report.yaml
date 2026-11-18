@@ -17,8 +17,7 @@ permissions: {}
 
 jobs:
   results:
-    # Fork pull requests get a read-only GITHUB_TOKEN and cannot create check
-    # runs, so the self-test can only run for same-repository events.
+    # Skip this job on PRs from forks because they get a read-only token and can't create check runs.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork }}
     permissions:
       contents: read
