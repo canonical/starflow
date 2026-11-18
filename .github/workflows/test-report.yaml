@@ -1,0 +1,71 @@
+name: Test report
+
+# After a workflow that generates test reports completes, this workflow
+# parses the reports and adds a new check run with inline annotations.
+#
+# The annotations are valuable because they allow us to preview
+# the logs of a failed test from the check run's summary.
+#
+# This is its own job rather than being part of the jobs that generate test
+# reports because PRs from forks have a read-only token and can't add a check run.
+
+on:
+  workflow_call:
+    inputs:
+      artifact:
+        description: |
+          Name or /regex/ of the artifacts containing the test results.
+          Capture groups replace $1, $2, ... in 'name'.
+        default: /test-results-(.*)/
+        required: false
+        type: string
+      name:
+        description: |
+          Name of the check run.
+          Capture groups from 'artifact' replace $1, $2, ...
+        default: Tests ($1)
+        required: false
+        type: string
+      path:
+        description: |
+          Glob for the test result files inside the artifacts.
+        default: junit*.xml
+        required: false
+        type: string
+      reporter:
+        description: |
+          Format of the test results, see
+          https://github.com/dorny/test-reporter#supported-formats.
+        required: true
+        type: string
+      max-annotations:
+        description: Maximum number of annotations added to the check run.
+        default: 50
+        required: false
+        type: number
+      fail-on-empty:
+        description: Fail if no test results were found.
+        default: false
+        required: false
+        type: boolean
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Publish test results
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a # v3.2.0
+        with:
+          artifact: ${{ inputs.artifact }}
+          name: ${{ inputs.name }}
+          path: ${{ inputs.path }}
+          reporter: ${{ inputs.reporter }}
+          use-actions-summary: false
+          max-annotations: ${{ inputs.max-annotations }}
+          fail-on-empty: ${{ inputs.fail-on-empty }}

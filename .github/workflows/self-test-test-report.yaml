@@ -1,0 +1,77 @@
+name: Self-test for test-report
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/test-report.yaml"
+      - ".github/workflows/self-test-test-report.yaml"
+  pull_request:
+    paths:
+      - ".github/workflows/test-report.yaml"
+      - ".github/workflows/self-test-test-report.yaml"
+
+permissions: {}
+
+jobs:
+  results:
+    # Fork pull requests get a read-only GITHUB_TOKEN and cannot create check
+    # runs, so the self-test can only run for same-repository events.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Write fake test results
+        run: |
+          mkdir -p results
+          cat > results/junit-selftest.xml <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <testsuite name="selftest" tests="2" failures="0" errors="0" skipped="0">
+            <testcase classname="tests.unit.test_demo" name="test_passes_1" file="tests/unit/test_demo.py" line="1" time="0.01"/>
+            <testcase classname="tests.unit.test_demo" name="test_passes_2" file="tests/unit/test_demo.py" line="5" time="0.02"/>
+          </testsuite>
+          EOF
+      - name: Upload test results
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-results-selftest
+          path: results/junit-selftest.xml
+          if-no-files-found: error
+
+  report:
+    needs: results
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork }}
+    uses: ./.github/workflows/test-report.yaml
+    permissions:
+      contents: read
+      actions: read
+      checks: write
+    with:
+      reporter: python-xunit
+      name: Tests ($1)
+
+  verify:
+    needs: report
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check the check run was created
+        # Run the report against the pull request head SHA when one
+        # exists, otherwise against the commit that started the run.
+        run: |
+          sha="${{ github.event.pull_request.head.sha || github.sha }}"
+          count=$(gh api "repos/${{ github.repository }}/commits/$sha/check-runs" \
+            --jq '[.check_runs[] | select(.name == "Tests (selftest)")] | length')
+          if [ "$count" -lt 1 ]; then
+            echo "::error::'Tests (selftest)' check run was not created"
+            exit 1
+          fi
