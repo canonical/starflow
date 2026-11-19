@@ -198,6 +198,33 @@ jobs:
         MY_VAR=value
 ```
 
+## Test report
+
+The test report workflow turns test results uploaded as `test-results-*` artifacts
+into check runs with inline annotations.
+
+An example workflow for a spread test suite:
+
+```yaml
+name: Test report
+on:
+  # zizmor: ignore[dangerous-triggers] Fork PRs cannot create check runs, so
+  # reporting must be triggered with workflow_run.
+  workflow_run:
+    workflows: [Spread tests for source]
+    types: [completed]
+permissions:
+  contents: read
+  actions: read
+  checks: write
+jobs:
+  report:
+    uses: canonical/starflow/.github/workflows/test-report.yaml@main
+    with:
+      reporter: java-junit
+      name: "Spread tests ($1)"
+```
+
 ## Documentation release
 
 The documentation release workflow publishes a project's documentation to Read the Docs.
