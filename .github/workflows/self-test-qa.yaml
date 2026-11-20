@@ -5,6 +5,7 @@ on:
 permissions:
   actions: read
   contents: read
+  pull-requests: read
 
 jobs:
   lint-python:
@@ -17,6 +18,7 @@ jobs:
       extra-env-vars: |
         REPO_VARIABLE=${{ vars.REPO_VARIABLE }}
         REPO_SECRET=$SECRET_1
+        IS_FORK_PR=${{ github.event.pull_request.head.repo.fork }}
   test-python-custom:
     uses: ./.github/workflows/test-python.yaml
     secrets:
@@ -36,6 +38,7 @@ jobs:
       extra-env-vars: |
         REPO_VARIABLE=${{ vars.REPO_VARIABLE }}
         REPO_SECRET=$SECRET_1
+        IS_FORK_PR=${{ github.event.pull_request.head.repo.fork }}
   test-python-as-root:
     uses: ./.github/workflows/test-python.yaml
     secrets:
@@ -57,6 +60,7 @@ jobs:
       extra-env-vars: |
         REPO_VARIABLE=${{ vars.REPO_VARIABLE }}
         REPO_SECRET=$SECRET_1
+        IS_FORK_PR=${{ github.event.pull_request.head.repo.fork }}
   test-python-noop-platforms: # Test that the Python tests are all skipped when platforms are empty
     uses: ./.github/workflows/test-python.yaml
     with:
