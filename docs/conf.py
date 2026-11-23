@@ -221,7 +221,9 @@ if "discourse_prefix" not in html_context and "discourse" in html_context:
 
 # Add configuration for intersphinx mapping
 intersphinx_mapping = {
+    "launchpad": ("https://documentation.ubuntu.com/launchpad", None),
     "snapcraft": ("https://documentation.ubuntu.com/snapcraft/stable", None),
+    "ubuntu": ("https://documentation.ubuntu.com/project", None),
 }
 
 # Block Intersphinx from looking up external sources with internal references. In other
