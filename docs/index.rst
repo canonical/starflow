@@ -42,3 +42,4 @@ Get involved
 
     how-to/index.rst
     explanation/index.rst
+    reference/index.rst
