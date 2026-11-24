@@ -393,11 +393,11 @@ def _strip_sample(name: str) -> str:
     return re.sub(r"#\d+(?:\.\.\d+)?$", "", name)
 
 
-def _get_task_file(ctx: str) -> str | None:
-    """Return the task.yaml path for a task context, or None for non-task contexts."""
+def _get_task_file(ctx: str) -> str:
+    """Return the task.yaml path for a task context, or spread.yaml for non-task contexts."""
     classname, name, variant = _split_ctx(ctx)
     if classname is None:
-        return None
+        return "spread.yaml"
     if variant is not None:
         name = name.removesuffix(f":{variant}")
     return f"{_strip_sample(name)}/task.yaml"

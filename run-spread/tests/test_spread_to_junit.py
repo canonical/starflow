@@ -1109,7 +1109,9 @@ def test_task_file_attribute():
         _case(root, "tests/spread/core24/baz#2").get("file")
         == "tests/spread/core24/baz/task.yaml"
     )
-    assert _case(root, "preparing:openstack:ubuntu-24.04-64").get("file") is None
+    assert (
+        _case(root, "preparing:openstack:ubuntu-24.04-64").get("file") == "spread.yaml"
+    )
 
 
 # endregion

@@ -9,7 +9,7 @@
       <skipped message="expected by 'spread -list' but never started" />
     </testcase>
     <testcase classname="openstack:ubuntu-26.04-64" name="tests/spread/core26/platforms:build" file="tests/spread/core26/platforms/task.yaml" time="15.000" />
-    <testcase classname="openstack:ubuntu-26.04-64" name="preparing:openstack:ubuntu-26.04-64">
+    <testcase classname="openstack:ubuntu-26.04-64" name="preparing:openstack:ubuntu-26.04-64" file="spread.yaml">
       <failure message="+ . /snapcraft/tests/spread/tools/prepare.sh">+ . /snapcraft/tests/spread/tools/prepare.sh</failure>
     </testcase>
   </testsuite>
