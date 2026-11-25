@@ -538,9 +538,18 @@ def test_cli_writes_junit_xml(tmp_path):
 
 
 def test_dataclass_fields_are_stable():
-    # Guards against accidental changes to the public record shapes.
-    case = TestCase(classname="c", name="n", outcome="passed")
-    assert (case.classname, case.name, case.outcome) == ("c", "n", "passed")
+    # Guards against accidental changes to the public record shapes and positional order.
+    case = TestCase("c", "n", "passed", 1.5, "msg", "det", "out")
+    assert (
+        case.classname,
+        case.name,
+        case.outcome,
+        case.duration,
+        case.message,
+        case.detail,
+        case.system_out,
+        case.file,
+    ) == ("c", "n", "passed", 1.5, "msg", "det", "out", "spread.yaml")
     log = parse_log("")
     assert log.starts == [] and log.errors == [] and not log.has_summary
 
@@ -1090,10 +1099,15 @@ def test_task_file_attribute():
             f"{TS}1:00 Executing openstack:ubuntu-24.04-64:tests/spread/core24/foo (w-1)...",
             f"{TS}1:10 Executing openstack:ubuntu-24.04-64:tests/spread/core24/bar:variant (w-1)...",
             f"{TS}1:20 Executing openstack:ubuntu-24.04-64:tests/spread/core24/baz#2 (w-1)...",
-            f"{TS}1:30 Error preparing openstack:ubuntu-24.04-64 (w-1) : boom",
+            f"{TS}1:25 Error preparing openstack:ubuntu-24.04-64:tests/spread/core24/qux (w-1) : task boom",
+            f"{TS}1:27 Error preparing openstack:ubuntu-24.04-64:tests/spread/core24/ (w-1) : suite boom",
+            f"{TS}1:30 Error preparing openstack:ubuntu-24.04-64 (w-1) : project boom",
             f"{TS}1:40 Successful tasks: 3",
-            f"{TS}1:40 Aborted tasks: 0",
+            f"{TS}1:40 Aborted tasks: 1",
+            f"{TS}1:40 Failed task prepare: 1",
+            f"{TS}1:40 Failed suite prepare: 1",
             f"{TS}1:40 Failed project prepare: 1",
+            f"{TS}1:40 Failed tasks: 1",
         ]
     )
     root = convert(log, exit_code=1)
@@ -1110,8 +1124,18 @@ def test_task_file_attribute():
         == "tests/spread/core24/baz/task.yaml"
     )
     assert (
+        _case(root, "preparing:tests/spread/core24/qux").get("file")
+        == "tests/spread/core24/qux/task.yaml"
+    )
+    assert _case(root, "preparing:tests/spread/core24/").get("file") == "spread.yaml"
+    assert (
         _case(root, "preparing:openstack:ubuntu-24.04-64").get("file") == "spread.yaml"
     )
+    assert _case(root, "aborted-task-1").get("file") == "spread.yaml"
+    assert _case(root, "unattributed-failure-1").get("file") == "spread.yaml"
+
+    unparsed = convert("unrecognizable output\n", exit_code=1)
+    assert _case(unparsed, "unparsed-spread-output").get("file") == "spread.yaml"
 
 
 # endregion

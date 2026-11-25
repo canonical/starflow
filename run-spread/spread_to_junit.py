@@ -36,6 +36,9 @@ Outcome = Literal["passed", "failed", "skipped"]
 # Classname for synthetic test cases that cannot be tied to a spread task.
 _SPREAD_CLASSNAME = "spread"
 
+# Fallback file path for test cases that cannot be tied to a spread task.
+_SPREAD_FILE = "spread.yaml"
+
 # Matches an optional YYYY-MM-DD HH:MM:SS timestamp prefix.
 _TIMESTAMP = r"(?:(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+)?"
 
@@ -214,10 +217,10 @@ class TestCase:
     name: str
     outcome: Outcome
     duration: float = 0.0
-    file: str | None = None
     message: str | None = None
     detail: str | None = None
     system_out: str | None = None
+    file: str = _SPREAD_FILE
 
 
 def _parse_ts(raw: str | None) -> datetime | None:
@@ -397,10 +400,13 @@ def _get_task_file(ctx: str) -> str:
     """Return the task.yaml path for a task context, or spread.yaml for non-task contexts."""
     classname, name, variant = _split_ctx(ctx)
     if classname is None:
-        return "spread.yaml"
+        return _SPREAD_FILE
     if variant is not None:
         name = name.removesuffix(f":{variant}")
-    return f"{_strip_sample(name)}/task.yaml"
+    name = _strip_sample(name)
+    if name.endswith("/"):
+        return _SPREAD_FILE
+    return f"{name}/task.yaml"
 
 
 def _match_errors_to_starts(log: Log) -> dict[int, int]:
@@ -456,7 +462,7 @@ class _PassedTask(NamedTuple):
     duration: float
     key: tuple[str, str]  # (context, label) of its start line
     occurrence: int  # 0-based index among the starts sharing its key
-    file: str | None = None
+    file: str = _SPREAD_FILE
 
 
 @dataclass
