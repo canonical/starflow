@@ -36,6 +36,9 @@ Outcome = Literal["passed", "failed", "skipped"]
 # Classname for synthetic test cases that cannot be tied to a spread task.
 _SPREAD_CLASSNAME = "spread"
 
+# Fallback file path for test cases that cannot be tied to a spread task.
+_SPREAD_FILE = "spread.yaml"
+
 # Matches an optional YYYY-MM-DD HH:MM:SS timestamp prefix.
 _TIMESTAMP = r"(?:(?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+)?"
 
@@ -217,6 +220,7 @@ class TestCase:
     message: str | None = None
     detail: str | None = None
     system_out: str | None = None
+    file: str = _SPREAD_FILE
 
 
 def _parse_ts(raw: str | None) -> datetime | None:
@@ -392,6 +396,19 @@ def _strip_sample(name: str) -> str:
     return re.sub(r"#\d+(?:\.\.\d+)?$", "", name)
 
 
+def _get_task_file(ctx: str) -> str:
+    """Return the task.yaml path for a task context, or spread.yaml for non-task contexts."""
+    classname, name, variant = _split_ctx(ctx)
+    if classname is None:
+        return _SPREAD_FILE
+    if variant is not None:
+        name = name.removesuffix(f":{variant}")
+    name = _strip_sample(name)
+    if name.endswith("/"):
+        return _SPREAD_FILE
+    return f"{name}/task.yaml"
+
+
 def _match_errors_to_starts(log: Log) -> dict[int, int]:
     """Match executing errors to the start line of the execution they ended.
 
@@ -445,6 +462,7 @@ class _PassedTask(NamedTuple):
     duration: float
     key: tuple[str, str]  # (context, label) of its start line
     occurrence: int  # 0-based index among the starts sharing its key
+    file: str = _SPREAD_FILE
 
 
 @dataclass
@@ -501,6 +519,7 @@ class _CaseBuilder:
             occurrences[key] = occurrence + 1
             self.started_ctxs.add(start.ctx)
             classname, name, _variant = _split_ctx(start.ctx)
+            task_file = _get_task_file(start.ctx)
             error_number = error_matches.get(index)
             error = log.errors[error_number] if error_number is not None else None
             if error is not None:
@@ -515,6 +534,7 @@ class _CaseBuilder:
                         name=name,
                         outcome="failed",
                         duration=duration,
+                        file=task_file,
                         message=error.message,
                         detail=error.detail or error.message,
                     )
@@ -527,6 +547,7 @@ class _CaseBuilder:
                         _duration_after(start.ts, index),
                         key,
                         occurrence,
+                        task_file,
                     )
                 )
 
@@ -547,6 +568,7 @@ class _CaseBuilder:
                     classname=classname or name,
                     name=task,
                     outcome="skipped",
+                    file=_get_task_file(name),
                     message="expected by 'spread -list' but never started",
                 )
             )
@@ -579,6 +601,7 @@ class _CaseBuilder:
                         classname=classname or name,
                         name=task,
                         outcome="failed",
+                        file=_get_task_file(name),
                         message=(
                             "spread reported this failure but no error detail "
                             "was parsed from the log"
@@ -614,6 +637,7 @@ class _CaseBuilder:
                         classname=pending.classname,
                         name=pending.name,
                         outcome="failed",
+                        file=pending.file,
                         message=message,
                     )
                 )
@@ -682,6 +706,7 @@ class _CaseBuilder:
                     classname=task.classname,
                     name=task.name,
                     outcome="skipped",
+                    file=task.file,
                     message="spread ended without a verdict for this task",
                 )
             )
@@ -707,6 +732,7 @@ class _CaseBuilder:
                     classname=task.classname,
                     name=task.name,
                     outcome="skipped",
+                    file=task.file,
                     message="spread ended without a verdict for this task",
                 )
             )
@@ -721,6 +747,7 @@ class _CaseBuilder:
                     name=task.name,
                     outcome="passed",
                     duration=task.duration,
+                    file=task.file,
                 )
             )
 
@@ -754,6 +781,7 @@ class _CaseBuilder:
                     classname=classname or error.ctx,
                     name=f"{prefix}{name}",
                     outcome="failed",
+                    file=_get_task_file(error.ctx),
                     message=error.message,
                     detail=error.detail or error.message,
                 )
@@ -845,6 +873,8 @@ def convert(
             "classname": _xml_safe(case.classname),
             "name": _xml_safe(case.name),
         }
+        if case.file:
+            attributes["file"] = _xml_safe(case.file)
         if case.duration:
             attributes["time"] = f"{case.duration:.3f}"
         element = ET.SubElement(suite, "testcase", attributes)
